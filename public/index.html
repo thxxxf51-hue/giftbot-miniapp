@@ -1152,7 +1152,7 @@ function init() {
   document.getElementById('p-refs').textContent = S.refs.length;
 
   // Ref link
-  const botName = tg?.initDataUnsafe?.bot?.username || 'GiftBot';
+  const botName = tg?.initDataUnsafe?.bot?.username || 'SATapp_bot';
   const refLink = `https://t.me/${botName}?start=ref_${UID}`;
   document.getElementById('ref-link').textContent = refLink;
 
@@ -1450,7 +1450,7 @@ function copyRef() {
 
 function shareRef() {
   const t = document.getElementById('ref-link').textContent;
-  const msg = encodeURIComponent('🎁 Присоединяйся к GiftBot и получи 1000 монет!\nЗарабатывай, выполняя задания и участвуй в розыгрышах!');
+  const msg = encodeURIComponent('🎁 Присоединяйся к SAT Bot и получи 1000 монет!\nЗарабатывай, выполняя задания и участвуй в розыгрышах!');
   if (tg) {
     tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(t)}&text=${msg}`);
   } else {
