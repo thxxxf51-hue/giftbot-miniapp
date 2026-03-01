@@ -459,7 +459,16 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 <!-- RAFFLES -->
 <div class="page" id="page-raffles">
   <div class="phdr"><div class="ptitle">Розыгрыши</div><div class="bpill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span id="b-raffles">0</span></div></div>
-  <div class="raff-empty"><div class="raff-empty-ico">🎁</div><div class="raff-empty-t">Пока розыгрышей нет</div><div class="raff-empty-s">Скоро здесь появятся призы —<br>следи за обновлениями!</div></div>
+  <div class="stabs" style="margin-bottom:12px">
+    <button class="stab active" id="rtab-active" onclick="raffleTab('active',this)">🎁 Активные</button>
+    <button class="stab" id="rtab-finished" onclick="raffleTab('finished',this)">🏆 Завершённые</button>
+  </div>
+  <div id="raffles-active">
+    <div class="raff-empty" id="raffles-empty"><div class="raff-empty-ico">🎁</div><div class="raff-empty-t">Пока розыгрышей нет</div><div class="raff-empty-s">Скоро здесь появятся призы —<br>следи за обновлениями!</div></div>
+  </div>
+  <div id="raffles-finished" style="display:none">
+    <div class="raff-empty" id="raffles-fin-empty"><div class="raff-empty-ico">🏆</div><div class="raff-empty-t">Нет завершённых</div><div class="raff-empty-s">Здесь будут прошедшие розыгрыши</div></div>
+  </div>
 </div>
 
 <!-- FRIENDS -->
@@ -1157,42 +1166,98 @@ function toast(msg,type='g'){
 
 /* ══ INIT ══ */
 /* ══ DRAWS ══ */
+let curRaffleTab = 'active';
+
+function raffleTab(tab, btn) {
+  curRaffleTab = tab;
+  document.querySelectorAll('#page-raffles .stab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('raffles-active').style.display = tab === 'active' ? 'block' : 'none';
+  document.getElementById('raffles-finished').style.display = tab === 'finished' ? 'block' : 'none';
+  if (tab === 'finished') loadFinishedDraws();
+}
+
 async function loadDraws(){
   try{
     const r=await fetch('/api/draws');
     const d=await r.json();
-    if(d.ok)renderDraws(d.draws||[]);
+    if(d.ok) renderDraws(d.draws||[]);
   }catch{}
 }
+
+async function loadFinishedDraws(){
+  try{
+    const r=await fetch('/api/draws/finished');
+    const d=await r.json();
+    if(d.ok) renderFinishedDraws(d.draws||[]);
+  }catch{}
+}
+
 function renderDraws(draws){
   const active=draws.filter(d=>d.endsAt>Date.now());
-  const page=document.getElementById('page-raffles');if(!page)return;
-  const empty=page.querySelector('.raff-empty');
-  page.querySelectorAll('.draw-card').forEach(e=>e.remove());
+  const cont=document.getElementById('raffles-active');if(!cont)return;
+  const empty=document.getElementById('raffles-empty');
+  cont.querySelectorAll('.draw-card').forEach(e=>e.remove());
   if(!active.length){if(empty)empty.style.display='';renderHomeDraws([]);return;}
   if(empty)empty.style.display='none';
-  const phdr=page.querySelector('.phdr');
   active.forEach(draw=>{
     const el=document.createElement('div');
     el.className='gc draw-card';el.style.cssText='padding:14px;margin-bottom:10px';
     const left=Math.ceil((draw.endsAt-Date.now())/60000);
     const tl=left>=1440?Math.floor(left/1440)+' дн.':left>=60?Math.floor(left/60)+' ч.':left+' мин.';
+    const wc=draw.winnersCount||1;
     el.innerHTML=`${draw.imageUrl?`<img src="${draw.imageUrl}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;margin-bottom:10px">`:`<div style="height:70px;border-radius:10px;background:linear-gradient(135deg,#1a2e1a,#0d1f14);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px">🎁</div>`}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <div style="font-size:15px;font-weight:800;color:var(--green)">${draw.prize}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--green)">${draw.prize}${draw.isMoney?' 🪙':''}</div>
       <div style="font-size:10px;color:var(--muted2);background:rgba(255,255,255,.05);padding:3px 8px;border-radius:8px">⏱ ${tl}</div>
     </div>
-    <div style="font-size:11px;color:var(--muted2);margin-bottom:10px">👥 Участников: ${draw.participantsCount}</div>
+    <div style="font-size:11px;color:var(--muted2);margin-bottom:10px;display:flex;gap:10px">
+      <span>👥 Участников: ${draw.participantsCount}</span>
+      <span>👑 Победителей: ${wc}</span>
+    </div>
     <button onclick="joinDraw(${draw.id},this)" style="width:100%;background:var(--green);color:#000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🎯 Участвовать</button>`;
-    if(phdr)phdr.after(el);else page.appendChild(el);
+    cont.appendChild(el);
   });
   renderHomeDraws(active);
 }
+
+function renderFinishedDraws(draws){
+  const cont=document.getElementById('raffles-finished');if(!cont)return;
+  const empty=document.getElementById('raffles-fin-empty');
+  cont.querySelectorAll('.fin-card').forEach(e=>e.remove());
+  if(!draws.length){if(empty)empty.style.display='';return;}
+  if(empty)empty.style.display='none';
+  draws.forEach(draw=>{
+    const el=document.createElement('div');
+    el.className='gc fin-card';el.style.cssText='padding:14px;margin-bottom:10px';
+    const date=new Date(draw.finishedAt).toLocaleDateString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+    const winners=draw.winners||[];
+    const winList=winners.length
+      ? winners.map(w=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:16px">👑</span><span style="font-size:13px;font-weight:600;color:var(--green)">${w.name}</span>${draw.isMoney?`<span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:700">+${Math.floor(parseInt(draw.prize)/(draw.winnersCount||1))} 🪙</span>`:''}</div>`).join('')
+      : '<div style="font-size:12px;color:var(--muted2)">Победителей нет</div>';
+    const allPart=draw.participants||[];
+    const partList=allPart.map(p=>`<span style="font-size:11px;color:var(--muted2);background:rgba(255,255,255,.04);padding:2px 7px;border-radius:6px">${p.name}</span>`).join(' ');
+    el.innerHTML=`
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;color:var(--red);background:var(--rdim);padding:2px 8px;border-radius:6px">Завершён</div>
+        <div style="font-size:10px;color:var(--muted2)">${date}</div>
+      </div>
+      ${draw.imageUrl?`<img src="${draw.imageUrl}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;margin-bottom:10px">`:''}
+      <div style="font-size:15px;font-weight:800;margin-bottom:10px">🏆 ${draw.prize}${draw.isMoney?' монет':''}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Победител${winners.length===1?'ь':'и'}</div>
+      <div style="margin-bottom:12px">${winList}</div>
+      ${allPart.length?`<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Участники (${allPart.length})</div><div style="display:flex;flex-wrap:wrap;gap:4px">${partList}</div>`:''}
+    `;
+    cont.appendChild(el);
+  });
+}
+
 function renderHomeDraws(draws){
   const el=document.getElementById('h-raf-block');if(!el)return;
   if(!draws.length){el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:20px;opacity:.3;gap:8px"><div style="font-size:28px">🎁</div><div style="font-size:12px;color:var(--muted)">Пока розыгрышей нет</div></div>`;return;}
-  el.innerHTML=draws.slice(0,2).map(d=>`<div onclick="go('raffles')" style="background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px"><div style="font-size:22px">${d.imageUrl?`<img src="${d.imageUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover">`:'🎁'}</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--green)">${d.prize}</div><div style="font-size:10px;color:var(--muted2)">${d.participantsCount} участников</div></div><div style="font-size:14px;color:var(--muted)">›</div></div>`).join('');
+  el.innerHTML=draws.slice(0,2).map(d=>`<div onclick="go('raffles')" style="background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px"><div style="font-size:22px">${d.imageUrl?`<img src="${d.imageUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover">`:'🎁'}</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--green)">${d.prize}${d.isMoney?' 🪙':''}</div><div style="font-size:10px;color:var(--muted2)">${d.participantsCount} участников</div></div><div style="font-size:14px;color:var(--muted)">›</div></div>`).join('');
 }
+
 async function joinDraw(id,btn){
   btn.disabled=true;btn.textContent='Участвуем...';
   try{
