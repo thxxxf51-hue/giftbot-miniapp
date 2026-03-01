@@ -130,6 +130,19 @@ app.post('/api/user/sync', (req, res) => {
   res.json({ ok: true, balance: u.balance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
 
+// Обновление баланса с фронтенда (после кейсов, заданий и т.д.)
+app.post('/api/balance/update', (req, res) => {
+  const { userId, balance } = req.body;
+  if (!userId || balance === undefined) return res.json({ ok: false });
+  const u = getUser(userId);
+  // Принимаем только если новый баланс больше или равен текущему
+  // (защита от случайного сброса)
+  if (Number(balance) >= u.balance) {
+    u.balance = Number(balance);
+  }
+  res.json({ ok: true, balance: u.balance });
+});
+
 app.post('/api/check-sub', async (req, res) => {
   const { userId, channel } = req.body;
   if (!userId || !channel) return res.json({ ok: false, error: 'missing params' });
@@ -167,7 +180,8 @@ app.get('/api/draws', (req, res) => {
     .map(d => ({
       id: d.id, prize: d.prize, endsAt: d.endsAt,
       imageUrl: d.imageUrl, participantsCount: d.participants.length,
-      winnersCount: d.winnersCount || 1, isMoney: isMoney(d.prize)
+      winnersCount: d.winnersCount || 1, isMoney: isMoney(d.prize),
+      requireTicket: d.requireTicket || false
     }));
   res.json({ ok: true, draws: active });
 });
@@ -187,10 +201,24 @@ app.get('/api/draws/finished', (req, res) => {
 });
 
 app.post('/api/draws/join', (req, res) => {
-  const { drawId, userId, username, firstName } = req.body;
+  const { drawId, userId, username, firstName, useTicket } = req.body;
   const draw = DB.draws[drawId];
   if (!draw || draw.finished || draw.endsAt < Date.now()) return res.json({ ok: false, error: 'Розыгрыш не найден или завершён' });
   if (draw.participants.find(p => String(p.uid) === String(userId))) return res.json({ ok: false, error: 'Вы уже участвуете' });
+
+  // Проверка билета
+  if (draw.requireTicket) {
+    const u = getUser(userId);
+    const tickets = u.tickets || 0;
+    if (tickets < 1) return res.json({ ok: false, error: 'ticket_required', errorText: '🎟 Нужен билет для участия' });
+    if (useTicket) {
+      u.tickets = tickets - 1;
+    } else {
+      // Спрашиваем подтверждение на фронте
+      return res.json({ ok: false, error: 'ticket_confirm', tickets, errorText: `🎟 Этот розыгрыш требует билет. У вас ${tickets} шт.` });
+    }
+  }
+
   draw.participants.push({ uid: String(userId), name: username ? '@'+username : (firstName||'Аноним') });
   res.json({ ok: true, count: draw.participants.length });
 });
@@ -265,10 +293,19 @@ async function handleCdraw(ctx, text, photo) {
   const prize = parts[0];
   const timeWords = ['мин','минут','минута','минуты','час','часа','часов','день','дня','дней','дн'];
 
-  // Определяем кол-во победителей (последний элемент если число и перед ним слово времени)
-  let winnersCount = 1;
   let timeParts = parts.slice(1);
-  const lastPart = timeParts[timeParts.length - 1];
+  let winnersCount = 1;
+  let requireTicket = false;
+
+  // Проверяем последний элемент на "билет"
+  const lastEl = (timeParts[timeParts.length - 1] || '').toLowerCase();
+  if (lastEl.includes('билет')) {
+    requireTicket = true;
+    timeParts = timeParts.slice(0, -1);
+  }
+
+  // Проверяем последний элемент на кол-во победителей
+  const lastPart = timeParts[timeParts.length - 1] || '';
   const prevPart = timeParts[timeParts.length - 2] || '';
   const lastIsNum = /^\d+$/.test(lastPart);
   const prevIsTime = timeWords.some(w => prevPart.toLowerCase().includes(w));
@@ -298,7 +335,7 @@ async function handleCdraw(ctx, text, photo) {
   DB.draws[id] = {
     id, prize, endsAt: Date.now() + ms, imageUrl,
     participants: [], finished: false,
-    winnersCount, createdAt: Date.now()
+    winnersCount, requireTicket, createdAt: Date.now()
   };
 
   const amountNote = moneyPrize && winnersCount > 1
@@ -310,6 +347,7 @@ async function handleCdraw(ctx, text, photo) {
     `✅ Розыгрыш #${id} создан!\n` +
     `🏆 Приз: ${prize}${moneyPrize ? ' монет' : ''}\n` +
     `👑 Победителей: ${winnersCount}\n` +
+    `🎟 Вход: ${requireTicket ? 'Требует билет' : 'Бесплатный'}\n` +
     `⏱ Длится: ${timeStr}` +
     amountNote +
     `\n📱 Уже в приложении!` +
