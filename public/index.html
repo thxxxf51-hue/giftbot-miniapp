@@ -54,11 +54,9 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .av-wrap{position:relative;flex-shrink:0}
 .av{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#2ecc71,#1a7a40);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;overflow:hidden;border:2px solid rgba(46,204,113,.4)}
 .av img{width:100%;height:100%;object-fit:cover}
-/* Crown */
 .av-crown{position:absolute;top:-10px;left:50%;transform:translateX(-50%);display:none;z-index:5}
 .av-crown svg{width:24px;height:24px}
 .av-crown.show{display:block}
-/* Legend glow */
 .av-wrap.legend-glow .av{box-shadow:0 0 0 3px var(--legend-color,#2ecc71),0 0 20px var(--legend-color,#2ecc71),0 0 40px var(--legend-color,rgba(46,204,113,.4))}
 .welcome{font-size:11px;color:var(--muted2);margin-bottom:2px}
 
@@ -575,8 +573,8 @@ const S={
   hasCrown:sv?.hasCrown||false,
   legendExpiry:sv?.legendExpiry||null,
   legendColor:sv?.legendColor||'#2ecc71',
-  inventory:sv?.inventory||{},  // {key: count}
-  bonusMulti:sv?.bonusMulti||0, // 0=none, 3=x3, 5=x5
+  inventory:sv?.inventory||{},
+  bonusMulti:sv?.bonusMulti||0,
   vipDiscount:sv?.vipDiscount||false,
   task3refsDone:sv?.task3refsDone||false,
 };
@@ -686,6 +684,19 @@ function syncB(){
   ['home','tasks','shop','inv','raffles','friends','profile'].forEach(k=>{const el=document.getElementById('b-'+k);if(el)el.textContent=b;});
   document.getElementById('p-bal').textContent=S.balance.toLocaleString('ru');
   save();
+  syncBalanceToServer();
+}
+
+/* ══ СИНХРОНИЗАЦИЯ БАЛАНСА С СЕРВЕРОМ ══ */
+let _bSyncTimer=null;
+function syncBalanceToServer(){
+  clearTimeout(_bSyncTimer);
+  _bSyncTimer=setTimeout(async()=>{
+    try{
+      await fetch('/api/balance/update',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId:UID,balance:S.balance})});
+    }catch{}
+  },1000);
 }
 
 /* ══ VIP ══ */
@@ -707,7 +718,6 @@ function applyNick(cid){
   const pc=document.getElementById('p-color');
   const c=COLORS.find(x=>x.id===cid);
   if(pc)pc.textContent=c?c.label:'Стандартный';
-  // Also update profile name color
   const pn=document.getElementById('p-name');
   if(pn&&cid){pn.style.background=c.grad;pn.style.webkitBackgroundClip='text';pn.style.webkitTextFillColor='transparent';pn.style.backgroundClip='text';}
   else if(pn){pn.style.background='';pn.style.webkitTextFillColor='';}
@@ -783,7 +793,6 @@ function useInvItem(key){
     openGenMo('👑 Корона','Надень корону на аватарку навсегда!\nКорона отображается над фото профиля на главном экране и в профиле.','👑 Надеть',()=>{removeInv('crown',1);S.hasCrown=true;save();applyCrown();closeGenMo();toast('👑 Корона надета!','g');renderInv();});
   } else if(a==='activateLegendItem'){
     closeGenMo();
-    // open legend color picker
     renderLegendColors();
     document.getElementById('lgmo').classList.add('show');
   } else if(a==='openMegaGift'){
@@ -842,7 +851,6 @@ function openTask(id){
       '📢 Перейти на канал',()=>{
         if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
         closeGenMo();
-        // Show verify button after returning
         setTimeout(()=>showVerifyBtn(t),800);
       }
     );return;
@@ -1029,7 +1037,6 @@ function spinCase(){
   spinning=true;S.balance-=curC.price;syncB();
   spinReel('rtrack',curC.drops,(winner)=>{
     spinning=false;
-    // Apply bonus multiplier to coins
     let coins=winner.coins||0;
     if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();toast(`⚡ Бонус применён!`,'g');}
     if(coins>0){S.balance+=coins;syncB();}
@@ -1114,7 +1121,6 @@ async function usePromo(inputId){
   const code=(el.value||'').trim().toUpperCase();
   if(!code){toast('Введите промокод','r');return;}
   if(S.usedPromos.has(code)){toast('❌ Уже использован','r');el.value='';return;}
-  // Показываем что идёт проверка
   el.disabled=true;
   const btn=el.nextElementSibling;
   const oldTxt=btn.textContent;btn.textContent='...';btn.disabled=true;
@@ -1128,7 +1134,7 @@ async function usePromo(inputId){
     const d=await r.json();
     if(d.ok){
       S.usedPromos.add(code);
-      S.balance=d.balance; // берём баланс с сервера
+      S.balance=d.balance;
       el.value='';
       syncB();rShopItems();
       toast(`✅ +${d.reward} монет!`,'g');
@@ -1136,7 +1142,6 @@ async function usePromo(inputId){
       toast(d.error||'❌ Неверный промокод','r');
     }
   }catch(e){
-    // Fallback — если нет сервера (тест в браузере)
     toast('❌ Ошибка соединения с сервером','r');
   }
   el.disabled=false;btn.textContent=oldTxt;btn.disabled=false;
@@ -1164,7 +1169,6 @@ function toast(msg,type='g'){
   clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);
 }
 
-/* ══ INIT ══ */
 /* ══ DRAWS ══ */
 let curRaffleTab = 'active';
 
@@ -1268,6 +1272,7 @@ async function joinDraw(id,btn){
   }catch{btn.disabled=false;btn.textContent='🎯 Участвовать';toast('Ошибка соединения','r');}
 }
 
+/* ══ INIT ══ */
 async function init(){
   const name=TGU.first_name||'User';
   const uname=TGU.username?'@'+TGU.username:'Без username';
@@ -1295,14 +1300,17 @@ async function init(){
   rRefList();
   document.getElementById('pi-h').addEventListener('keydown',e=>{if(e.key==='Enter')usePromo('pi-h');});
   document.getElementById('pi-p').addEventListener('keydown',e=>{if(e.key==='Enter')usePromo('pi-p');});
-  // Синх с сервером — регистрирует юзера и берёт актуальный баланс
+  // ════════════════════════════════════════════════════════
+  // ИСПРАВЛЕНИЕ: передаём локальный баланс на сервер при синке.
+  // Сервер вернёт максимальный из двух — так не теряются
+  // ни админские начисления, ни прогресс пользователя.
+  // ════════════════════════════════════════════════════════
   try{
     const sr=await fetch('/api/user/sync',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||''})});
+      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance})});
     const sd=await sr.json();
     if(sd.ok){S.balance=sd.balance;syncB();}
   }catch{}
-  // Загрузка розыгрышей
   loadDraws();
   setInterval(loadDraws,30000);
 }
