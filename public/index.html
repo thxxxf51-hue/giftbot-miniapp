@@ -1101,16 +1101,37 @@ function shareRef(){
 }
 
 /* ══ PROMO ══ */
-const PROMOS={GIFT100:{r:100},BONUS50:{r:50},START200:{r:200},WELCOME:{r:75},VIP500:{r:500},NEW1000:{r:1000}};
-function usePromo(inputId){
+async function usePromo(inputId){
   const el=document.getElementById(inputId);
   const code=(el.value||'').trim().toUpperCase();
   if(!code){toast('Введите промокод','r');return;}
   if(S.usedPromos.has(code)){toast('❌ Уже использован','r');el.value='';return;}
-  const p=PROMOS[code];
-  if(!p){toast('❌ Неверный промокод','r');return;}
-  S.usedPromos.add(code);S.balance+=p.r;el.value='';
-  syncB();rShopItems();toast(`✅ +${p.r} монет!`,'g');
+  // Показываем что идёт проверка
+  el.disabled=true;
+  const btn=el.nextElementSibling;
+  const oldTxt=btn.textContent;btn.textContent='...';btn.disabled=true;
+  try{
+    const isVip=S.vipExpiry&&Date.now()<S.vipExpiry;
+    const r=await fetch('/api/promo',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code,userId:UID,isVip})
+    });
+    const d=await r.json();
+    if(d.ok){
+      S.usedPromos.add(code);
+      S.balance=d.balance; // берём баланс с сервера
+      el.value='';
+      syncB();rShopItems();
+      toast(`✅ +${d.reward} монет!`,'g');
+    } else {
+      toast(d.error||'❌ Неверный промокод','r');
+    }
+  }catch(e){
+    // Fallback — если нет сервера (тест в браузере)
+    toast('❌ Ошибка соединения с сервером','r');
+  }
+  el.disabled=false;btn.textContent=oldTxt;btn.disabled=false;
 }
 
 /* ══ GENERAL MODAL ══ */
