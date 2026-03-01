@@ -686,6 +686,15 @@ function syncB(){
   ['home','tasks','shop','inv','raffles','friends','profile'].forEach(k=>{const el=document.getElementById('b-'+k);if(el)el.textContent=b;});
   document.getElementById('p-bal').textContent=S.balance.toLocaleString('ru');
   save();
+  // Синхронизируем баланс на сервер (дебаунс 2 сек)
+  clearTimeout(syncB._t);
+  syncB._t=setTimeout(()=>{
+    fetch('/api/balance/update',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:UID,balance:S.balance})
+    }).catch(()=>{});
+  },2000);
 }
 
 /* ══ VIP ══ */
@@ -1225,9 +1234,10 @@ function renderDraws(draws){
       <div style="font-size:15px;font-weight:800;color:var(--green)">${draw.prize}${draw.isMoney?' 🪙':''}</div>
       <div style="font-size:10px;color:var(--muted2);background:rgba(255,255,255,.05);padding:3px 8px;border-radius:8px">⏱ ${tl}</div>
     </div>
-    <div style="font-size:11px;color:var(--muted2);margin-bottom:10px;display:flex;gap:10px">
-      <span>👥 Участников: ${draw.participantsCount}</span>
-      <span>👑 Победителей: ${wc}</span>
+    <div style="font-size:11px;color:var(--muted2);margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <span>👥 ${draw.participantsCount} уч.</span>
+      <span>👑 ${wc} поб.</span>
+      ${draw.requireTicket?'<span style="color:var(--orange);font-weight:700">🎟 Нужен билет</span>':'<span style="color:var(--green);font-weight:600">✅ Бесплатно</span>'}
     </div>
     <button onclick="joinDraw(${draw.id},this)" style="width:100%;background:var(--green);color:#000;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🎯 Участвовать</button>`;
     cont.appendChild(el);
@@ -1272,14 +1282,50 @@ function renderHomeDraws(draws){
   el.innerHTML=draws.slice(0,2).map(d=>`<div onclick="go('raffles')" style="background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px"><div style="font-size:22px">${d.imageUrl?`<img src="${d.imageUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover">`:'🎁'}</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--green)">${d.prize}${d.isMoney?' 🪙':''}</div><div style="font-size:10px;color:var(--muted2)">${d.participantsCount} участников</div></div><div style="font-size:14px;color:var(--muted)">›</div></div>`).join('');
 }
 
-async function joinDraw(id,btn){
+async function joinDraw(id,btn,useTicket=false){
   btn.disabled=true;btn.textContent='Участвуем...';
   try{
-    const r=await fetch('/api/draws/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({drawId:id,userId:UID,username:TGU.username,firstName:TGU.first_name})});
+    const r=await fetch('/api/draws/join',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({drawId:id,userId:UID,username:TGU.username,firstName:TGU.first_name,useTicket})
+    });
     const d=await r.json();
-    if(d.ok){btn.textContent='✅ Вы участвуете';btn.style.background='var(--gdim)';btn.style.color='var(--green)';toast('🎯 Вы в розыгрыше!','g');}
-    else{btn.disabled=false;btn.textContent='🎯 Участвовать';toast(d.error||'Ошибка','r');}
-  }catch{btn.disabled=false;btn.textContent='🎯 Участвовать';toast('Ошибка соединения','r');}
+    if(d.ok){
+      btn.textContent='✅ Вы участвуете';
+      btn.style.background='var(--gdim)';
+      btn.style.color='var(--green)';
+      toast('🎯 Вы в розыгрыше!','g');
+    } else if(d.error==='ticket_confirm'){
+      // Спрашиваем подтверждение списания билета
+      btn.disabled=false;btn.textContent='🎯 Участвовать';
+      openGenMo(
+        '🎟 Нужен билет',
+        `Этот розыгрыш требует 1 билет для участия.
+У вас: ${d.tickets} билет(ов).
+
+Списать 1 билет и участвовать?`,
+        '🎟 Использовать билет',
+        ()=>{ closeGenMo(); joinDraw(id,btn,true); }
+      );
+    } else if(d.error==='ticket_required'){
+      btn.disabled=false;btn.textContent='🎯 Участвовать';
+      openGenMo(
+        '🎟 Нет билетов',
+        'Для участия в этом розыгрыше нужен билет.
+
+Билеты выпадают из кейсов — попробуй открыть кейс!',
+        '📦 В магазин',
+        ()=>{ closeGenMo(); go('shop'); setTimeout(()=>document.querySelectorAll('.stab')[1]?.click(),300); }
+      );
+    } else {
+      btn.disabled=false;btn.textContent='🎯 Участвовать';
+      toast(d.errorText||d.error||'Ошибка','r');
+    }
+  }catch{
+    btn.disabled=false;btn.textContent='🎯 Участвовать';
+    toast('Ошибка соединения','r');
+  }
 }
 
 async function init(){
