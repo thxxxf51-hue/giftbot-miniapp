@@ -731,7 +731,7 @@ function renderInv(){
   const el=document.getElementById('inv-list');if(!el)return;
   const keys=Object.keys(S.inventory).filter(k=>S.inventory[k]>0);
   if(!keys.length){
-    el.innerHTML=`<div class="inv-empty"><div class="inv-empty-ico">📦</div><div class="inv-empty-t">Инвентарь пуст</div><div class="inv-empty-s">Открывай кейсы, чтобы получать предметы</div></div>`;
+    el.innerHTML=`<div class="inv-empty"><div class="inv-empty-ico">📦</div><div class="inv-empty-t">Инвентарь пуст</div><div class="inv-empty-s">Открывай кейсы чтобы получать предметы</div></div>`;
     return;
   }
   el.innerHTML=keys.map(k=>{
@@ -830,26 +830,62 @@ function openTask(id){
     return;
   }
   if(t.check==='sub'){
-    openGenMo('📢 '+t.name,`Подпишись на канал и нажми "Проверить".\n\n${t.desc}`,'📢 Перейти на канал',()=>{
-      if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
-      closeGenMo();
-      setTimeout(()=>openVerify(t),1200);
-    });return;
+    openGenMo('📢 '+t.name,`Подпишись на @${t.channel} и вернись — нажми "Проверить подписку"`,
+      '📢 Перейти на канал',()=>{
+        if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
+        closeGenMo();
+        // Show verify button after returning
+        setTimeout(()=>showVerifyBtn(t),800);
+      }
+    );return;
   }
   if(t.check==='chat'){
-    openGenMo('💬 '+t.name,`Напиши любое слово в чате и нажми "Проверить".\n\n${t.desc}`,'💬 Открыть чат',()=>{
-      if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
-      closeGenMo();
-      setTimeout(()=>openVerify(t),1200);
-    });return;
+    openGenMo('💬 '+t.name,`Зайди в @${t.channel}, напиши любое слово и вернись — нажми "Проверить"`,
+      '💬 Открыть чат',()=>{
+        if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
+        closeGenMo();
+        setTimeout(()=>showVerifyBtn(t),800);
+      }
+    );return;
   }
 }
 
-function openVerify(t){
-  const label=t.check==='sub'?'подписались':'написали в чат';
-  openGenMo('Проверка задания',`Вы ${label}?\n\n${t.name}`,'✅ Да, выполнил',()=>{completeTask(t.id);});
-  // Override cancel to show error
-  document.querySelector('#genmo .mbtn.gray').onclick=()=>{closeGenMo();toast('Вы не '+label,'r');};
+function showVerifyBtn(t){
+  openGenMo(
+    '🔍 Проверка задания',
+    t.check==='sub'
+      ? `Подписался ли ты на @${t.channel}?`
+      : `Написал ли ты слово в @${t.channel}?`,
+    '✅ Проверить',
+    ()=>verifyTask(t)
+  );
+  document.querySelector('#genmo .mbtn.gray').textContent='Ещё не выполнил';
+  document.querySelector('#genmo .mbtn.gray').onclick=()=>{
+    closeGenMo();
+    toast(t.check==='sub'?'Вы не подписались':'Вы не написали слово в чат','r');
+  };
+}
+
+async function verifyTask(t){
+  const uid=UID;
+  document.getElementById('gm-a').textContent='Проверяем...';
+  document.getElementById('gm-a').disabled=true;
+  try{
+    if(t.check==='sub'){
+      const r=await fetch('/api/check-sub',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,channel:t.channel})});
+      const d=await r.json();
+      if(d.subscribed){completeTask(t.id);}
+      else{closeGenMo();toast('Вы не подписались','r');}
+    } else if(t.check==='chat'){
+      const r=await fetch('/api/check-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,channel:t.channel})});
+      const d=await r.json();
+      if(d.member){completeTask(t.id);}
+      else{closeGenMo();toast('Вы не в чате','r');}
+    }
+  }catch(e){
+    closeGenMo();toast('Ошибка проверки. Попробуй ещё раз','r');
+  }
+  document.getElementById('gm-a').disabled=false;
 }
 
 function completeTask(id){
