@@ -122,24 +122,33 @@ async function finishDraw(id) {
 /* ══ REST API ══ */
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName } = req.body;
+  const { userId, username, firstName, balance } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
   if (firstName) u.firstName = firstName;
+
+  // ════════════════════════════════════════════════════════
+  // ИСПРАВЛЕНИЕ: если фронт передаёт баланс при синке —
+  // берём максимальный из двух (защита от потерь прогресса)
+  // ════════════════════════════════════════════════════════
+  if (balance !== undefined && Number(balance) > u.balance) {
+    u.balance = Number(balance);
+  }
+
   res.json({ ok: true, balance: u.balance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
 
-// Обновление баланса с фронтенда (после кейсов, заданий и т.д.)
+// ════════════════════════════════════════════════════════════
+// ИСПРАВЛЕНИЕ: убрали ограничение "только если больше".
+// Теперь баланс всегда принимается с фронта (траты в магазине,
+// открытие кейсов и т.д. корректно сохраняются на сервере).
+// ════════════════════════════════════════════════════════════
 app.post('/api/balance/update', (req, res) => {
   const { userId, balance } = req.body;
   if (!userId || balance === undefined) return res.json({ ok: false });
   const u = getUser(userId);
-  // Принимаем только если новый баланс больше или равен текущему
-  // (защита от случайного сброса)
-  if (Number(balance) >= u.balance) {
-    u.balance = Number(balance);
-  }
+  u.balance = Number(balance);
   res.json({ ok: true, balance: u.balance });
 });
 
