@@ -686,22 +686,7 @@ function syncB(){
   ['home','tasks','shop','inv','raffles','friends','profile'].forEach(k=>{const el=document.getElementById('b-'+k);if(el)el.textContent=b;});
   document.getElementById('p-bal').textContent=S.balance.toLocaleString('ru');
   save();
-  syncBalanceToServer();
 }
-
-/* ══ СИНХРОНИЗАЦИЯ БАЛАНСА С СЕРВЕРОМ ══ */
-let _bSyncTimer=null;
-function syncBalanceToServer(){
-  // Дебаунс 1с — не спамим запросами при быстрых изменениях
-  clearTimeout(_bSyncTimer);
-  _bSyncTimer=setTimeout(async()=>{
-    try{
-      await fetch('/api/balance/update',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({userId:UID,balance:S.balance})});
-    }catch{}
-  },1000);
-}
-
 
 /* ══ VIP ══ */
 function vipStatus(){if(!S.vipExpiry)return'none';return Date.now()<S.vipExpiry?'active':'expired';}
@@ -1313,7 +1298,7 @@ async function init(){
   // Синх с сервером — регистрирует юзера и берёт актуальный баланс
   try{
     const sr=await fetch('/api/user/sync',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance});
+      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||''})});
     const sd=await sr.json();
     if(sd.ok){S.balance=sd.balance;syncB();}
   }catch{}
