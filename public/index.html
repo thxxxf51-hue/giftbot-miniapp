@@ -350,6 +350,39 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 /* WIP Case overlay */
 .ccard-wip{position:relative}
 .ccard-wip::after{content:'В разработке';position:absolute;inset:0;background:rgba(10,10,10,.75);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--star);border-radius:15px;backdrop-filter:blur(2px)}
+
+/* ══ DRAW PARTICIPANTS BOTTOM SHEET ══ */
+.dp-mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:550;align-items:flex-end}
+.dp-mo.show{display:flex}
+.dp-box{background:#161819;border-radius:22px 22px 0 0;width:100%;border-top:1px solid rgba(255,255,255,.08);animation:shup .24s cubic-bezier(.4,0,.2,1);max-height:82vh;display:flex;flex-direction:column;will-change:transform}
+.dp-drag-wrap{padding:0 16px;flex-shrink:0;cursor:grab;touch-action:none}
+.dp-drag{width:34px;height:4px;background:rgba(255,255,255,.12);border-radius:4px;margin:12px auto 0}
+.dp-hdr{padding:12px 16px 0;flex-shrink:0}
+.dp-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.dp-title{font-size:16px;font-weight:800}
+.dp-close{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--muted2);border:none;font-family:inherit;flex-shrink:0}
+.dp-close:active{opacity:.7}
+.dp-prize{font-size:11px;color:var(--muted2);margin-bottom:12px;margin-top:2px}
+.dp-tabs{display:flex;gap:5px;background:rgba(0,0,0,.35);border-radius:10px;padding:3px;margin-bottom:0}
+.dp-tab{flex:1;padding:8px 4px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+.dp-tab.active{background:var(--glass);color:var(--text)}
+.dp-body{flex:1;overflow-y:auto;padding:12px 16px calc(20px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch}
+.dp-body::-webkit-scrollbar{display:none}
+.dp-winner-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.dp-winner-row:last-child{border-bottom:none}
+.dp-winner-num{width:26px;height:26px;border-radius:50%;background:var(--gdim);border:1px solid var(--gbor);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.dp-winner-name{font-size:14px;font-weight:700;color:var(--green);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp-winner-prize{font-size:11px;font-weight:700;color:var(--green);white-space:nowrap;background:var(--gdim);border:1px solid var(--gbor);border-radius:8px;padding:3px 8px}
+.dp-part-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.dp-part-row:last-child{border-bottom:none}
+.dp-part-num{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--muted2);flex-shrink:0}
+.dp-part-name{font-size:13px;font-weight:500;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dp-part-badge{font-size:9px;font-weight:700;color:var(--green);background:var(--gdim);border:1px solid var(--gbor);border-radius:6px;padding:2px 7px;white-space:nowrap}
+.dp-empty{display:flex;flex-direction:column;align-items:center;padding:40px 20px;gap:10px;opacity:.35}
+.dp-empty-ico{font-size:36px}
+.dp-empty-t{font-size:13px;font-weight:600;color:var(--muted)}
+.dp-show-btn{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px;font-size:12px;font-weight:600;color:var(--muted2);cursor:pointer;font-family:inherit;transition:background .15s,color .15s;margin-top:10px;position:relative;z-index:1}
+.dp-show-btn:active{background:rgba(255,255,255,.09);color:var(--text)}
 </style>
 </head>
 <body>
@@ -489,6 +522,27 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
   </div>
 </div>
 
+<!-- ══ DRAW PARTICIPANTS BOTTOM SHEET ══ -->
+<div class="dp-mo" id="dp-mo" onclick="if(event.target===this)closeDpMo()">
+  <div class="dp-box" id="dp-box">
+    <div class="dp-drag-wrap" id="dp-drag-wrap">
+      <div class="dp-drag"></div>
+    </div>
+    <div class="dp-hdr">
+      <div class="dp-title-row">
+        <div class="dp-title" id="dp-title">Розыгрыш</div>
+        <button class="dp-close" onclick="closeDpMo()">✕</button>
+      </div>
+      <div class="dp-prize" id="dp-prize"></div>
+      <div class="dp-tabs">
+        <button class="dp-tab active" id="dp-tab-w" onclick="dpTab('winners',this)">👑 Победители</button>
+        <button class="dp-tab" id="dp-tab-p" onclick="dpTab('parts',this)">👥 Участники</button>
+      </div>
+    </div>
+    <div class="dp-body" id="dp-body"></div>
+  </div>
+</div>
+
 <div class="app">
 <div class="pages">
 
@@ -506,7 +560,6 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
       </div>
     </div>
     <div class="hbal-row">
-      <!-- Stars pill — слева от основного баланса -->
       <div class="stars-pill" id="stars-pill-h" onclick="openStarsMo()">
         <span class="star-ico">⭐</span><span id="b-stars-h">0</span>
       </div>
@@ -750,7 +803,6 @@ const CASES=[
   {id:4,name:'Премиум',price:1000,bg:'linear-gradient(145deg,#200a0a,#1a0808)',ic:'#FF4D4D',ib:'rgba(255,77,77,.15)',
    icon:`<svg viewBox="0 0 24 24" stroke="#FF4D4D" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><circle cx="12" cy="12" r="3"/></svg>`,
    drops:[{i:'👑',n:'Корона',v:'навсегда',inv:'crown',cnt:1},{i:'💰',n:'Монеты',v:'+5000',coins:5000},{i:'🏆',n:'VIP',v:'30 дней',vipDays:30},{i:'✨',n:'Легенда',v:'14 дней',inv:'legend',cnt:1},{i:'🌟',n:'Супер',v:'х1',inv:'super',cnt:1},{i:'🎁',n:'Мега-подарок',v:'х1',inv:'megagift',cnt:1},{i:'💰',n:'Монеты',v:'+10000',coins:10000},{i:'🏆',n:'VIP',v:'7 дней',vipDays:7}]},
-  // ═══ ЗВЁЗДНЫЙ КЕЙС (В разработке) ═══
   {id:5,name:'Звёздный ⭐',starsPrice:99,wip:true,bg:'linear-gradient(145deg,#1a1500,#201a00)',ic:'#FFD700',ib:'rgba(255,215,0,.15)',
    icon:`<svg viewBox="0 0 24 24" stroke="#FFD700" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
    drops:[]},
@@ -811,7 +863,6 @@ function syncB(){
   const sb=S.starsBalance;
   ['home','tasks','shop','inv','raffles','friends','profile'].forEach(k=>{const el=document.getElementById('b-'+k);if(el)el.textContent=b;});
   document.getElementById('p-bal').textContent=S.balance.toLocaleString('ru');
-  // Stars balance
   const sbh=document.getElementById('b-stars-h');if(sbh)sbh.textContent=sb;
   const sbm=document.getElementById('sm-bal');if(sbm)sbm.textContent=sb;
   const pstar=document.getElementById('p-stars');if(pstar)pstar.textContent=sb+' ⭐';
@@ -1107,7 +1158,6 @@ function rCases(){
     let priceHtml='';
     let wrapClass='gc ccard';
     if(c.wip){
-      // Stars case — WIP overlay
       priceHtml=`<div class="ccprice star-price">⭐ ${c.starsPrice} Stars</div>`;
       wrapClass='gc ccard ccard-wip';
     } else {
@@ -1318,7 +1368,6 @@ let _pendingInvoiceId=null;
 function openStarsMo(){
   document.getElementById('sm-bal').textContent=S.starsBalance;
   document.getElementById('stars-custom-in').value='';
-  // reset presets
   document.querySelectorAll('.stars-preset').forEach(p=>p.classList.remove('sel'));
   document.querySelector('.stars-preset').classList.add('sel');
   starsAmount=50;
@@ -1373,18 +1422,13 @@ async function initiateStarsPayment(){
     const d=await r.json();
     if(d.ok&&d.invoiceLink){
       _pendingInvoiceId=d.invoiceId;
-      // Открываем оплату через Telegram
       if(tg&&tg.openInvoice){
         tg.openInvoice(d.invoiceLink,(status)=>{
-          if(status==='paid'){
-            checkStarsPayment();
-          }
+          if(status==='paid'){checkStarsPayment();}
         });
       } else {
-        // Fallback — открываем ссылку
         window.open(d.invoiceLink,'_blank');
       }
-      // Показываем кнопку проверки
       document.getElementById('stars-check-area').classList.add('show');
     } else {
       toast(d.error||'❌ Ошибка создания счёта','r');
@@ -1490,21 +1534,21 @@ function renderFinishedDraws(draws){
     el.className='gc fin-card';el.style.cssText='padding:14px;margin-bottom:10px';
     const date=new Date(draw.finishedAt).toLocaleDateString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
     const winners=draw.winners||[];
-    const winList=winners.length
-      ? winners.map(w=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="font-size:16px">👑</span><span style="font-size:13px;font-weight:600;color:var(--green)">${w.name}</span>${draw.isMoney?`<span style="margin-left:auto;font-size:11px;color:var(--green);font-weight:700">+${Math.floor(parseInt(draw.prize)/(draw.winnersCount||1))} 🪙</span>`:''}</div>`).join('')
-      : '<div style="font-size:12px;color:var(--muted2)">Победителей нет</div>';
-    const allPart=draw.participants||[];
-    const partList=allPart.map(p=>`<span style="font-size:11px;color:var(--muted2);background:rgba(255,255,255,.04);padding:2px 7px;border-radius:6px">${p.name}</span>`).join(' ');
+    const topWinner=winners[0];
+    const extraWinners=winners.length>1?` +ещё ${winners.length-1}`:'';
     el.innerHTML=`
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:var(--red);background:var(--rdim);padding:2px 8px;border-radius:6px">Завершён</div>
         <div style="font-size:10px;color:var(--muted2)">${date}</div>
       </div>
       ${draw.imageUrl?`<img src="${draw.imageUrl}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;margin-bottom:10px">`:''}
-      <div style="font-size:15px;font-weight:800;margin-bottom:10px">🏆 ${draw.prize}${draw.isMoney?' монет':''}</div>
-      <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Победител${winners.length===1?'ь':'и'}</div>
-      <div style="margin-bottom:12px">${winList}</div>
-      ${allPart.length?`<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Участники (${allPart.length})</div><div style="display:flex;flex-wrap:wrap;gap:4px">${partList}</div>`:''}
+      <div style="font-size:15px;font-weight:800;margin-bottom:8px">🏆 ${draw.prize}${draw.isMoney?' монет':''}</div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:2px">
+        <span style="font-size:14px">👑</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green);flex:1">${topWinner?topWinner.name+'<span style="color:var(--muted2);font-weight:400">'+extraWinners+'</span>':'Победителей нет'}</span>
+        ${draw.isMoney&&topWinner?`<span style="font-size:11px;font-weight:700;color:var(--green);background:var(--gdim);border:1px solid var(--gbor);border-radius:8px;padding:3px 8px">+${Math.floor(parseInt(draw.prize)/(draw.winnersCount||1))} 🪙</span>`:''}
+      </div>
+      <button class="dp-show-btn" onclick="openDpMo(${JSON.stringify(draw).replace(/"/g,'&quot;')})">👥 Показать участников · ${(draw.participants||[]).length}</button>
     `;
     cont.appendChild(el);
   });
@@ -1524,6 +1568,126 @@ async function joinDraw(id,btn){
     if(d.ok){btn.textContent='✅ Вы участвуете';btn.style.background='var(--gdim)';btn.style.color='var(--green)';toast('🎯 Вы в розыгрыше!','g');}
     else{btn.disabled=false;btn.textContent='🎯 Участвовать';toast(d.error||'Ошибка','r');}
   }catch{btn.disabled=false;btn.textContent='🎯 Участвовать';toast('Ошибка соединения','r');}
+}
+
+/* ══ DRAW PARTICIPANTS BOTTOM SHEET ══ */
+let _dpDraw=null;
+let _dpTab='winners';
+
+function openDpMo(draw){
+  _dpDraw=draw;
+  _dpTab='winners';
+  // Set header info
+  document.getElementById('dp-title').textContent='🎁 ' + draw.prize + (draw.isMoney?' монет':'');
+  const date=new Date(draw.finishedAt).toLocaleDateString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('dp-prize').textContent='Завершён: ' + date;
+  // Reset tabs
+  document.getElementById('dp-tab-w').classList.add('active');
+  document.getElementById('dp-tab-p').classList.remove('active');
+  // Render winners
+  _renderDpBody('winners');
+  // Show modal
+  document.getElementById('dp-mo').classList.add('show');
+  // Init swipe
+  _initDpSwipe();
+}
+
+function closeDpMo(){
+  const box=document.getElementById('dp-box');
+  box.style.transition='transform .28s cubic-bezier(.4,0,.2,1)';
+  box.style.transform='translateY(100%)';
+  setTimeout(()=>{
+    document.getElementById('dp-mo').classList.remove('show');
+    box.style.transition='';
+    box.style.transform='';
+  },280);
+}
+
+function dpTab(tab,btn){
+  _dpTab=tab;
+  document.querySelectorAll('.dp-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _renderDpBody(tab);
+}
+
+function _renderDpBody(tab){
+  const body=document.getElementById('dp-body');
+  if(!_dpDraw){body.innerHTML='';return;}
+  if(tab==='winners'){
+    const winners=_dpDraw.winners||[];
+    const wc=_dpDraw.winnersCount||1;
+    const prizeEach=_dpDraw.isMoney?Math.floor(parseInt(_dpDraw.prize)/wc):0;
+    if(!winners.length){
+      body.innerHTML=`<div class="dp-empty"><div class="dp-empty-ico">🏆</div><div class="dp-empty-t">Победителей нет</div></div>`;
+      return;
+    }
+    body.innerHTML=winners.map((w,i)=>`
+      <div class="dp-winner-row">
+        <div class="dp-winner-num">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👑'}</div>
+        <div class="dp-winner-name">${w.name}</div>
+        ${_dpDraw.isMoney?`<div class="dp-winner-prize">+${prizeEach} 🪙</div>`:''}
+      </div>`).join('');
+  } else {
+    const parts=_dpDraw.participants||[];
+    const winnerNames=new Set((_dpDraw.winners||[]).map(w=>w.name));
+    if(!parts.length){
+      body.innerHTML=`<div class="dp-empty"><div class="dp-empty-ico">👥</div><div class="dp-empty-t">Участников нет</div></div>`;
+      return;
+    }
+    body.innerHTML=parts.map((p,i)=>`
+      <div class="dp-part-row">
+        <div class="dp-part-num">${i+1}</div>
+        <div class="dp-part-name">${p.name}</div>
+        ${winnerNames.has(p.name)?'<div class="dp-part-badge">👑 Победитель</div>':''}
+      </div>`).join('');
+  }
+}
+
+/* ══ SWIPE-TO-DISMISS для dp-mo ══ */
+function _initDpSwipe(){
+  const box=document.getElementById('dp-box');
+  const dragWrap=document.getElementById('dp-drag-wrap');
+  let startY=0,curY=0,dragging=false;
+
+  function onStart(e){
+    // Only drag from the drag handle area
+    startY=e.touches?e.touches[0].clientY:e.clientY;
+    curY=0;
+    dragging=true;
+    box.style.transition='none';
+  }
+  function onMove(e){
+    if(!dragging)return;
+    const y=(e.touches?e.touches[0].clientY:e.clientY)-startY;
+    if(y<0)return; // prevent upward drag
+    curY=y;
+    box.style.transform=`translateY(${y}px)`;
+    // Fade overlay
+    const op=Math.max(0,0.82-y/400);
+    document.getElementById('dp-mo').style.background=`rgba(0,0,0,${op})`;
+  }
+  function onEnd(){
+    if(!dragging)return;
+    dragging=false;
+    if(curY>110){
+      closeDpMo();
+      document.getElementById('dp-mo').style.background='';
+    } else {
+      box.style.transition='transform .22s cubic-bezier(.4,0,.2,1)';
+      box.style.transform='translateY(0)';
+      document.getElementById('dp-mo').style.background='';
+    }
+  }
+
+  // Remove old listeners by cloning
+  const newDrag=dragWrap.cloneNode(true);
+  dragWrap.parentNode.replaceChild(newDrag,dragWrap);
+  newDrag.addEventListener('touchstart',onStart,{passive:true});
+  newDrag.addEventListener('touchmove',onMove,{passive:true});
+  newDrag.addEventListener('touchend',onEnd);
+  newDrag.addEventListener('mousedown',onStart);
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('mouseup',onEnd);
 }
 
 /* ══ INIT ══ */
