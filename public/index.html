@@ -1565,7 +1565,7 @@ async function joinDraw(id,btn){
   try{
     const r=await fetch('/api/draws/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({drawId:id,userId:UID,username:TGU.username,firstName:TGU.first_name})});
     const d=await r.json();
-    if(d.ok){btn.textContent='✅ Вы участвуете';btn.style.background='var(--gdim)';btn.style.color='var(--green)';toast('🎯 Вы в розыгрыше!','g');}
+    if(d.ok){btn.textContent='Вы участвуете';btn.style.background='var(--gdim)';btn.style.color='var(--green)';toast('🎯 Вы в розыгрыше!','g');}
     else{btn.disabled=false;btn.textContent='🎯 Участвовать';toast(d.error||'Ошибка','r');}
   }catch{btn.disabled=false;btn.textContent='🎯 Участвовать';toast('Ошибка соединения','r');}
 }
