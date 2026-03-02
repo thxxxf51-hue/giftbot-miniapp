@@ -19,16 +19,20 @@ const DB = {
   draws: {},
   finished: {},
   drawCounter: 0,
-  pendingDraw: {}, // временное хранение фото пока ждём команду
+  pendingDraw: {},        // временное хранение фото пока ждём команду
+  starsInvoices: {},      // хранение счетов на оплату Stars: invoiceId -> { userId, amount, paid, createdAt }
+  invoiceCounter: 0,
 };
 
 function getUser(uid) {
   uid = String(uid);
   if (!DB.users[uid]) DB.users[uid] = {
-    balance: 1000, refs: [], refBy: null, refEarned: 0,
+    balance: 1000, starsBalance: 0, refs: [], refBy: null, refEarned: 0,
     usedPromos: [], vipExpiry: null, username: '', firstName: '',
     regDate: new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'})
   };
+  // Убедимся что starsBalance существует у старых юзеров
+  if (DB.users[uid].starsBalance === undefined) DB.users[uid].starsBalance = 0;
   return DB.users[uid];
 }
 
@@ -122,34 +126,31 @@ async function finishDraw(id) {
 /* ══ REST API ══ */
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName, balance } = req.body;
+  const { userId, username, firstName, balance, starsBalance } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
   if (firstName) u.firstName = firstName;
 
-  // ════════════════════════════════════════════════════════
-  // ИСПРАВЛЕНИЕ: если фронт передаёт баланс при синке —
-  // берём максимальный из двух (защита от потерь прогресса)
-  // ════════════════════════════════════════════════════════
+  // Берём максимальный из двух балансов (защита от потерь прогресса)
   if (balance !== undefined && Number(balance) > u.balance) {
     u.balance = Number(balance);
   }
+  // Stars: тоже берём максимум при синке
+  if (starsBalance !== undefined && Number(starsBalance) > u.starsBalance) {
+    u.starsBalance = Number(starsBalance);
+  }
 
-  res.json({ ok: true, balance: u.balance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
+  res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
 
-// ════════════════════════════════════════════════════════════
-// ИСПРАВЛЕНИЕ: убрали ограничение "только если больше".
-// Теперь баланс всегда принимается с фронта (траты в магазине,
-// открытие кейсов и т.д. корректно сохраняются на сервере).
-// ════════════════════════════════════════════════════════════
 app.post('/api/balance/update', (req, res) => {
-  const { userId, balance } = req.body;
+  const { userId, balance, starsBalance } = req.body;
   if (!userId || balance === undefined) return res.json({ ok: false });
   const u = getUser(userId);
   u.balance = Number(balance);
-  res.json({ ok: true, balance: u.balance });
+  if (starsBalance !== undefined) u.starsBalance = Number(starsBalance);
+  res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance });
 });
 
 app.post('/api/check-sub', async (req, res) => {
@@ -180,6 +181,145 @@ app.post('/api/promo', (req, res) => {
   u.balance += p.reward;
   p.usedCount++;
   res.json({ ok: true, reward: p.reward, balance: u.balance });
+});
+
+/* ══ STARS PAYMENT API ══ */
+
+/**
+ * POST /api/stars/create-invoice
+ * Создаёт инвойс Telegram Stars для оплаты
+ * Body: { userId, amount }
+ * Response: { ok, invoiceId, invoiceLink }
+ */
+app.post('/api/stars/create-invoice', async (req, res) => {
+  const { userId, amount } = req.body;
+  if (!userId || !amount || Number(amount) < 1) {
+    return res.json({ ok: false, error: 'Неверные параметры' });
+  }
+  const stars = Math.floor(Number(amount));
+  if (stars > 99999) return res.json({ ok: false, error: 'Максимум 99 999 Stars за раз' });
+
+  try {
+    // Создаём invoice через Telegram Bot API
+    // createInvoiceLink — доступен через sendInvoice или через прямой вызов API
+    const apiRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: '⭐ Пополнение Stars',
+        description: `Зачисление ${stars} Stars на баланс GiftBot`,
+        payload: JSON.stringify({ userId: String(userId), amount: stars }),
+        currency: 'XTR',              // XTR = Telegram Stars
+        prices: [{ label: 'Stars', amount: stars }],
+      })
+    });
+    const apiData = await apiRes.json();
+
+    if (!apiData.ok) {
+      console.error('createInvoiceLink error:', apiData);
+      return res.json({ ok: false, error: 'Ошибка создания счёта Telegram' });
+    }
+
+    const invoiceId = 'inv_' + (++DB.invoiceCounter) + '_' + Date.now();
+    DB.starsInvoices[invoiceId] = {
+      userId: String(userId),
+      amount: stars,
+      paid: false,
+      createdAt: Date.now(),
+      invoiceLink: apiData.result,
+    };
+
+    res.json({ ok: true, invoiceId, invoiceLink: apiData.result });
+  } catch (e) {
+    console.error('Stars invoice error:', e);
+    res.json({ ok: false, error: 'Ошибка сервера' });
+  }
+});
+
+/**
+ * POST /api/stars/check
+ * Проверяет был ли оплачен инвойс и зачисляет Stars
+ * Body: { userId, invoiceId, amount }
+ * Response: { ok, credited, starsBalance, amount } или { ok, pending }
+ */
+app.post('/api/stars/check', (req, res) => {
+  const { userId, invoiceId, amount } = req.body;
+  if (!userId) return res.json({ ok: false, error: 'Не авторизован' });
+
+  // Если invoiceId передан — проверяем конкретный инвойс
+  if (invoiceId) {
+    const inv = DB.starsInvoices[invoiceId];
+    if (!inv) return res.json({ ok: false, error: 'Счёт не найден' });
+    if (String(inv.userId) !== String(userId)) return res.json({ ok: false, error: 'Доступ запрещён' });
+
+    if (inv.paid) {
+      // Уже зачислено ранее
+      const u = getUser(userId);
+      return res.json({ ok: true, credited: true, starsBalance: u.starsBalance, amount: inv.amount });
+    }
+
+    // Проверяем — оплачен ли (флаг устанавливается в pre_checkout + successful_payment)
+    return res.json({ ok: true, pending: true });
+  }
+
+  // Fallback: без invoiceId — не должно использоваться
+  return res.json({ ok: false, error: 'invoiceId обязателен' });
+});
+
+/* ══ Обработка успешной оплаты Stars ══ */
+bot.on('pre_checkout_query', async (ctx) => {
+  // Всегда отвечаем OK — Telegram требует ответ в течение 10 секунд
+  try { await ctx.answerPreCheckoutQuery(true); } catch (e) { console.error('pre_checkout error:', e); }
+});
+
+bot.on('message', async (ctx, next) => {
+  // Обработка successful_payment (оплата Stars)
+  if (ctx.message?.successful_payment) {
+    const payment = ctx.message.successful_payment;
+    // payload — JSON строка { userId, amount }
+    try {
+      const payload = JSON.parse(payment.invoice_payload);
+      const userId = String(payload.userId);
+      const stars = Number(payload.amount);
+      const u = getUser(userId);
+      u.starsBalance = (u.starsBalance || 0) + stars;
+
+      // Помечаем инвойс как оплаченный
+      for (const inv of Object.values(DB.starsInvoices)) {
+        if (String(inv.userId) === userId && inv.amount === stars && !inv.paid) {
+          const age = Date.now() - inv.createdAt;
+          if (age < 3600000) { // не старше 1 часа
+            inv.paid = true;
+            break;
+          }
+        }
+      }
+
+      try {
+        await ctx.reply(
+          `⭐ Оплата прошла успешно!\n\n` +
+          `Зачислено: ${stars} Stars\n` +
+          `Ваш баланс Stars: ${u.starsBalance} ⭐\n\n` +
+          `Баланс обновится в приложении автоматически.`
+        );
+      } catch {}
+
+      try {
+        await bot.telegram.sendMessage(ADMIN_ID,
+          `⭐ Stars оплата!\nПользователь: @${u.username || userId} (${userId})\nСумма: ${stars} Stars\nНовый баланс Stars: ${u.starsBalance}`
+        );
+      } catch {}
+    } catch (e) {
+      console.error('Stars payment parse error:', e);
+    }
+    return;
+  }
+
+  // Обновляем данные пользователя при любом сообщении
+  const u = getUser(ctx.from.id);
+  u.username = (ctx.from.username||'').toLowerCase();
+  u.firstName = ctx.from.first_name||'';
+  return next();
 });
 
 app.get('/api/draws', (req, res) => {
@@ -223,7 +363,6 @@ app.post('/api/draws/join', (req, res) => {
     if (useTicket) {
       u.tickets = tickets - 1;
     } else {
-      // Спрашиваем подтверждение на фронте
       return res.json({ ok: false, error: 'ticket_confirm', tickets, errorText: `🎟 Этот розыгрыш требует билет. У вас ${tickets} шт.` });
     }
   }
@@ -259,7 +398,7 @@ bot.start(async (ctx) => {
     }
   }
   await ctx.reply(
-    `👋 Привет, ${ctx.from.first_name}!\n\n🎁 Добро пожаловать в GiftBot!\n💰 Баланс: ${u.balance} монет`,
+    `👋 Привет, ${ctx.from.first_name}!\n\n🎁 Добро пожаловать в GiftBot!\n💰 Баланс: ${u.balance} монет\n⭐ Stars: ${u.starsBalance}`,
     { reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] } }
   );
 });
@@ -282,10 +421,7 @@ bot.command('vpromo', (ctx) => {
   ctx.reply(`✅ VIP-промокод создан!\n📌 Код: ${c}\n💰 Награда: ${p[2]} монет\n👑 Только для VIP`);
 });
 
-/* ══ /cdraw — поддержка фото ══
-   Telegram при отправке фото+caption передаёт это как message с photo и caption.
-   Поэтому обрабатываем оба варианта: текстовое сообщение И фото с caption.
-*/
+/* ══ /cdraw — поддержка фото ══ */
 async function handleCdraw(ctx, text, photo) {
   if (!isAdmin(ctx.from.id)) return;
   const raw = (text || '').replace('/cdraw', '').trim();
@@ -306,14 +442,12 @@ async function handleCdraw(ctx, text, photo) {
   let winnersCount = 1;
   let requireTicket = false;
 
-  // Проверяем последний элемент на "билет"
   const lastEl = (timeParts[timeParts.length - 1] || '').toLowerCase();
   if (lastEl.includes('билет')) {
     requireTicket = true;
     timeParts = timeParts.slice(0, -1);
   }
 
-  // Проверяем последний элемент на кол-во победителей
   const lastPart = timeParts[timeParts.length - 1] || '';
   const prevPart = timeParts[timeParts.length - 2] || '';
   const lastIsNum = /^\d+$/.test(lastPart);
@@ -334,7 +468,6 @@ async function handleCdraw(ctx, text, photo) {
   const moneyPrize = isMoney(prize);
   const id = ++DB.drawCounter;
 
-  // Получаем URL фото если есть
   let imageUrl = null;
   if (photo) {
     const bigPhoto = photo[photo.length - 1];
@@ -366,12 +499,10 @@ async function handleCdraw(ctx, text, photo) {
   setTimeout(() => finishDraw(id), ms);
 }
 
-// Текстовая команда /cdraw (без фото)
 bot.command('cdraw', (ctx) => {
   handleCdraw(ctx, ctx.message.text, null);
 });
 
-// Фото с caption /cdraw ... — это главный способ добавить картинку
 bot.on('photo', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const caption = ctx.message.caption || '';
@@ -414,6 +545,29 @@ bot.command('pgive', async (ctx) => {
   ctx.reply(`✅ @${username} получил ${amount.toLocaleString('ru')} монет\n💼 Баланс: ${u.balance.toLocaleString('ru')}`);
 });
 
+/* ══ /sgive — начисление Stars вручную (для тестирования) ══ */
+bot.command('sgive', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.split(' ');
+  if (parts.length < 3) return ctx.reply('Формат: /sgive @username КОЛИЧЕСТВО\nПример: /sgive @assate 100');
+  const username = parts[1].replace('@', '').toLowerCase();
+  const amount = Number(parts[2]);
+  if (!amount || amount <= 0) return ctx.reply('❌ Неверное количество');
+  let targetUID = null;
+  for (const [uid, u] of Object.entries(DB.users)) {
+    if (u.username === username) { targetUID = uid; break; }
+  }
+  if (!targetUID) return ctx.reply(`❌ @${username} не найден. Попроси написать /start.`);
+  const u = getUser(targetUID);
+  u.starsBalance = (u.starsBalance || 0) + amount;
+  try {
+    await ctx.telegram.sendMessage(Number(targetUID),
+      `⭐ Администратор начислил тебе ${amount} Stars!\n⭐ Баланс Stars: ${u.starsBalance}`
+    );
+  } catch {}
+  ctx.reply(`✅ @${username} получил ${amount} Stars\n⭐ Баланс Stars: ${u.starsBalance}`);
+});
+
 bot.command('ddelete', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const parts = ctx.message.text.split(' ');
@@ -450,11 +604,24 @@ bot.command('users', (ctx) => {
   ctx.reply(`👥 Пользователей: ${Object.keys(DB.users).length}`);
 });
 
-bot.on('message', (ctx, next) => {
-  const u = getUser(ctx.from.id);
-  u.username = (ctx.from.username||'').toLowerCase();
-  u.firstName = ctx.from.first_name||'';
-  return next();
+bot.command('stars', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const invoices = Object.values(DB.starsInvoices);
+  const paid = invoices.filter(i => i.paid);
+  const pending = invoices.filter(i => !i.paid);
+  const totalPaid = paid.reduce((s, i) => s + i.amount, 0);
+  ctx.reply(
+    `⭐ Stars статистика:\n\n` +
+    `✅ Оплачено: ${paid.length} счетов (${totalPaid} Stars)\n` +
+    `⏳ Ожидают: ${pending.length} счетов\n\n` +
+    `Топ Stars-балансы:\n` +
+    Object.values(DB.users)
+      .filter(u => u.starsBalance > 0)
+      .sort((a, b) => b.starsBalance - a.starsBalance)
+      .slice(0, 10)
+      .map(u => `• @${u.username||'?'}: ${u.starsBalance} ⭐`)
+      .join('\n') || '(пусто)'
+  );
 });
 
 /* ══ SERVER ══ */
