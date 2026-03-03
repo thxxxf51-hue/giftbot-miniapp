@@ -132,11 +132,9 @@ app.post('/api/user/sync', (req, res) => {
   if (username) u.username = username.toLowerCase();
   if (firstName) u.firstName = firstName;
 
-  // Берём максимальный из двух балансов (защита от потерь прогресса)
   if (balance !== undefined && Number(balance) > u.balance) {
     u.balance = Number(balance);
   }
-  // Stars: тоже берём максимум при синке
   if (starsBalance !== undefined && Number(starsBalance) > u.starsBalance) {
     u.starsBalance = Number(starsBalance);
   }
@@ -185,12 +183,6 @@ app.post('/api/promo', (req, res) => {
 
 /* ══ STARS PAYMENT API ══ */
 
-/**
- * POST /api/stars/create-invoice
- * Создаёт инвойс Telegram Stars для оплаты
- * Body: { userId, amount }
- * Response: { ok, invoiceId, invoiceLink }
- */
 app.post('/api/stars/create-invoice', async (req, res) => {
   const { userId, amount } = req.body;
   if (!userId || !amount || Number(amount) < 1) {
@@ -200,8 +192,6 @@ app.post('/api/stars/create-invoice', async (req, res) => {
   if (stars > 99999) return res.json({ ok: false, error: 'Максимум 99 999 Stars за раз' });
 
   try {
-    // Создаём invoice через Telegram Bot API
-    // createInvoiceLink — доступен через sendInvoice или через прямой вызов API
     const apiRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -209,7 +199,7 @@ app.post('/api/stars/create-invoice', async (req, res) => {
         title: '⭐ Пополнение Stars',
         description: `Зачисление ${stars} Stars на баланс GiftBot`,
         payload: JSON.stringify({ userId: String(userId), amount: stars }),
-        currency: 'XTR',              // XTR = Telegram Stars
+        currency: 'XTR',
         prices: [{ label: 'Stars', amount: stars }],
       })
     });
@@ -236,47 +226,34 @@ app.post('/api/stars/create-invoice', async (req, res) => {
   }
 });
 
-/**
- * POST /api/stars/check
- * Проверяет был ли оплачен инвойс и зачисляет Stars
- * Body: { userId, invoiceId, amount }
- * Response: { ok, credited, starsBalance, amount } или { ok, pending }
- */
 app.post('/api/stars/check', (req, res) => {
   const { userId, invoiceId, amount } = req.body;
   if (!userId) return res.json({ ok: false, error: 'Не авторизован' });
 
-  // Если invoiceId передан — проверяем конкретный инвойс
   if (invoiceId) {
     const inv = DB.starsInvoices[invoiceId];
     if (!inv) return res.json({ ok: false, error: 'Счёт не найден' });
     if (String(inv.userId) !== String(userId)) return res.json({ ok: false, error: 'Доступ запрещён' });
 
     if (inv.paid) {
-      // Уже зачислено ранее
       const u = getUser(userId);
       return res.json({ ok: true, credited: true, starsBalance: u.starsBalance, amount: inv.amount });
     }
 
-    // Проверяем — оплачен ли (флаг устанавливается в pre_checkout + successful_payment)
     return res.json({ ok: true, pending: true });
   }
 
-  // Fallback: без invoiceId — не должно использоваться
   return res.json({ ok: false, error: 'invoiceId обязателен' });
 });
 
 /* ══ Обработка успешной оплаты Stars ══ */
 bot.on('pre_checkout_query', async (ctx) => {
-  // Всегда отвечаем OK — Telegram требует ответ в течение 10 секунд
   try { await ctx.answerPreCheckoutQuery(true); } catch (e) { console.error('pre_checkout error:', e); }
 });
 
 bot.on('message', async (ctx, next) => {
-  // Обработка successful_payment (оплата Stars)
   if (ctx.message?.successful_payment) {
     const payment = ctx.message.successful_payment;
-    // payload — JSON строка { userId, amount }
     try {
       const payload = JSON.parse(payment.invoice_payload);
       const userId = String(payload.userId);
@@ -284,14 +261,10 @@ bot.on('message', async (ctx, next) => {
       const u = getUser(userId);
       u.starsBalance = (u.starsBalance || 0) + stars;
 
-      // Помечаем инвойс как оплаченный
       for (const inv of Object.values(DB.starsInvoices)) {
         if (String(inv.userId) === userId && inv.amount === stars && !inv.paid) {
           const age = Date.now() - inv.createdAt;
-          if (age < 3600000) { // не старше 1 часа
-            inv.paid = true;
-            break;
-          }
+          if (age < 3600000) { inv.paid = true; break; }
         }
       }
 
@@ -315,7 +288,6 @@ bot.on('message', async (ctx, next) => {
     return;
   }
 
-  // Обновляем данные пользователя при любом сообщении
   const u = getUser(ctx.from.id);
   u.username = (ctx.from.username||'').toLowerCase();
   u.firstName = ctx.from.first_name||'';
@@ -355,7 +327,6 @@ app.post('/api/draws/join', (req, res) => {
   if (!draw || draw.finished || draw.endsAt < Date.now()) return res.json({ ok: false, error: 'Розыгрыш не найден или завершён' });
   if (draw.participants.find(p => String(p.uid) === String(userId))) return res.json({ ok: false, error: 'Вы уже участвуете' });
 
-  // Проверка билета
   if (draw.requireTicket) {
     const u = getUser(userId);
     const tickets = u.tickets || 0;
@@ -509,6 +480,33 @@ bot.on('photo', (ctx) => {
   if (caption.startsWith('/cdraw')) {
     handleCdraw(ctx, caption, ctx.message.photo);
   }
+  if (caption.startsWith('/broadcast_photo')) {
+    const text = caption.replace('/broadcast_photo', '').trim();
+    if (!text) return ctx.reply('Добавь текст в подпись к фото после /broadcast_photo');
+    const photo = ctx.message.photo;
+    const fileId = photo[photo.length - 1].file_id;
+    const userIds = Object.keys(DB.users);
+    if (!userIds.length) return ctx.reply('❌ Нет пользователей в базе');
+    ctx.reply(`📤 Начинаю рассылку с фото...\n👥 Получателей: ${userIds.length}`).then(async statusMsg => {
+      let sent = 0, failed = 0, blocked = 0;
+      for (const uid of userIds) {
+        try {
+          await bot.telegram.sendPhoto(Number(uid), fileId, {
+            caption: text,
+            reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+          });
+          sent++;
+        } catch (e) {
+          if (e.description?.includes('blocked') || e.description?.includes('deactivated')) blocked++;
+          else failed++;
+        }
+        await new Promise(r => setTimeout(r, 50));
+      }
+      await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
+        `✅ Рассылка с фото завершена!\n\n📤 Отправлено: ${sent}\n🚫 Заблокировали бота: ${blocked}\n❌ Ошибки: ${failed}\n👥 Всего в базе: ${userIds.length}`
+      );
+    });
+  }
 });
 
 bot.command('pgive', async (ctx) => {
@@ -545,7 +543,6 @@ bot.command('pgive', async (ctx) => {
   ctx.reply(`✅ @${username} получил ${amount.toLocaleString('ru')} монет\n💼 Баланс: ${u.balance.toLocaleString('ru')}`);
 });
 
-/* ══ /sgive — начисление Stars вручную (для тестирования) ══ */
 bot.command('sgive', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const parts = ctx.message.text.split(' ');
@@ -621,6 +618,70 @@ bot.command('stars', (ctx) => {
       .slice(0, 10)
       .map(u => `• @${u.username||'?'}: ${u.starsBalance} ⭐`)
       .join('\n') || '(пусто)'
+  );
+});
+
+/* ══ РАССЫЛКА ══ */
+
+bot.command('broadcast', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const text = ctx.message.text.replace('/broadcast', '').trim();
+  if (!text) return ctx.reply(
+    'Формат: /broadcast ТЕКСТ\n\nПример:\n/broadcast 🎁 Новый розыгрыш! Открывай приложение и участвуй!'
+  );
+  const userIds = Object.keys(DB.users);
+  if (!userIds.length) return ctx.reply('❌ Нет пользователей в базе');
+  const statusMsg = await ctx.reply(`📤 Начинаю рассылку...\n👥 Получателей: ${userIds.length}`);
+  let sent = 0, failed = 0, blocked = 0;
+  for (const uid of userIds) {
+    try {
+      await bot.telegram.sendMessage(Number(uid), text, {
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+      });
+      sent++;
+    } catch (e) {
+      if (e.description?.includes('blocked') || e.description?.includes('deactivated')) blocked++;
+      else failed++;
+    }
+    await new Promise(r => setTimeout(r, 50));
+  }
+  await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
+    `✅ Рассылка завершена!\n\n📤 Отправлено: ${sent}\n🚫 Заблокировали бота: ${blocked}\n❌ Ошибки: ${failed}\n👥 Всего в базе: ${userIds.length}`
+  );
+});
+
+bot.command('broadcast_vip', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const text = ctx.message.text.replace('/broadcast_vip', '').trim();
+  if (!text) return ctx.reply('Формат: /broadcast_vip ТЕКСТ');
+  const now = Date.now();
+  const vipUsers = Object.entries(DB.users)
+    .filter(([, u]) => u.vipExpiry && u.vipExpiry > now)
+    .map(([uid]) => uid);
+  if (!vipUsers.length) return ctx.reply('❌ Нет активных VIP пользователей');
+  const statusMsg = await ctx.reply(`📤 Рассылка VIP...\n👑 Получателей: ${vipUsers.length}`);
+  let sent = 0, failed = 0;
+  for (const uid of vipUsers) {
+    try {
+      await bot.telegram.sendMessage(Number(uid), '👑 ' + text, {
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+      });
+      sent++;
+    } catch { failed++; }
+    await new Promise(r => setTimeout(r, 50));
+  }
+  await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
+    `✅ VIP рассылка завершена!\n\n📤 Отправлено: ${sent}\n❌ Ошибки: ${failed}`
+  );
+});
+
+bot.command('bc_count', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const total = Object.keys(DB.users).length;
+  const now = Date.now();
+  const vip = Object.values(DB.users).filter(u => u.vipExpiry && u.vipExpiry > now).length;
+  ctx.reply(
+    `📊 Статистика рассылки:\n\n👥 Всего пользователей: ${total}\n👑 VIP активных: ${vip}\n\nКоманды:\n/broadcast ТЕКСТ — всем\n/broadcast_vip ТЕКСТ — только VIP\n/broadcast_photo ТЕКСТ — всем с фото (caption)`
   );
 });
 
