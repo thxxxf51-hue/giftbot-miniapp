@@ -1334,12 +1334,17 @@ function buildReel(trackId,drops){
 function spinReelRandom(trackId,drops,delayMs,duration,onDone){
   const track=document.getElementById(trackId);
   if(!track)return;
+
+  // Measure actual item width from DOM (compact reels = 78px, normal = 84px + 5px gap)
+  const firstItem=track.querySelector('.ritem');
+  const itemW=firstItem ? firstItem.offsetWidth+5 : IW;
+
   const total=drops.length*10;
   const winIdx=Math.floor(total/2)+Math.floor(Math.random()*drops.length);
   const winner=drops[winIdx%drops.length];
 
   const cw=track.parentElement.clientWidth;
-  const tx=-(winIdx*IW-cw/2+IW/2);
+  const tx=-(winIdx*itemW-cw/2+itemW/2);
 
   track.style.transition='none';
   track.style.transform='translateX(0)';
@@ -1360,10 +1365,12 @@ function spinReelRandom(trackId,drops,delayMs,duration,onDone){
 /* Original spinReel for single spin */
 function spinReel(trackId,drops,onWin){
   const track=document.getElementById(trackId);
+  const firstItem=track.querySelector('.ritem');
+  const itemW=firstItem ? firstItem.offsetWidth+5 : IW;
   const total=drops.length*10;
   const winIdx=Math.floor(total/2)+Math.floor(Math.random()*drops.length);
   const cw=track.parentElement.clientWidth;
-  const tx=-(winIdx*IW-cw/2+IW/2);
+  const tx=-(winIdx*itemW-cw/2+itemW/2);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     track.style.transition='transform 5s cubic-bezier(0.1,0.82,0.05,1)';
     track.style.transform=`translateX(${tx}px)`;
@@ -1737,7 +1744,7 @@ function renderDraws(draws){
     const tl=left>=1440?Math.floor(left/1440)+' дн.':left>=60?Math.floor(left/60)+' ч.':left+' мин.';
     const wc=draw.winnersCount||1;
     const ticketBadge=draw.requireTicket
-      ? `<div class="ticket-badge">🎟 Только с билетом</div>`
+      ? `<div class="ticket-badge">🎟 Требуется билет</div>`
       : '';
     const joinBtnStyle=draw.requireTicket
       ? `style="width:100%;background:rgba(255,96,96,.15);color:var(--red);border:1px solid rgba(255,96,96,.35);border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit"`
