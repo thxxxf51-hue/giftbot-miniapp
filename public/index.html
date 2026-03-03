@@ -1744,7 +1744,7 @@ function renderDraws(draws){
     const tl=left>=1440?Math.floor(left/1440)+' дн.':left>=60?Math.floor(left/60)+' ч.':left+' мин.';
     const wc=draw.winnersCount||1;
     const ticketBadge=draw.requireTicket
-      ? `<div class="ticket-badge">🎟 Требуется билет</div>`
+      ? `<div class="ticket-badge">🎟 Только с билетом</div>`
       : '';
     const joinBtnStyle=draw.requireTicket
       ? `style="width:100%;background:rgba(255,96,96,.15);color:var(--red);border:1px solid rgba(255,96,96,.35);border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit"`
@@ -1760,7 +1760,7 @@ function renderDraws(draws){
       <span>👥 Участников: ${draw.participantsCount}</span>
       <span>👑 Победителей: ${wc}</span>
     </div>
-    <button onclick="joinDraw(${draw.id},this)" ${joinBtnStyle}>${joinBtnText}</button>`;
+    <button onclick="joinDraw(${draw.id},this,${draw.requireTicket?'true':'false'})" ${joinBtnStyle}>${joinBtnText}</button>`;
     cont.appendChild(el);
   });
   renderHomeDraws(active);
@@ -1817,24 +1817,43 @@ function renderHomeDraws(draws){
   </div>`).join('');
 }
 
-async function joinDraw(id,btn){
+async function joinDraw(id,btn,requireTicket){
   btn.disabled=true;btn.textContent='Участвуем...';
   try{
-    const r=await fetch('/api/draws/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({drawId:id,userId:UID,username:TGU.username,firstName:TGU.first_name})});
+    const body={drawId:id,userId:UID,username:TGU.username,firstName:TGU.first_name};
+    if(requireTicket){
+      // Check if user has a ticket locally first
+      const tickets=S.inventory['ticket']||0;
+      if(tickets<1){
+        btn.disabled=false;
+        btn.textContent='🎟 Участвовать (нужен билет)';
+        toast('❌ Нет билетов в инвентаре','r');
+        return;
+      }
+      body.useTicket=true;
+    }
+    const r=await fetch('/api/draws/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const d=await r.json();
     if(d.ok){
+      // Deduct ticket locally if used
+      if(requireTicket) removeInv('ticket',1);
       btn.textContent='✅ Вы участвуете';
       btn.style.background='var(--gdim)';btn.style.color='var(--green)';
       btn.style.border='1px solid var(--gbor)';
       toast('🎯 Вы в розыгрыше!','g');
-    } else if(d.error==='ticket_required'||d.error==='ticket_confirm'){
+    } else if(d.error==='ticket_required'){
       btn.disabled=false;btn.textContent='🎟 Участвовать (нужен билет)';
-      toast(d.errorText||'Нужен билет для участия','r');
+      toast('❌ Нет билетов в инвентаре','r');
     } else {
-      btn.disabled=false;btn.textContent='🎯 Участвовать';
+      btn.disabled=false;
+      btn.textContent=requireTicket?'🎟 Участвовать (нужен билет)':'🎯 Участвовать';
       toast(d.error||'Ошибка','r');
     }
-  }catch{btn.disabled=false;btn.textContent='🎯 Участвовать';toast('Ошибка соединения','r');}
+  }catch{
+    btn.disabled=false;
+    btn.textContent=requireTicket?'🎟 Участвовать (нужен билет)':'🎯 Участвовать';
+    toast('Ошибка соединения','r');
+  }
 }
 
 /* ══ DRAW PARTICIPANTS BOTTOM SHEET ══ */
