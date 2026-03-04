@@ -19,9 +19,11 @@ const DB = {
   draws: {},
   finished: {},
   drawCounter: 0,
-  pendingDraw: {},        // временное хранение фото пока ждём команду
-  starsInvoices: {},      // хранение счетов на оплату Stars: invoiceId -> { userId, amount, paid, createdAt }
+  pendingDraw: {},
+  starsInvoices: {},
   invoiceCounter: 0,
+  bans: {},       // username (lowercase, без @) -> { until: timestamp или 0=навсегда, bannedAt }
+  bansByUid: {},  // uid -> { until, bannedAt }
 };
 
 function getUser(uid) {
@@ -38,6 +40,97 @@ function getUser(uid) {
 
 function isAdmin(uid) { return Number(uid) === ADMIN_ID; }
 function isMoney(prize) { return /^\d+$/.test(String(prize).trim()); }
+
+/* ══ HELPERS ══ */
+
+// Найти uid по username
+function findUidByUsername(username) {
+  username = username.replace(/^@/, '').toLowerCase();
+  return Object.keys(DB.users).find(uid => (DB.users[uid].username||'').toLowerCase() === username) || null;
+}
+
+// Сбросить статистику пользователя (кроме starsBalance)
+function resetUserStats(uid) {
+  uid = String(uid);
+  const u = DB.users[uid];
+  if (!u) return false;
+  const stars = u.starsBalance || 0;
+  DB.users[uid] = {
+    balance: 0,
+    starsBalance: stars,
+    refs: u.refs || [],
+    refBy: u.refBy || null,
+    refEarned: u.refEarned || 0,
+    usedPromos: [],
+    vipExpiry: null,
+    username: u.username || '',
+    firstName: u.firstName || '',
+    regDate: u.regDate || '',
+    hasCrown: false,
+    legendExpiry: null,
+    legendColor: '#2ecc71',
+    inventory: {},
+    bonusMulti: 0,
+    vipDiscount: false,
+    doneTasks: [],
+    task3refsDone: false,
+  };
+  return true;
+}
+
+// Проверить забанен ли пользователь
+function isBanned(uid, username) {
+  const now = Date.now();
+  const banUid = DB.bansByUid[String(uid)];
+  if (banUid) {
+    if (banUid.until === 0 || banUid.until > now) return banUid;
+    else delete DB.bansByUid[String(uid)];
+  }
+  if (username) {
+    const un = username.replace(/^@/, '').toLowerCase();
+    const banUn = DB.bans[un];
+    if (banUn) {
+      if (banUn.until === 0 || banUn.until > now) return banUn;
+      else delete DB.bans[un];
+    }
+  }
+  return null;
+}
+
+// Парсинг времени бана: "1 час", "7 дней", "0" = навсегда
+function parseBanDuration(str) {
+  if (!str || str === '0') return 0;
+  str = str.toLowerCase().trim();
+  const map = {
+    'мин':60,'минут':60,'минута':60,'минуты':60,'min':60,
+    'час':3600,'часа':3600,'часов':3600,'hour':3600,'h':3600,
+    'день':86400,'дня':86400,'дней':86400,'day':86400,'d':86400,
+    'неделя':604800,'недели':604800,'недель':604800,'week':604800,'w':604800,
+    'год':31536000,'года':31536000,'лет':31536000,'year':31536000,'y':31536000,
+  };
+  const match = str.match(/^(\d+)\s*(.+)$/);
+  if (!match) return null;
+  const num = parseInt(match[1]);
+  const unit = match[2].trim();
+  const sec = map[unit];
+  if (!sec) return null;
+  return Date.now() + num * sec * 1000;
+}
+
+function formatDuration(ms) {
+  if (ms <= 0 || ms === 0) return 'навсегда';
+  const diff = ms - Date.now();
+  if (diff <= 0) return 'истёк';
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return s + ' сек.';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + ' мин.';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + ' ч.';
+  const d = Math.floor(h / 24);
+  if (d < 30) return d + ' дн.';
+  return Math.floor(d / 30) + ' мес.';
+}
 
 async function getPhotoUrl(fileId) {
   try {
@@ -132,6 +225,20 @@ app.post('/api/user/sync', (req, res) => {
   if (username) u.username = username.toLowerCase();
   if (firstName) u.firstName = firstName;
 
+  // Если забанен по username — применяем бан к uid
+  if (username) {
+    const un = username.replace(/^@/, '').toLowerCase();
+    if (DB.bans[un] && !DB.bansByUid[String(userId)]) {
+      DB.bansByUid[String(userId)] = DB.bans[un];
+    }
+  }
+
+  // Проверяем бан
+  const ban = isBanned(userId, username);
+  if (ban) {
+    return res.json({ ok: true, banned: true, banUntil: ban.until, balance: u.balance, starsBalance: u.starsBalance });
+  }
+
   if (balance !== undefined && Number(balance) > u.balance) {
     u.balance = Number(balance);
   }
@@ -140,6 +247,15 @@ app.post('/api/user/sync', (req, res) => {
   }
 
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
+});
+
+// Проверка бана (вызывается из приложения при каждом открытии)
+app.get('/api/user/ban-status', (req, res) => {
+  const { userId, username } = req.query;
+  if (!userId) return res.json({ ok: false });
+  const ban = isBanned(userId, username);
+  if (!ban) return res.json({ ok: true, banned: false });
+  return res.json({ ok: true, banned: true, banUntil: ban.until });
 });
 
 app.post('/api/balance/update', (req, res) => {
@@ -183,6 +299,12 @@ app.post('/api/promo', (req, res) => {
 
 /* ══ STARS PAYMENT API ══ */
 
+/**
+ * POST /api/stars/create-invoice
+ * Создаёт инвойс Telegram Stars для оплаты
+ * Body: { userId, amount }
+ * Response: { ok, invoiceId, invoiceLink }
+ */
 app.post('/api/stars/create-invoice', async (req, res) => {
   const { userId, amount } = req.body;
   if (!userId || !amount || Number(amount) < 1) {
@@ -192,6 +314,8 @@ app.post('/api/stars/create-invoice', async (req, res) => {
   if (stars > 99999) return res.json({ ok: false, error: 'Максимум 99 999 Stars за раз' });
 
   try {
+    // Создаём invoice через Telegram Bot API
+    // createInvoiceLink — доступен через sendInvoice или через прямой вызов API
     const apiRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -199,7 +323,7 @@ app.post('/api/stars/create-invoice', async (req, res) => {
         title: '⭐ Пополнение Stars',
         description: `Зачисление ${stars} Stars на баланс GiftBot`,
         payload: JSON.stringify({ userId: String(userId), amount: stars }),
-        currency: 'XTR',
+        currency: 'XTR',              // XTR = Telegram Stars
         prices: [{ label: 'Stars', amount: stars }],
       })
     });
@@ -226,34 +350,47 @@ app.post('/api/stars/create-invoice', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/stars/check
+ * Проверяет был ли оплачен инвойс и зачисляет Stars
+ * Body: { userId, invoiceId, amount }
+ * Response: { ok, credited, starsBalance, amount } или { ok, pending }
+ */
 app.post('/api/stars/check', (req, res) => {
   const { userId, invoiceId, amount } = req.body;
   if (!userId) return res.json({ ok: false, error: 'Не авторизован' });
 
+  // Если invoiceId передан — проверяем конкретный инвойс
   if (invoiceId) {
     const inv = DB.starsInvoices[invoiceId];
     if (!inv) return res.json({ ok: false, error: 'Счёт не найден' });
     if (String(inv.userId) !== String(userId)) return res.json({ ok: false, error: 'Доступ запрещён' });
 
     if (inv.paid) {
+      // Уже зачислено ранее
       const u = getUser(userId);
       return res.json({ ok: true, credited: true, starsBalance: u.starsBalance, amount: inv.amount });
     }
 
+    // Проверяем — оплачен ли (флаг устанавливается в pre_checkout + successful_payment)
     return res.json({ ok: true, pending: true });
   }
 
+  // Fallback: без invoiceId — не должно использоваться
   return res.json({ ok: false, error: 'invoiceId обязателен' });
 });
 
 /* ══ Обработка успешной оплаты Stars ══ */
 bot.on('pre_checkout_query', async (ctx) => {
+  // Всегда отвечаем OK — Telegram требует ответ в течение 10 секунд
   try { await ctx.answerPreCheckoutQuery(true); } catch (e) { console.error('pre_checkout error:', e); }
 });
 
 bot.on('message', async (ctx, next) => {
+  // Обработка successful_payment (оплата Stars)
   if (ctx.message?.successful_payment) {
     const payment = ctx.message.successful_payment;
+    // payload — JSON строка { userId, amount }
     try {
       const payload = JSON.parse(payment.invoice_payload);
       const userId = String(payload.userId);
@@ -261,10 +398,14 @@ bot.on('message', async (ctx, next) => {
       const u = getUser(userId);
       u.starsBalance = (u.starsBalance || 0) + stars;
 
+      // Помечаем инвойс как оплаченный
       for (const inv of Object.values(DB.starsInvoices)) {
         if (String(inv.userId) === userId && inv.amount === stars && !inv.paid) {
           const age = Date.now() - inv.createdAt;
-          if (age < 3600000) { inv.paid = true; break; }
+          if (age < 3600000) { // не старше 1 часа
+            inv.paid = true;
+            break;
+          }
         }
       }
 
@@ -288,6 +429,7 @@ bot.on('message', async (ctx, next) => {
     return;
   }
 
+  // Обновляем данные пользователя при любом сообщении
   const u = getUser(ctx.from.id);
   u.username = (ctx.from.username||'').toLowerCase();
   u.firstName = ctx.from.first_name||'';
@@ -327,6 +469,7 @@ app.post('/api/draws/join', (req, res) => {
   if (!draw || draw.finished || draw.endsAt < Date.now()) return res.json({ ok: false, error: 'Розыгрыш не найден или завершён' });
   if (draw.participants.find(p => String(p.uid) === String(userId))) return res.json({ ok: false, error: 'Вы уже участвуете' });
 
+  // Проверка билета
   if (draw.requireTicket) {
     const u = getUser(userId);
     const tickets = u.tickets || 0;
@@ -474,38 +617,43 @@ bot.command('cdraw', (ctx) => {
   handleCdraw(ctx, ctx.message.text, null);
 });
 
-bot.on('photo', (ctx) => {
+bot.on('photo', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const caption = ctx.message.caption || '';
+
+  // /cdraw с фото
   if (caption.startsWith('/cdraw')) {
     handleCdraw(ctx, caption, ctx.message.photo);
+    return;
   }
+
+  // /broadcast_photo — рассылка с фото
+  // Использование: прикрепи фото и напиши в подписи:
+  // /broadcast_photo Текст сообщения
   if (caption.startsWith('/broadcast_photo')) {
     const text = caption.replace('/broadcast_photo', '').trim();
-    if (!text) return ctx.reply('Добавь текст в подпись к фото после /broadcast_photo');
-    const photo = ctx.message.photo;
-    const fileId = photo[photo.length - 1].file_id;
+    if (!text) return ctx.reply('Добавь текст после команды.\nПример: /broadcast_photo 🎁 Новый розыгрыш!');
+    const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
     const userIds = Object.keys(DB.users);
     if (!userIds.length) return ctx.reply('❌ Нет пользователей в базе');
-    ctx.reply(`📤 Начинаю рассылку с фото...\n👥 Получателей: ${userIds.length}`).then(async statusMsg => {
-      let sent = 0, failed = 0, blocked = 0;
-      for (const uid of userIds) {
-        try {
-          await bot.telegram.sendPhoto(Number(uid), fileId, {
-            caption: text,
-            reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
-          });
-          sent++;
-        } catch (e) {
-          if (e.description?.includes('blocked') || e.description?.includes('deactivated')) blocked++;
-          else failed++;
-        }
-        await new Promise(r => setTimeout(r, 50));
+    const statusMsg = await ctx.reply(`📤 Начинаю рассылку с фото...\n👥 Получателей: ${userIds.length}`);
+    let sent = 0, failed = 0, blocked = 0;
+    for (const uid of userIds) {
+      try {
+        await bot.telegram.sendPhoto(Number(uid), fileId, {
+          caption: text,
+          reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+        });
+        sent++;
+      } catch (e) {
+        if (e.description?.includes('blocked') || e.description?.includes('deactivated')) blocked++;
+        else failed++;
       }
-      await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
-        `✅ Рассылка с фото завершена!\n\n📤 Отправлено: ${sent}\n🚫 Заблокировали бота: ${blocked}\n❌ Ошибки: ${failed}\n👥 Всего в базе: ${userIds.length}`
-      );
-    });
+      await new Promise(r => setTimeout(r, 50));
+    }
+    await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
+      `✅ Рассылка с фото завершена!\n\n📤 Отправлено: ${sent}\n🚫 Заблокировали бота: ${blocked}\n❌ Ошибки: ${failed}\n👥 Всего в базе: ${userIds.length}`
+    );
   }
 });
 
@@ -543,6 +691,7 @@ bot.command('pgive', async (ctx) => {
   ctx.reply(`✅ @${username} получил ${amount.toLocaleString('ru')} монет\n💼 Баланс: ${u.balance.toLocaleString('ru')}`);
 });
 
+/* ══ /sgive — начисление Stars вручную (для тестирования) ══ */
 bot.command('sgive', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const parts = ctx.message.text.split(' ');
@@ -623,6 +772,7 @@ bot.command('stars', (ctx) => {
 
 /* ══ РАССЫЛКА ══ */
 
+// /broadcast ТЕКСТ — отправить всем пользователям
 bot.command('broadcast', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const text = ctx.message.text.replace('/broadcast', '').trim();
@@ -650,6 +800,7 @@ bot.command('broadcast', async (ctx) => {
   );
 });
 
+// /broadcast_vip ТЕКСТ — отправить только VIP пользователям
 bot.command('broadcast_vip', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const text = ctx.message.text.replace('/broadcast_vip', '').trim();
@@ -675,15 +826,170 @@ bot.command('broadcast_vip', async (ctx) => {
   );
 });
 
+// /bc_count — статистика перед рассылкой
 bot.command('bc_count', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const total = Object.keys(DB.users).length;
   const now = Date.now();
   const vip = Object.values(DB.users).filter(u => u.vipExpiry && u.vipExpiry > now).length;
   ctx.reply(
-    `📊 Статистика рассылки:\n\n👥 Всего пользователей: ${total}\n👑 VIP активных: ${vip}\n\nКоманды:\n/broadcast ТЕКСТ — всем\n/broadcast_vip ТЕКСТ — только VIP\n/broadcast_photo ТЕКСТ — всем с фото (caption)`
+    `📊 Статистика рассылки:\n\n` +
+    `👥 Всего пользователей: ${total}\n` +
+    `👑 VIP активных: ${vip}\n\n` +
+    `Команды:\n` +
+    `/broadcast ТЕКСТ — всем\n` +
+    `/broadcast_vip ТЕКСТ — только VIP\n` +
+    `/broadcast_photo ТЕКСТ — всем с фото (caption)`
   );
 });
+
+
+/* ══ ADMIN: СБРОС СТАТИСТИКИ ══ */
+
+// /dstats — сбросить статистику ВСЕХ пользователей (кроме Stars)
+bot.command('dstats', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const uids = Object.keys(DB.users);
+  if (!uids.length) return ctx.reply('❌ Нет пользователей в базе');
+  const msg = await ctx.reply(`⚠️ Сбросить статистику ВСЕХ ${uids.length} пользователей?\n\nБудет сброшено: баланс, VIP, инвентарь, корона, легенда, задания.\n⭐ Stars не тронутся.\n\nОтвет: да / нет`);
+  // Ждём подтверждения через следующее сообщение
+  bot.on('text', async (c) => {
+    if (!isAdmin(c.from.id)) return;
+    if (c.message.reply_to_message?.message_id !== msg.message_id) return;
+    const ans = c.message.text.toLowerCase();
+    if (ans !== 'да' && ans !== 'yes') return c.reply('❌ Отменено');
+    let count = 0;
+    for (const uid of uids) { if (resetUserStats(uid)) count++; }
+    c.reply(`✅ Статистика сброшена у ${count} пользователей.\n⭐ Stars не тронуты.`);
+  });
+});
+
+// /dstats_user @username — сбросить статистику конкретного пользователя
+bot.command('dstats_user', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const args = ctx.message.text.split(/\s+/);
+  const rawUsername = args[1];
+  if (!rawUsername) return ctx.reply('Формат: /dstats_user @username\n\nПример: /dstats_user @ivan');
+
+  const username = rawUsername.replace(/^@/, '').toLowerCase();
+  const uid = findUidByUsername(username);
+
+  if (!uid) {
+    return ctx.reply(`❌ Пользователь @${username} не найден в базе.\n\nПользователь должен хотя бы раз открыть приложение.`);
+  }
+
+  const u = DB.users[uid];
+  const stars = u.starsBalance || 0;
+  resetUserStats(uid);
+
+  ctx.reply(
+    `✅ Статистика @${username} сброшена!\n\n` +
+    `👤 UID: ${uid}\n` +
+    `⭐ Stars сохранены: ${stars}\n` +
+    `💰 Баланс обнулён\n` +
+    `🏆 VIP удалён\n` +
+    `📦 Инвентарь очищен\n` +
+    `👑 Корона удалена\n` +
+    `✅ Задания сброшены`
+  );
+});
+
+/* ══ ADMIN: БАН ══ */
+
+// /ban @username время — забанить пользователя
+// время: "1 час", "7 дней", "0" = навсегда
+bot.command('ban', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.replace('/ban', '').trim().split(/\s+/);
+  const rawUsername = parts[0];
+  const timeStr = parts.slice(1).join(' ');
+
+  if (!rawUsername) {
+    return ctx.reply(
+      'Формат: /ban @username время\n\n' +
+      'Примеры:\n' +
+      '/ban @ivan 0 — навсегда\n' +
+      '/ban @ivan 1 час\n' +
+      '/ban @ivan 7 дней\n' +
+      '/ban @ivan 1 неделя\n' +
+      '/ban @ivan 1 месяц'
+    );
+  }
+
+  const username = rawUsername.replace(/^@/, '').toLowerCase();
+  const until = parseBanDuration(timeStr || '0');
+
+  if (until === null) {
+    return ctx.reply(`❌ Не понял время: "${timeStr}"\n\nПримеры: 1 час / 7 дней / 1 неделя / 0 (навсегда)`);
+  }
+
+  const banData = { until, bannedAt: Date.now() };
+  DB.bans[username] = banData;
+
+  // Если пользователь уже в базе — баним и по uid
+  const uid = findUidByUsername(username);
+  if (uid) DB.bansByUid[uid] = banData;
+
+  const untilStr = until === 0 ? '🔴 Навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
+  const durationStr = until === 0 ? 'навсегда' : formatDuration(until);
+
+  // Пытаемся уведомить пользователя
+  if (uid) {
+    try {
+      await bot.telegram.sendMessage(Number(uid),
+        `🚫 Вы заблокированы в GiftBot.\n\n` +
+        `⏱ Срок: ${durationStr}\n` +
+        (until !== 0 ? `📅 Разбан: ${new Date(until).toLocaleString('ru-RU')}` : '')
+      );
+    } catch {}
+  }
+
+  ctx.reply(
+    `🚫 @${username} забанен!\n\n` +
+    `⏱ ${untilStr}\n` +
+    `${uid ? `👤 UID найден: ${uid}` : '⚠️ Пользователь ещё не в базе — бан применится при первом входе'}\n\n` +
+    `Разбанить: /unban @${username}`
+  );
+});
+
+// /unban @username — снять бан
+bot.command('unban', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.split(/\s+/);
+  const rawUsername = parts[1];
+  if (!rawUsername) return ctx.reply('Формат: /unban @username');
+
+  const username = rawUsername.replace(/^@/, '').toLowerCase();
+  const existed = DB.bans[username];
+  delete DB.bans[username];
+
+  const uid = findUidByUsername(username);
+  if (uid) delete DB.bansByUid[uid];
+
+  if (!existed) return ctx.reply(`❌ @${username} не был забанен`);
+  ctx.reply(`✅ @${username} разбанен!`);
+
+  if (uid) {
+    bot.telegram.sendMessage(Number(uid), `✅ Ваш бан снят! Добро пожаловать обратно в GiftBot.`, {
+      reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+    }).catch(() => {});
+  }
+});
+
+// /bans — список забаненных
+bot.command('bans', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const list = Object.entries(DB.bans);
+  if (!list.length) return ctx.reply('✅ Забаненных нет');
+  const now = Date.now();
+  const rows = list.map(([un, b]) => {
+    const active = b.until === 0 || b.until > now;
+    const t = b.until === 0 ? 'навсегда' : formatDuration(b.until);
+    return `${active ? '🚫' : '✅'} @${un} — ${t}`;
+  });
+  ctx.reply('🚫 Забаненные:\n\n' + rows.join('\n'));
+});
+
 
 /* ══ SERVER ══ */
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
