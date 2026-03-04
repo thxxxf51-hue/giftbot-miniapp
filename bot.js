@@ -1061,7 +1061,8 @@ const PVP_FILL_MS = 20000;
 const PVP_COUNTDOWN_MS = 5000;
 const PVP_SPIN_MS = 5000;
 
-if (!DB.pvp) DB.pvp = { game: null };
+if (!DB.pvp) DB.pvp = { game: null, history: [] };
+if (!DB.pvp.history) DB.pvp.history = [];
 let pvpTimer = null;
 
 function clearPvpTimers() { if (pvpTimer) { clearTimeout(pvpTimer); pvpTimer = null; } }
@@ -1100,7 +1101,21 @@ function startPvpSpin() {
 
   pvpTimer = setTimeout(() => {
     if (DB.pvp.game) {
-      DB.pvp.game.state = 'done';
+      const doneGame = DB.pvp.game;
+      doneGame.state = 'done';
+      // Save to history
+      if (doneGame.winner) {
+        DB.pvp.history.unshift({
+          id:          doneGame.id,
+          time:        Date.now(),
+          players:     doneGame.players.length,
+          totalBet:    doneGame.totalBet,
+          winnerName:  doneGame.winner.username ? '@'+doneGame.winner.username : doneGame.winner.firstName,
+          winnerUid:   doneGame.winner.uid,
+        });
+        // Keep only last hour
+        DB.pvp.history = DB.pvp.history.filter(h => Date.now() - h.time < 3600000);
+      }
       saveDB();
       setTimeout(() => { DB.pvp.game = null; saveDB(); }, 15000);
     }
@@ -1189,6 +1204,14 @@ app.get('/api/avatar', async (req, res) => {
   } catch {
     res.status(500).end();
   }
+});
+
+
+/* ══ PvP HISTORY ══ */
+app.get('/api/pvp/history', (req, res) => {
+  // Clean entries older than 1 hour
+  DB.pvp.history = (DB.pvp.history || []).filter(h => Date.now() - h.time < 3600000);
+  res.json({ ok: true, history: DB.pvp.history });
 });
 
 /* ══ SERVER ══ */
