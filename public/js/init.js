@@ -51,6 +51,14 @@ function showBanScreen(until) {
   }
 }
 
+/* ══ СБРОС localStorage ══ */
+function hardReset() {
+  // Удаляем только ключ этого пользователя, не трогаем остальных
+  try { localStorage.removeItem('gb4_' + UID); } catch {}
+  // Перезагружаем страницу — приложение запустится с чистым slate
+  location.reload();
+}
+
 /* ══ INIT ══ */
 async function init(){
   const name=TGU.first_name||'User';
@@ -79,19 +87,30 @@ async function init(){
   rRefList();
   document.getElementById('pi-h').addEventListener('keydown',e=>{if(e.key==='Enter')usePromo('pi-h');});
   document.getElementById('pi-p').addEventListener('keydown',e=>{if(e.key==='Enter')usePromo('pi-p');});
+
   try{
     const sr=await fetch('/api/user/sync',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance})});
     const sd=await sr.json();
     if(sd.ok){
+      // Бан
       if(sd.banned){ showBanScreen(sd.banUntil); return; }
+
+      // Сброс статистики — очищаем localStorage и перезагружаемся
+      if(sd.reset){
+        hardReset();
+        return;
+      }
+
       S.balance=sd.balance;
       if(sd.starsBalance!==undefined)S.starsBalance=sd.starsBalance;
       syncB();
     }
   }catch{}
+
   loadDraws();
   setInterval(loadDraws,30000);
+
   // Проверка бана каждые 30 сек
   setInterval(async()=>{
     try{
