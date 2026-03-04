@@ -282,17 +282,17 @@ app.post('/api/user/sync', (req, res) => {
     return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
   }
 
-  if (balance !== undefined && Number(balance) > u.balance) {
+  // Always sync balance from client (client is source of truth for localStorage data)
+  if (balance !== undefined && Number(balance) >= 0) {
     u.balance = Number(balance);
   }
-  if (starsBalance !== undefined && Number(starsBalance) > u.starsBalance) {
+  if (starsBalance !== undefined && Number(starsBalance) >= 0) {
     u.starsBalance = Number(starsBalance);
   }
-  // Sync vipExpiry from client (stored in localStorage)
-  if (vipExpiry && Number(vipExpiry) > Date.now()) {
-    u.vipExpiry = Number(vipExpiry);
-  } else if (vipExpiry === null) {
-    u.vipExpiry = null;
+  // Sync vipExpiry from client
+  if (vipExpiry !== undefined) {
+    const vipNum = vipExpiry ? Number(vipExpiry) : null;
+    u.vipExpiry = (vipNum && vipNum > Date.now()) ? vipNum : null;
   }
 
   saveDB();
