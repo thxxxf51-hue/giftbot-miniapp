@@ -64,10 +64,22 @@ function addTx(uid, type, amount, details) {
   if (!u.transactions) u.transactions = [];
   u.transactions.unshift({
     type, amount, details,
-    date: new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'short',year:'numeric'})
+    date: mskFmt(null, {day:'numeric',month:'short',year:'numeric'})
   });
   // Keep last 100
   if (u.transactions.length > 100) u.transactions = u.transactions.slice(0, 100);
+}
+
+/* Moscow timezone helper (UTC+3) */
+function mskDate(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  return new Date(d.getTime() + 3 * 60 * 60 * 1000);
+}
+function mskFmt(ts, opts) {
+  return mskDate(ts).toLocaleDateString('ru-RU', opts);
+}
+function mskTimeFmt(ts) {
+  return mskDate(ts).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
 }
 
 function getUser(uid) {
@@ -75,7 +87,7 @@ function getUser(uid) {
   if (!DB.users[uid]) DB.users[uid] = {
     balance: 1000, starsBalance: 0, refs: [], refBy: null, refEarned: 0,
     usedPromos: [], vipExpiry: null, username: '', firstName: '',
-    regDate: new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'})
+    regDate: mskFmt(null, {day:'numeric',month:'long',year:'numeric'})
   };
   // Убедимся что starsBalance существует у старых юзеров
   if (DB.users[uid].starsBalance === undefined) DB.users[uid].starsBalance = 0;
@@ -568,7 +580,7 @@ bot.start(async (ctx) => {
       const ru = getUser(refUID);
       u.refBy = refUID;
       const name = ctx.from.username ? '@'+ctx.from.username : ctx.from.first_name;
-      ru.refs.push({ name, date: new Date().toLocaleDateString('ru-RU') });
+      ru.refs.push({ name, date: mskFmt(null) });
       ru.balance += 1000; ru.refEarned += 1000;
       if (ru.refs.length >= 3 && !ru.task3Done) {
         ru.balance += 2000; ru.task3Done = true;
@@ -944,9 +956,10 @@ bot.command('stat', async (ctx) => {
     const mins  = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days  = Math.floor(diff / 86400000);
-    const timeOnly = d.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
+    const msk = mskDate(u.lastSeen);
+    const timeOnly = mskTimeFmt(u.lastSeen);
     if (days > 0) {
-      lastSeen = `${d.toLocaleDateString('ru')} в ${timeOnly} (${days}д назад)`;
+      lastSeen = `${mskFmt(u.lastSeen, {day:'numeric',month:'short'})} в ${timeOnly} (${days}д назад)`;
     } else if (hours > 0) {
       lastSeen = `Сегодня в ${timeOnly} (${hours}ч ${mins % 60}м назад)`;
     } else if (mins > 0) {
@@ -962,9 +975,9 @@ bot.command('stat', async (ctx) => {
   if (u.regDate) {
     const asNum = Number(u.regDate);
     if (!isNaN(asNum) && asNum > 1000000000000) {
-      regDate = new Date(asNum).toLocaleDateString('ru');
+      regDate = mskFmt(asNum, {day:'numeric',month:'long',year:'numeric'});
     } else {
-      regDate = String(u.regDate); // already a readable string
+      regDate = String(u.regDate);
     }
   }
 
@@ -1038,9 +1051,10 @@ bot.command('stat', async (ctx) => {
     const mins  = Math.floor(diff / 60000);
     const hours = Math.floor(diff / 3600000);
     const days  = Math.floor(diff / 86400000);
-    const timeOnly = d.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
+    const msk = mskDate(u.lastSeen);
+    const timeOnly = mskTimeFmt(u.lastSeen);
     if (days > 0) {
-      lastSeen = `${d.toLocaleDateString('ru')} в ${timeOnly} (${days}д назад)`;
+      lastSeen = `${mskFmt(u.lastSeen, {day:'numeric',month:'short'})} в ${timeOnly} (${days}д назад)`;
     } else if (hours > 0) {
       lastSeen = `Сегодня в ${timeOnly} (${hours}ч ${mins % 60}м назад)`;
     } else if (mins > 0) {
@@ -1056,9 +1070,9 @@ bot.command('stat', async (ctx) => {
   if (u.regDate) {
     const asNum = Number(u.regDate);
     if (!isNaN(asNum) && asNum > 1000000000000) {
-      regDate = new Date(asNum).toLocaleDateString('ru');
+      regDate = mskFmt(asNum, {day:'numeric',month:'long',year:'numeric'});
     } else {
-      regDate = String(u.regDate); // already a readable string
+      regDate = String(u.regDate);
     }
   }
 
