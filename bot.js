@@ -947,8 +947,7 @@ bot.command('stat', async (ctx) => {
 ⭐ Stars: ${stars}
 👑 VIP: ${vipStr}
 ✨ Легенда: ${legendStr}
-${hasCrown !== '—' ? '👑 Корона: Есть
-' : ''}📅 Зарегистрирован: ${regDate}
+${hasCrown !== '—' ? '👑 Корона: Есть | ' : ''}📅 Зарегистрирован: ${regDate}
 🕐 Последний вход: ${lastSeen}
 🆔 UID: ${uid}`;
 
@@ -1029,8 +1028,7 @@ bot.command('stat', async (ctx) => {
 ⭐ Stars: ${stars}
 👑 VIP: ${vipStr}
 ✨ Легенда: ${legendStr}
-${hasCrown !== '—' ? '👑 Корона: Есть
-' : ''}📅 Зарегистрирован: ${regDate}
+${hasCrown !== '—' ? '👑 Корона: Есть | ' : ''}📅 Зарегистрирован: ${regDate}
 🕐 Последний вход: ${lastSeen}
 🆔 UID: ${uid}`;
 
