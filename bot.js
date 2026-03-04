@@ -38,16 +38,17 @@ function saveDB() {
 const _saved = loadDB();
 
 const DB = {
-  users:         _saved?.users         || {},
-  promos:        _saved?.promos        || {},
-  draws:         _saved?.draws         || {},
-  finished:      _saved?.finished      || {},
-  drawCounter:   _saved?.drawCounter   || 0,
-  pendingDraw:   _saved?.pendingDraw   || {},
+  users: _saved?.users || {},
+  promos: _saved?.promos || {},
+  draws: _saved?.draws || {},
+  finished: _saved?.finished || {},
+  drawCounter: _saved?.drawCounter || 0,
+  pendingDraw: _saved?.pendingDraw || {},
   starsInvoices: _saved?.starsInvoices || {},
-  invoiceCounter:_saved?.invoiceCounter|| 0,
-  bans:          _saved?.bans          || {},
-  bansByUid:     _saved?.bansByUid     || {},
+  invoiceCounter: _saved?.invoiceCounter || 0,
+  bans: _saved?.bans || {},
+  bansByUid: _saved?.bansByUid || {},
+  pvp: _saved?.pvp || { game: null, history: [] },
 };
 
 // Автосохранение каждые 30 секунд
@@ -55,13 +56,20 @@ setInterval(saveDB, 30000);
 
 // Сохранение при завершении процесса
 process.on('SIGTERM', () => { saveDB(); process.exit(0); });
-process.on('SIGINT',  () => { saveDB(); process.exit(0); });
+process.on('SIGINT', () => { saveDB(); process.exit(0); });
 
 function getUser(uid) {
   uid = String(uid);
   if (!DB.users[uid]) DB.users[uid] = {
-    balance: 1000, starsBalance: 0, refs: [], refBy: null, refEarned: 0,
-    usedPromos: [], vipExpiry: null, username: '', firstName: '',
+    balance: 1000,
+    starsBalance: 0,
+    refs: [],
+    refBy: null,
+    refEarned: 0,
+    usedPromos: [],
+    vipExpiry: null,
+    username: '',
+    firstName: '',
     regDate: new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'})
   };
   // Убедимся что starsBalance существует у старых юзеров
@@ -74,13 +82,11 @@ function isMoney(prize) { return /^\d+$/.test(String(prize).trim()); }
 
 /* ══ HELPERS ══ */
 
-// Найти uid по username
 function findUidByUsername(username) {
   username = username.replace(/^@/, '').toLowerCase();
   return Object.keys(DB.users).find(uid => (DB.users[uid].username||'').toLowerCase() === username) || null;
 }
 
-// Сбросить статистику пользователя (кроме starsBalance)
 function resetUserStats(uid) {
   uid = String(uid);
   const u = DB.users[uid];
@@ -105,12 +111,11 @@ function resetUserStats(uid) {
     vipDiscount: false,
     doneTasks: [],
     task3refsDone: false,
-    resetAt: Date.now(), // флаг: приложение должно сбросить localStorage
+    resetAt: Date.now(),
   };
   return true;
 }
 
-// Проверить забанен ли пользователь
 function isBanned(uid, username) {
   const now = Date.now();
   const banUid = DB.bansByUid[String(uid)];
@@ -129,16 +134,15 @@ function isBanned(uid, username) {
   return null;
 }
 
-// Парсинг времени бана: "1 час", "7 дней", "0" = навсегда
 function parseBanDuration(str) {
   if (!str || str === '0') return 0;
   str = str.toLowerCase().trim();
   const map = {
-    'мин':60,'минут':60,'минута':60,'минуты':60,'min':60,
-    'час':3600,'часа':3600,'часов':3600,'hour':3600,'h':3600,
-    'день':86400,'дня':86400,'дней':86400,'day':86400,'d':86400,
-    'неделя':604800,'недели':604800,'недель':604800,'week':604800,'w':604800,
-    'год':31536000,'года':31536000,'лет':31536000,'year':31536000,'y':31536000,
+    'мин':60, 'минут':60, 'минута':60, 'минуты':60, 'min':60,
+    'час':3600, 'часа':3600, 'часов':3600, 'hour':3600, 'h':3600,
+    'день':86400, 'дня':86400, 'дней':86400, 'day':86400, 'd':86400,
+    'неделя':604800, 'недели':604800, 'недель':604800, 'week':604800, 'w':604800,
+    'год':31536000, 'года':31536000, 'лет':31536000, 'year':31536000, 'y':31536000,
   };
   const match = str.match(/^(\d+)\s*(.+)$/);
   if (!match) return null;
@@ -217,7 +221,6 @@ async function finishDraw(id) {
   delete DB.draws[id];
   saveDB();
 
-  // Уведомление админу
   const winList = winners.map(w => `${w.name} (ID: ${w.uid})`).join('\n');
   const pList = draw.participants.map(p => p.name).join(', ');
   try {
@@ -229,7 +232,6 @@ async function finishDraw(id) {
     );
   } catch {}
 
-  // Уведомляем победителей
   for (const winner of winners) {
     if (moneyPrize) {
       const u = getUser(winner.uid);
@@ -259,7 +261,6 @@ app.post('/api/user/sync', (req, res) => {
   if (firstName) u.firstName = firstName;
   u.lastSeen = Date.now();
 
-  // Если забанен по username — применяем бан к uid
   if (username) {
     const un = username.replace(/^@/, '').toLowerCase();
     if (DB.bans[un] && !DB.bansByUid[String(userId)]) {
@@ -267,16 +268,13 @@ app.post('/api/user/sync', (req, res) => {
     }
   }
 
-  // Проверяем бан
   const ban = isBanned(userId, username);
   if (ban) {
     return res.json({ ok: true, banned: true, banUntil: ban.until, balance: u.balance, starsBalance: u.starsBalance });
   }
 
-  // Если был сброс — говорим клиенту очистить localStorage
   const wasReset = u.resetAt ? u.resetAt : null;
   if (wasReset) {
-    // Сбрасываем флаг чтобы не сбрасывать повторно
     delete u.resetAt;
     saveDB();
     return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
@@ -293,7 +291,6 @@ app.post('/api/user/sync', (req, res) => {
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
 
-// Проверка бана (вызывается из приложения при каждом открытии)
 app.get('/api/user/ban-status', (req, res) => {
   const { userId, username } = req.query;
   if (!userId) return res.json({ ok: false });
@@ -351,7 +348,6 @@ app.post('/api/stars/create-invoice', async (req, res) => {
   }
   const stars = Math.floor(Number(amount));
   if (stars > 99999) return res.json({ ok: false, error: 'Максимум 99 999 Stars за раз' });
-
   try {
     const apiRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
       method: 'POST',
@@ -390,7 +386,6 @@ app.post('/api/stars/create-invoice', async (req, res) => {
 app.post('/api/stars/check', (req, res) => {
   const { userId, invoiceId, amount } = req.body;
   if (!userId) return res.json({ ok: false, error: 'Не авторизован' });
-
   if (invoiceId) {
     const inv = DB.starsInvoices[invoiceId];
     if (!inv) return res.json({ ok: false, error: 'Счёт не найден' });
@@ -400,10 +395,8 @@ app.post('/api/stars/check', (req, res) => {
       const u = getUser(userId);
       return res.json({ ok: true, credited: true, starsBalance: u.starsBalance, amount: inv.amount });
     }
-
     return res.json({ ok: true, pending: true });
   }
-
   return res.json({ ok: false, error: 'invoiceId обязателен' });
 });
 
@@ -634,9 +627,7 @@ async function handleCdraw(ctx, text, photo) {
   setTimeout(() => finishDraw(id), ms);
 }
 
-bot.command('cdraw', (ctx) => {
-  handleCdraw(ctx, ctx.message.text, null);
-});
+bot.command('cdraw', (ctx) => handleCdraw(ctx, ctx.message.text, null));
 
 bot.on('photo', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
@@ -719,7 +710,7 @@ bot.command('sgive', async (ctx) => {
   for (const [uid, u] of Object.entries(DB.users)) {
     if (u.username === username) { targetUID = uid; break; }
   }
-  if (!targetUID) return ctx.reply(`❌ @${username} не найден. Попроси написать /start.`);
+  if (!targetUID) return ctx.reply('❌ @${username} не найден. Попроси написать /start.');
   const u = getUser(targetUID);
   u.starsBalance = (u.starsBalance || 0) + amount;
   try {
@@ -745,7 +736,7 @@ bot.command('ddelete', (ctx) => {
 bot.command('promos', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const list = Object.entries(DB.promos)
-    .map(([c, p]) => `• ${c}: +${p.reward}🪙  ${p.usedCount}/${p.maxUses}${p.vipOnly ? ' 👑' : ''}`)
+    .map(([c, p]) => `• ${c}: +${p.reward}🪙 ${p.usedCount}/${p.maxUses}${p.vipOnly ? ' 👑' : ''}`)
     .join('\n');
   ctx.reply(list ? `📋 Промокоды:\n\n${list}` : 'Промокодов нет');
 });
@@ -777,12 +768,12 @@ bot.command('stars', (ctx) => {
     `✅ Оплачено: ${paid.length} счетов (${totalPaid} Stars)\n` +
     `⏳ Ожидают: ${pending.length} счетов\n\n` +
     `Топ Stars-балансы:\n` +
-    (Object.values(DB.users)
+    Object.values(DB.users)
       .filter(u => u.starsBalance > 0)
       .sort((a, b) => b.starsBalance - a.starsBalance)
       .slice(0, 10)
       .map(u => `• @${u.username||'?'}: ${u.starsBalance} ⭐`)
-      .join('\n') || '(пусто)')
+      .join('\n') || '(пусто)'
   );
 });
 
@@ -856,7 +847,8 @@ bot.command('bc_count', (ctx) => {
   );
 });
 
-/* ══ ADMIN: /stat — статистика пользователя ══ */
+/* ══ ADMIN: СБРОС СТАТИСТИКИ ══ */
+
 bot.command('stat', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const args = ctx.message.text.split(' ').slice(1);
@@ -869,35 +861,31 @@ bot.command('stat', async (ctx) => {
 
   const now = Date.now();
   const balance = (u.balance||0).toLocaleString('ru');
-  const stars   = u.starsBalance||0;
+  const stars = u.starsBalance||0;
 
-  // VIP
   let vipStr = '❌ Нет';
   if (u.vipExpiry && u.vipExpiry > now) {
     const daysLeft = Math.ceil((u.vipExpiry - now) / 86400000);
     vipStr = `✅ Активен (${daysLeft} дн. осталось)`;
   }
 
-  // Last seen
   let lastSeen = '—';
   if (u.lastSeen) {
     const d = new Date(u.lastSeen);
     const diff = now - u.lastSeen;
     const mins = Math.floor(diff/60000);
-    const hours= Math.floor(diff/3600000);
+    const hours = Math.floor(diff/3600000);
     const days = Math.floor(diff/86400000);
-    const timeStr = days>0?`${days}д назад`:hours>0?`${hours}ч назад`:mins>0?`${mins}м назад`:'только что';
+    let timeStr = 'только что';
+    if (days > 0) timeStr = `${days}д назад`;
+    else if (hours > 0) timeStr = `${hours}ч назад`;
+    else if (mins > 0) timeStr = `${mins}м назад`;
     lastSeen = `${d.toLocaleDateString('ru')} ${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})} (${timeStr})`;
   }
 
-  // Reg date
   let regDate = '—';
-  if (u.regDate) {
-    const d = new Date(u.regDate);
-    regDate = d.toLocaleDateString('ru');
-  }
+  if (u.regDate) regDate = new Date(u.regDate).toLocaleDateString('ru');
 
-  // Crown / Legend
   const hasCrown = u.hasCrown ? '👑 Есть' : '—';
   let legendStr = '—';
   if (u.legendExpiry && u.legendExpiry > now) {
@@ -905,24 +893,20 @@ bot.command('stat', async (ctx) => {
     legendStr = `✨ Активна (${ld} дн.)`;
   }
 
-  const crownLine = hasCrown !== '—' ? '👑 Корона: Есть\n' : '';
+  const msg = 
+`👤 Профиль @${username}
 
-  const msg = `👤 Профиль @${username}\n\n` +
-    `💰 Баланс: ${balance} монет\n` +
-    `⭐ Stars: ${stars}\n` +
-    `👑 VIP: ${vipStr}\n` +
-    `✨ Легенда: ${legendStr}\n` +
-    crownLine +
-    `📅 Зарегистрирован: ${regDate}\n` +
-    `🕐 Последний вход: ${lastSeen}\n` +
-    `🆔 UID: ${uid}`;
+💰 Баланс: ${balance} монет
+⭐ Stars: ${stars}
+👑 VIP: ${vipStr}
+✨ Легенда: ${legendStr}
+${hasCrown !== '—' ? '👑 Корона: Есть\n' : ''}📅 Зарегистрирован: ${regDate}
+🕐 Последний вход: ${lastSeen}
+🆔 UID: ${uid}`;
 
   ctx.reply(msg);
 });
 
-/* ══ ADMIN: СБРОС СТАТИСТИКИ ══ */
-
-// /dstats — сбросить статистику ВСЕХ пользователей (кроме Stars)
 bot.command('dstats', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const uids = Object.keys(DB.users);
@@ -939,7 +923,6 @@ bot.command('dstats', async (ctx) => {
   });
 });
 
-// /dstats_user @username — сбросить статистику конкретного пользователя
 bot.command('dstats_user', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const args = ctx.message.text.split(/\s+/);
@@ -1020,7 +1003,7 @@ bot.command('ban', async (ctx) => {
   ctx.reply(
     `🚫 @${username} забанен!\n\n` +
     `⏱ ${untilStr}\n` +
-    `${uid ? `👤 UID найден: ${uid}` : '⚠️ Пользователь ещё не в базе — бан применится при первом входе'}\n\n` +
+    (uid ? `👤 UID найден: ${uid}\n` : '⚠️ Пользователь ещё не в базе — бан применится при первом входе\n') +
     `Разбанить: /unban @${username}`
   );
 });
@@ -1084,7 +1067,6 @@ const PVP_FILL_MS = 20000;
 const PVP_COUNTDOWN_MS = 5000;
 const PVP_SPIN_MS = 5000;
 
-if (!DB.pvp) DB.pvp = { game: null, history: [] };
 if (!DB.pvp.history) DB.pvp.history = [];
 let pvpTimer = null;
 
@@ -1126,12 +1108,12 @@ function startPvpSpin() {
       doneGame.state = 'done';
       if (doneGame.winner) {
         DB.pvp.history.unshift({
-          id:          doneGame.id,
-          time:        Date.now(),
-          players:     doneGame.players.length,
-          totalBet:    doneGame.totalBet,
-          winnerName:  doneGame.winner.username ? '@'+doneGame.winner.username : doneGame.winner.firstName,
-          winnerUid:   doneGame.winner.uid,
+          id: doneGame.id,
+          time: Date.now(),
+          players: doneGame.players.length,
+          totalBet: doneGame.totalBet,
+          winnerName: doneGame.winner.username ? '@'+doneGame.winner.username : doneGame.winner.firstName,
+          winnerUid: doneGame.winner.uid,
         });
         DB.pvp.history = DB.pvp.history.filter(h => Date.now() - h.time < 3600000);
       }
@@ -1206,7 +1188,7 @@ app.post('/api/pvp/leave', (req, res) => {
   res.json({ ok: true, refunded: player.bet });
 });
 
-/* ══ AVATAR PROXY (решает CORS для canvas) ══ */
+/* ══ AVATAR PROXY ══ */
 app.get('/api/avatar', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('https://')) return res.status(400).end();
@@ -1214,7 +1196,7 @@ app.get('/api/avatar', async (req, res) => {
     const r = await fetch(url);
     if (!r.ok) return res.status(404).end();
     const buf = await r.arrayBuffer();
-    const ct  = r.headers.get('content-type') || 'image/jpeg';
+    const ct = r.headers.get('content-type') || 'image/jpeg';
     res.set('Content-Type', ct);
     res.set('Cache-Control', 'public, max-age=86400');
     res.set('Access-Control-Allow-Origin', '*');
@@ -1231,7 +1213,7 @@ app.get('/api/pvp/history', (req, res) => {
 });
 
 /* ══ SERVER ══ */
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
