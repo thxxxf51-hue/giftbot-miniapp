@@ -47,7 +47,7 @@ function toast(msg,type='g',icon=''){
   clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);
 }
 
-const PROMO_ICO='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11.5 14.5 16 9.5"/></svg>';
+const PROMO_ICO='<img src="icons/check-circle.svg" width="18" height="18" style="display:block;flex-shrink:0;filter:invert(56%) sepia(97%) saturate(400%) hue-rotate(100deg) brightness(95%)">';
 
 /* ══ GENERAL MODAL ══ */
 let _gmCb=null;
