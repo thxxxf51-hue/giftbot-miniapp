@@ -240,7 +240,7 @@ const MEGA_DROPS=[
   {i:'🏆',n:'VIP',v:'7 дней',vipDays:7},
   {i:'🎟️',n:'Билеты',v:'х10',inv:'ticket',cnt:10},
   {i:'👑',n:'Корона',v:'14 дней',inv:'crown',cnt:1},
-  {i:'📦',n:'Кейс Золотой',v:'бесплатно',freeCase:3},
+  {i:'📦',n:'Кейс Богача',v:'бесплатно',freeCase:3},
 ];
 let megaSpinning=false;
 function openMegaGift(){
