@@ -1172,6 +1172,25 @@ app.post('/api/pvp/leave', (req, res) => {
   res.json({ ok: true, refunded: player.bet });
 });
 
+
+/* ══ AVATAR PROXY (решает CORS для canvas) ══ */
+app.get('/api/avatar', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !url.startsWith('https://')) return res.status(400).end();
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return res.status(404).end();
+    const buf = await r.arrayBuffer();
+    const ct  = r.headers.get('content-type') || 'image/jpeg';
+    res.set('Content-Type', ct);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.set('Access-Control-Allow-Origin', '*');
+    res.send(Buffer.from(buf));
+  } catch {
+    res.status(500).end();
+  }
+});
+
 /* ══ SERVER ══ */
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
