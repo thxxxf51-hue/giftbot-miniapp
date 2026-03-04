@@ -419,9 +419,13 @@
         </button>
       </div>
     </div>
-    <!-- History for idle -->
-    <div class="sec" style="margin-top:4px">История</div>
-    <div id="pvp-idle-history"></div>
+    <!-- History button for idle -->
+    <button onclick="openPvpHistory()" style="display:flex;align-items:center;gap:8px;width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px 16px;cursor:pointer;font-family:inherit;margin-bottom:6px">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:#aaa"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span style="font-size:13px;font-weight:700;color:var(--text)">История игр</span>
+      <span style="font-size:11px;color:var(--muted2);margin-left:auto" id="pvp-hist-count"></span>
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color:#555"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
   </div>
 
   <!-- ═══ LOBBY: ожидание/наполнение ═══ -->
@@ -458,9 +462,12 @@
         ↩️ Выйти (вернуть монеты)
       </button>
     </div>
-    <!-- History for lobby -->
-    <div class="sec" style="margin-top:4px">История</div>
-    <div id="pvp-lobby-history"></div>
+    <!-- History button for lobby -->
+    <button onclick="openPvpHistory()" style="display:flex;align-items:center;gap:8px;width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:13px 16px;cursor:pointer;font-family:inherit;margin-bottom:6px">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:#aaa"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span style="font-size:13px;font-weight:700;color:var(--text)">История игр</span>
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color:#555;margin-left:auto"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
   </div>
 
   <!-- ═══ INGAME: колесо ═══ -->
@@ -510,5 +517,23 @@
 <script src="js/draws.js"></script>
 <script src="js/pvp.js"></script>
 <script src="js/init.js"></script>
+
+<!-- PvP History Modal -->
+<div id="pvp-hist-mo" onclick="if(event.target===this)closePvpHistory()"
+  style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:flex-end">
+  <div style="background:#18191c;border-radius:20px 20px 0 0;width:100%;max-height:80vh;display:flex;flex-direction:column">
+    <!-- Drag handle -->
+    <div style="display:flex;justify-content:center;padding:10px 0 4px">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15)"></div>
+    </div>
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px 14px">
+      <div style="font-size:16px;font-weight:800">🕐 История игр</div>
+      <div style="font-size:11px;color:var(--muted2)">последний час</div>
+    </div>
+    <!-- Scrollable list -->
+    <div id="pvp-hist-modal-list" style="overflow-y:auto;padding:0 14px 24px;-webkit-overflow-scrolling:touch"></div>
+  </div>
+</div>
 </body>
 </html>
