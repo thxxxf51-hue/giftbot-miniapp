@@ -1,6 +1,7 @@
 const { Telegraf } = require('telegraf');
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
@@ -13,18 +14,48 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+/* ══ PERSISTENT DB ══ */
+const DB_FILE = path.join(__dirname, 'db.json');
+
+function loadDB() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf8');
+      const saved = JSON.parse(raw);
+      console.log('✅ DB loaded from file, users:', Object.keys(saved.users || {}).length);
+      return saved;
+    }
+  } catch (e) { console.error('DB load error:', e.message); }
+  return null;
+}
+
+function saveDB() {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(DB), 'utf8');
+  } catch (e) { console.error('DB save error:', e.message); }
+}
+
+const _saved = loadDB();
+
 const DB = {
-  users: {},
-  promos: {},
-  draws: {},
-  finished: {},
-  drawCounter: 0,
-  pendingDraw: {},
-  starsInvoices: {},
-  invoiceCounter: 0,
-  bans: {},       // username (lowercase, без @) -> { until: timestamp или 0=навсегда, bannedAt }
-  bansByUid: {},  // uid -> { until, bannedAt }
+  users:         _saved?.users         || {},
+  promos:        _saved?.promos        || {},
+  draws:         _saved?.draws         || {},
+  finished:      _saved?.finished      || {},
+  drawCounter:   _saved?.drawCounter   || 0,
+  pendingDraw:   _saved?.pendingDraw   || {},
+  starsInvoices: _saved?.starsInvoices || {},
+  invoiceCounter:_saved?.invoiceCounter|| 0,
+  bans:          _saved?.bans          || {},
+  bansByUid:     _saved?.bansByUid     || {},
 };
+
+// Автосохранение каждые 30 секунд
+setInterval(saveDB, 30000);
+
+// Сохранение при завершении процесса
+process.on('SIGTERM', () => { saveDB(); process.exit(0); });
+process.on('SIGINT',  () => { saveDB(); process.exit(0); });
 
 function getUser(uid) {
   uid = String(uid);
@@ -74,6 +105,7 @@ function resetUserStats(uid) {
     vipDiscount: false,
     doneTasks: [],
     task3refsDone: false,
+    resetAt: Date.now(), // флаг: приложение должно сбросить localStorage
   };
   return true;
 }
@@ -183,6 +215,7 @@ async function finishDraw(id) {
   draw.winners = winners;
   DB.finished[id] = { ...draw };
   delete DB.draws[id];
+  saveDB();
 
   // Уведомление админу
   const winList = winners.map(w => `${w.name} (ID: ${w.uid})`).join('\n');
@@ -239,6 +272,15 @@ app.post('/api/user/sync', (req, res) => {
     return res.json({ ok: true, banned: true, banUntil: ban.until, balance: u.balance, starsBalance: u.starsBalance });
   }
 
+  // Если был сброс — говорим клиенту очистить localStorage
+  const wasReset = u.resetAt ? u.resetAt : null;
+  if (wasReset) {
+    // Сбрасываем флаг чтобы не сбрасывать повторно
+    delete u.resetAt;
+    saveDB();
+    return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
+  }
+
   if (balance !== undefined && Number(balance) > u.balance) {
     u.balance = Number(balance);
   }
@@ -246,6 +288,7 @@ app.post('/api/user/sync', (req, res) => {
     u.starsBalance = Number(starsBalance);
   }
 
+  saveDB();
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
 
@@ -264,6 +307,7 @@ app.post('/api/balance/update', (req, res) => {
   const u = getUser(userId);
   u.balance = Number(balance);
   if (starsBalance !== undefined) u.starsBalance = Number(starsBalance);
+  saveDB();
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance });
 });
 
@@ -881,6 +925,7 @@ bot.command('dstats_user', async (ctx) => {
   const u = DB.users[uid];
   const stars = u.starsBalance || 0;
   resetUserStats(uid);
+  saveDB();
 
   ctx.reply(
     `✅ Статистика @${username} сброшена!\n\n` +
@@ -929,6 +974,7 @@ bot.command('ban', async (ctx) => {
   // Если пользователь уже в базе — баним и по uid
   const uid = findUidByUsername(username);
   if (uid) DB.bansByUid[uid] = banData;
+  saveDB();
 
   const untilStr = until === 0 ? '🔴 Навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
   const durationStr = until === 0 ? 'навсегда' : formatDuration(until);
@@ -965,6 +1011,7 @@ bot.command('unban', (ctx) => {
 
   const uid = findUidByUsername(username);
   if (uid) delete DB.bansByUid[uid];
+  saveDB();
 
   if (!existed) return ctx.reply(`❌ @${username} не был забанен`);
   ctx.reply(`✅ @${username} разбанен!`);
