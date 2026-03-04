@@ -173,7 +173,7 @@ function useInvItem(key){
       const sellCoins=777;
       const extra=document.getElementById('gm-extra');
       openGenMo('👑 Корона (×'+cnt+')','У вас больше 3 корон! Можно носить или продать лишние за '+sellCoins+' 🪙 каждую.','👑 Надеть',()=>{removeInv('crown',1);S.hasCrown=true;save();applyCrown();closeGenMo();toast('👑 Корона надета!','g');renderInv();});
-      if(extra){extra.innerHTML='<button onclick="sellInvItem('crown')" style="width:100%;background:rgba(255,215,0,.12);color:#F4C430;border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">💰 Продать 1 корону за '+sellCoins+' монет</button>';}
+      if(extra){extra.innerHTML='<button onclick="sellInvItem(\'crown\')" style="width:100%;background:rgba(255,215,0,.12);color:#F4C430;border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">💰 Продать 1 корону за '+sellCoins+' монет</button>';}
     } else {
       openGenMo('👑 Корона','Надень корону на аватарку навсегда!\nКорона отображается над фото профиля на главном экране и в профиле.','👑 Надеть',()=>{removeInv('crown',1);S.hasCrown=true;save();applyCrown();closeGenMo();toast('👑 Корона надета!','g');renderInv();});
     }
@@ -182,7 +182,7 @@ function useInvItem(key){
       const sellCoins=333;
       openGenMo('✨ Легенда (×'+cnt+')','У вас больше 3 легенд! Можно активировать или продать за '+sellCoins+' 🪙 каждую.','✨ Активировать',()=>{closeGenMo();renderLegendColors();document.getElementById('lgmo').classList.add('show');});
       const extra=document.getElementById('gm-extra');
-      if(extra){extra.innerHTML='<button onclick="sellInvItem('legend')" style="width:100%;background:rgba(255,215,0,.12);color:#F4C430;border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">💰 Продать 1 легенду за '+sellCoins+' монет</button>';}
+      if(extra){extra.innerHTML='<button onclick="sellInvItem(\'legend\')" style="width:100%;background:rgba(255,215,0,.12);color:#F4C430;border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">💰 Продать 1 легенду за '+sellCoins+' монет</button>';}
     } else {
       closeGenMo();
       renderLegendColors();
