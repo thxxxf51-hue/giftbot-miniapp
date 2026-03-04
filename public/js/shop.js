@@ -1,3 +1,9 @@
+/* ══ TX HELPER ══ */
+async function addServerTx(type,amount,details){
+  try{await fetch('/api/transactions/add',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:UID,type,amount,details})});}catch{}
+}
+
 /* ══ SHOP ══ */
 function shopTab(tab,btn){
   document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
@@ -34,6 +40,7 @@ function buyItem(id){
     S.balance-=price;
     if(x.vipDays){activateVip(x.vipDays);if(id===3&&S.vipDiscount){S.vipDiscount=false;save();}}
     syncB();rShopItems();closeGenMo();
+    if(x.vipDays)addServerTx('vip_buy','-'+price,'Покупка VIP на '+x.vipDays+' дн.');
     toast(`${x.ico} ${x.vipDays?'VIP на '+x.vipDays+' дн. активирован!':'Куплено!'}`,'g');
   });
 }
@@ -49,7 +56,7 @@ function openColorPicker(free=false){
 }
 function buyColor(){
   if(!freeColor&&S.balance<250){toast('Недостаточно монет','r');return;}
-  if(!freeColor){S.balance-=250;syncB();}
+  if(!freeColor){S.balance-=250;syncB();addServerTx('color_buy','-250','Покупка цветного ника');}
   applyNick(selColor);
   document.getElementById('cpmo').classList.remove('show');
   toast('🌈 Цвет ника изменён!','g');

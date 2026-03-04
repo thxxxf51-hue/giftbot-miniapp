@@ -24,6 +24,7 @@ function go(name){
   // Page enter hooks
   if(name==='inventory')renderInv();
   if(name==='pvp')onPvpPageEnter?.();
+  if(name==='profile')loadTxList();
 }
 
 /* ══ TOAST ══ */

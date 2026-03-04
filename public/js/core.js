@@ -286,3 +286,29 @@ function activateLegend(){
   toast('✨ Легенда активирована на 14 дней!','g');
   renderInv();
 }
+
+/* ══ TRANSACTIONS ══ */
+async function loadTxList() {
+  const el = document.getElementById('tx-list');
+  if (!el) return;
+  try {
+    const r = await fetch('/api/transactions?userId=' + UID);
+    const d = await r.json();
+    if (!d.ok || !d.transactions || !d.transactions.length) {
+      el.innerHTML = '<div class="tx-empty">Нет транзакций</div>';
+      return;
+    }
+    el.innerHTML = d.transactions.map(tx => {
+      const isPos = String(tx.amount).startsWith('+');
+      const isNeg = String(tx.amount).startsWith('-');
+      return `<div class="tx-row">
+        <span><span class="tx-badge">${tx.type}</span></span>
+        <span class="tx-amt ${isPos?'pos':isNeg?'neg':''}">${tx.amount}</span>
+        <span class="tx-det">${tx.details||'—'}</span>
+        <span class="tx-date">${tx.date||'—'}</span>
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<div class="tx-empty">Ошибка загрузки</div>';
+  }
+}
