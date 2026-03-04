@@ -1,3 +1,56 @@
+/* ══ BAN SCREEN ══ */
+let _banTimer = null;
+
+function showBanScreen(until) {
+  document.querySelector('.app').style.display = 'none';
+
+  const ban = document.createElement('div');
+  ban.id = 'ban-screen';
+  ban.style.cssText = 'position:fixed;inset:0;background:#0a0a0a;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;font-family:-apple-system,sans-serif;';
+
+  const isPermanent = !until || until === 0;
+
+  ban.innerHTML = `
+    <div style="font-size:64px;margin-bottom:20px">🚫</div>
+    <div style="font-size:22px;font-weight:800;color:#ff6060;margin-bottom:10px;text-align:center">Вы заблокированы</div>
+    <div style="font-size:14px;color:#555;text-align:center;line-height:1.6;margin-bottom:28px;max-width:280px">Ваш аккаунт заблокирован администратором</div>
+    ${isPermanent ? `
+      <div style="background:rgba(255,96,96,.1);border:1px solid rgba(255,96,96,.3);border-radius:16px;padding:18px 28px;text-align:center">
+        <div style="font-size:11px;color:#777;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Срок блокировки</div>
+        <div style="font-size:20px;font-weight:800;color:#ff6060">Навсегда</div>
+      </div>
+    ` : `
+      <div style="background:rgba(255,96,96,.1);border:1px solid rgba(255,96,96,.3);border-radius:16px;padding:18px 28px;text-align:center;min-width:220px">
+        <div style="font-size:11px;color:#777;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Осталось до разбана</div>
+        <div id="ban-countdown" style="font-size:28px;font-weight:900;color:#ff6060;font-variant-numeric:tabular-nums">--:--</div>
+        <div id="ban-date" style="font-size:11px;color:#555;margin-top:6px"></div>
+      </div>
+    `}
+    <div style="margin-top:32px;font-size:11px;color:#333;text-align:center">По вопросам обратитесь к администратору</div>
+  `;
+
+  document.body.appendChild(ban);
+
+  if (!isPermanent) {
+    const dateEl = document.getElementById('ban-date');
+    if (dateEl) dateEl.textContent = 'До ' + new Date(until).toLocaleString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+
+    function tick() {
+      const diff = until - Date.now();
+      if (diff <= 0) { clearInterval(_banTimer); location.reload(); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const el = document.getElementById('ban-countdown');
+      if (el) el.textContent = h > 0
+        ? `${h}ч ${String(m).padStart(2,'0')}м ${String(s).padStart(2,'0')}с`
+        : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+    tick();
+    _banTimer = setInterval(tick, 1000);
+  }
+}
+
 /* ══ INIT ══ */
 async function init(){
   const name=TGU.first_name||'User';
@@ -31,6 +84,7 @@ async function init(){
       body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance})});
     const sd=await sr.json();
     if(sd.ok){
+      if(sd.banned){ showBanScreen(sd.banUntil); return; }
       S.balance=sd.balance;
       if(sd.starsBalance!==undefined)S.starsBalance=sd.starsBalance;
       syncB();
@@ -38,6 +92,14 @@ async function init(){
   }catch{}
   loadDraws();
   setInterval(loadDraws,30000);
+  // Проверка бана каждые 30 сек
+  setInterval(async()=>{
+    try{
+      const r=await fetch(`/api/user/ban-status?userId=${UID}&username=${encodeURIComponent(TGU.username||'')}`);
+      const d=await r.json();
+      if(d.ok&&d.banned&&!document.getElementById('ban-screen')) showBanScreen(d.banUntil);
+    }catch{}
+  },30000);
 }
 
 init();
