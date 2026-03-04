@@ -1,7 +1,19 @@
 /* ══ TELEGRAM ══ */
 const tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#0a0a0a');tg.setBackgroundColor('#0a0a0a');}catch(e){}}
-const TGU=tg?.initDataUnsafe?.user||{id:123456,first_name:'ik',username:'assate',photo_url:null};
+/* Parse user safely — try initDataUnsafe first, then parse initData string */
+let TGU=(()=>{
+  try{
+    const u=tg?.initDataUnsafe?.user;
+    if(u&&u.id&&u.id!==0)return u;
+    // fallback: parse raw initData
+    const raw=tg?.initData||'';
+    const params=new URLSearchParams(raw);
+    const userStr=params.get('user');
+    if(userStr){const p=JSON.parse(decodeURIComponent(userStr));if(p&&p.id)return p;}
+  }catch(e){}
+  return {id:123456,first_name:'Dev',username:'dev',photo_url:null};
+})();
 const UID=String(TGU.id);
 
 /* ══ STORAGE ══ */
