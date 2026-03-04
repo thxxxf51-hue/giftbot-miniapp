@@ -97,7 +97,7 @@
 <div class="stars-mo" id="stars-mo" onclick="if(event.target===this)closeStarsMo()">
   <div class="stars-box">
     <div class="stars-hdr">
-      <div class="stars-title">⭐ Баланс Telegram Stars</div>
+      <div class="stars-title">⭐ Telegram Stars</div>
       <button class="stars-close" onclick="closeStarsMo()">✕</button>
     </div>
     <div class="stars-bal-display">
@@ -105,8 +105,13 @@
         <div class="stars-bal-lbl">Ваш баланс Stars</div>
         <div class="stars-bal-val">⭐ <span id="sm-bal">0</span></div>
       </div>
-      <div style="font-size:10px;color:var(--muted2);text-align:right;line-height:1.5">1 Star = 1 ⭐<br>в приложении</div>
+      <div style="font-size:10px;color:var(--muted2);text-align:right;line-height:1.5">1 ⭐ = 100 🪙</div>
     </div>
+    <div class="stars-tabs">
+      <button class="stars-tab-btn active" id="stars-tab-topup" onclick="switchStarsTab('topup')">⭐ Пополнить</button>
+      <button class="stars-tab-btn" id="stars-tab-exchange" onclick="switchStarsTab('exchange')">🔄 Обменять</button>
+    </div>
+    <div id="stars-topup-panel">
     <div class="stars-presets">
       <div class="stars-preset sel" onclick="selectStarsPreset(50,this)">
         <div class="stars-preset-ico">⭐</div>
@@ -150,6 +155,24 @@
     <div class="stars-check-area" id="stars-check-area">
       <div class="stars-check-note">Уже оплатили? Нажмите кнопку ниже — мы проверим платёж и зачислим звёзды на баланс.</div>
       <button class="stars-check-btn" onclick="checkStarsPayment()">🔍 Проверить оплату</button>
+    </div>
+    </div><!-- /stars-topup-panel -->
+
+    <!-- EXCHANGE PANEL -->
+    <div id="stars-exchange-panel" style="display:none;padding:0 16px 8px">
+      <div style="font-size:12px;color:var(--muted2);margin:12px 0 8px;text-align:center;line-height:1.6">Обменяй Stars на монеты<br><span style="color:var(--star);font-weight:700">1 ⭐ = 100 🪙</span></div>
+      <div style="background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Сколько Stars обменять?</div>
+        <input id="exch-input" type="number" min="1" placeholder="Введите кол-во Stars"
+          style="width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(255,215,0,.25);border-radius:10px;padding:10px 12px;color:var(--star);font-size:16px;font-weight:700;outline:none;font-family:inherit;text-align:center"
+          oninput="updateExchangePreview()">
+        <div id="exch-preview" style="text-align:center;font-size:20px;font-weight:900;color:var(--green);margin-top:8px;min-height:28px"></div>
+      </div>
+      <div style="font-size:10px;color:var(--muted2);text-align:center;margin-bottom:10px">Баланс Stars: <span style="color:var(--star);font-weight:700" id="exch-bal">0</span> ⭐</div>
+      <button id="exch-btn" onclick="doExchange()" disabled
+        style="width:100%;background:linear-gradient(135deg,#FFD700,#FFA500);color:#000;border:none;border-radius:14px;padding:14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .15s">
+        Введите количество
+      </button>
     </div>
   </div>
 </div>
@@ -365,13 +388,91 @@
   </div>
 </div>
 
+
+<!-- PvP -->
+<div class="page" id="page-pvp">
+  <div class="phdr"><div class="ptitle">⚔️ PvP Дуэль</div><div class="bpill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span id="b-pvp">0</span></div></div>
+
+  <!-- Пусто -->
+  <div id="pvp-empty" style="display:flex;flex-direction:column;align-items:center;padding:30px 20px 16px;gap:6px">
+    <div style="font-size:52px;margin-bottom:4px">⚔️</div>
+    <div style="font-size:17px;font-weight:800">Нет активной игры</div>
+    <div style="font-size:12px;color:var(--muted2);text-align:center;line-height:1.5">Поставь монеты и жди соперников.<br>Побеждает тот, кому повезёт!</div>
+  </div>
+
+  <!-- Правила -->
+  <div class="gc" style="padding:12px 14px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start">
+    <div style="font-size:20px;flex-shrink:0">📋</div>
+    <div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:3px">Как играть</div>
+      <div style="font-size:11px;color:var(--muted2);line-height:1.6">Минимальная ставка: <span style="color:var(--green);font-weight:700">50 🪙</span><br>Игроков: <span style="color:var(--green);font-weight:700">2–10</span><br>Шанс выиграть = доля твоей ставки в банке<br>Победитель забирает весь банк</div>
+    </div>
+  </div>
+
+  <!-- Ставка -->
+  <div class="gc" style="padding:13px 14px;margin-bottom:10px" id="pvp-join-wrap">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">Твоя ставка</div>
+    <div style="display:flex;gap:7px" id="pvp-join-section">
+      <input id="pvp-bet-input" type="number" min="50" placeholder="Мин. 50 монет"
+        style="flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:10px 12px;color:var(--green);font-size:15px;font-weight:700;outline:none;font-family:inherit;min-width:0"
+        oninput="this.value=Math.max(0,parseInt(this.value)||0)||''">
+      <button id="pvp-join-btn" onclick="pvpJoin()"
+        style="background:var(--green);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">
+        ⚔️ Участвовать
+      </button>
+    </div>
+    <button id="pvp-leave-btn" onclick="pvpLeave()" style="display:none;width:100%;background:var(--rdim);color:var(--red);border:1px solid rgba(255,96,96,.3);border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+      ↩️ Выйти (вернуть монеты)
+    </button>
+  </div>
+
+  <!-- Лобби -->
+  <div id="pvp-lobby" style="display:none">
+    <div class="gc" style="padding:13px 14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div id="pvp-state-label" style="font-size:13px;font-weight:700;color:var(--green)">⏳ Ожидание</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:2px">Игроков: <span id="pvp-count" style="color:var(--text);font-weight:700">0 / 10</span></div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--muted2)">Банк</div>
+          <div id="pvp-total" style="font-size:18px;font-weight:900;color:var(--green)">0 🪙</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:11px;color:var(--muted2)">До старта:</div>
+        <div id="pvp-timer" style="font-size:18px;font-weight:900;color:var(--star)"></div>
+      </div>
+      <div id="pvp-players-list" style="display:flex;flex-direction:column;gap:7px"></div>
+    </div>
+  </div>
+
+  <!-- Колесо -->
+  <div id="pvp-wheel-wrap" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:10px 0">
+    <div style="font-size:14px;font-weight:700;color:var(--muted2)">Колесо крутится...</div>
+    <div style="position:relative;display:flex;align-items:center;justify-content:center">
+      <canvas id="pvp-canvas" width="300" height="300" style="display:block;border-radius:50%"></canvas>
+    </div>
+  </div>
+
+  <!-- Результат -->
+  <div id="pvp-result" style="display:none;flex-direction:column;align-items:center;padding:20px;gap:10px">
+    <div id="pvp-res-ico" style="font-size:56px"></div>
+    <div id="pvp-res-title" style="font-size:20px;font-weight:800"></div>
+    <div id="pvp-res-name" style="font-size:13px;color:var(--muted2);text-align:center"></div>
+    <div id="pvp-res-prize" style="font-size:22px;font-weight:900"></div>
+    <button onclick="fetchPvpState()" style="margin-top:8px;background:var(--gdim);color:var(--green);border:1px solid var(--gbor);border-radius:12px;padding:12px 24px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+      🔄 Обновить
+    </button>
+  </div>
+</div>
 </div><!-- /pages -->
 
 <nav class="nav">
   <button class="nb active" id="nb-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></button>
   <button class="nb" id="nb-tasks" onclick="go('tasks')"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Задания</span></button>
   <button class="nb" id="nb-shop" onclick="go('shop')"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span>Магазин</span></button>
-  <button class="nb" id="nb-inventory" onclick="go('inventory')"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg><span>Инвентарь</span></button>
+  <button class="nb" id="nb-pvp" onclick="go('pvp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="15 5 19 5 19 9"/><polyline points="5 15 5 19 9 19"/><line x1="15" y1="9" x2="19" y2="5"/><line x1="5" y1="19" x2="9" y2="15"/></svg><span>PvP</span></button>
   <button class="nb" id="nb-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></button>
 </nav>
 </div>
@@ -385,6 +486,7 @@
 <script src="js/friends.js"></script>
 <script src="js/stars.js"></script>
 <script src="js/draws.js"></script>
+<script src="js/pvp.js"></script>
 <script src="js/init.js"></script>
 </body>
 </html>
