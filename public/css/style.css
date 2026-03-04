@@ -394,3 +394,34 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 
 /* Nav PvP icon active tint */
 #nb-pvp.active .nb-pvp-ico { opacity:1; filter:invert(60%) sepia(80%) saturate(400%) hue-rotate(100deg); }
+
+/* ══ Nav icon press animation ══ */
+.nb svg, .nb span {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nb:active svg, .nb:active span {
+  transform: scale(0.75);
+}
+
+/* ══ Inventory action buttons ══ */
+.inv-act-btn {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.12s cubic-bezier(0.34,1.56,0.64,1), opacity 0.1s;
+}
+.inv-act-btn:active { transform: scale(0.95); opacity: 0.85; }
+.inv-act-wear {
+  background: var(--green);
+  color: #000;
+}
+.inv-act-sell {
+  background: rgba(244,196,48,.12);
+  color: #F4C430;
+  border: 1px solid rgba(244,196,48,.3) !important;
+}
