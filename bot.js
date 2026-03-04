@@ -1038,6 +1038,140 @@ bot.command('bans', (ctx) => {
 });
 
 
+
+/* ══ STARS EXCHANGE ══ */
+app.post('/api/stars/exchange', (req, res) => {
+  const { userId, amount } = req.body;
+  if (!userId || !amount) return res.json({ ok: false, error: 'missing params' });
+  const amt = Number(amount);
+  if (!amt || amt < 1) return res.json({ ok: false, error: 'Неверное количество' });
+  const u = getUser(userId);
+  if (u.starsBalance < amt) return res.json({ ok: false, error: 'Недостаточно Stars' });
+  u.starsBalance -= amt;
+  u.balance += amt * 100;
+  saveDB();
+  res.json({ ok: true, starsBalance: u.starsBalance, balance: u.balance, coins: amt * 100 });
+});
+
+/* ══ PvP WHEEL ══ */
+const PVP_COLORS = ['#2ecc71','#e74c3c','#5b8def','#f39c12','#9b59b6','#1abc9c','#e67e22','#ff6fb7','#00e5ff','#f4c430'];
+const PVP_MIN_BET = 50;
+const PVP_MAX_PLAYERS = 10;
+const PVP_FILL_MS = 20000;
+const PVP_COUNTDOWN_MS = 5000;
+const PVP_SPIN_MS = 5000;
+
+if (!DB.pvp) DB.pvp = { game: null };
+let pvpTimer = null;
+
+function clearPvpTimers() { if (pvpTimer) { clearTimeout(pvpTimer); pvpTimer = null; } }
+
+function startPvpFilling() {
+  const g = DB.pvp.game; if (!g) return;
+  g.state = 'filling';
+  g.fillEndsAt = Date.now() + PVP_FILL_MS;
+  pvpTimer = setTimeout(() => startPvpCountdown(), PVP_FILL_MS);
+}
+
+function startPvpCountdown() {
+  const g = DB.pvp.game; if (!g) return;
+  if (g.players.length < 2) { DB.pvp.game = null; saveDB(); return; }
+  g.state = 'countdown';
+  g.countdownEndsAt = Date.now() + PVP_COUNTDOWN_MS;
+  pvpTimer = setTimeout(() => startPvpSpin(), PVP_COUNTDOWN_MS);
+}
+
+function startPvpSpin() {
+  const g = DB.pvp.game; if (!g) return;
+  g.state = 'spinning';
+  g.spinEndsAt = Date.now() + PVP_SPIN_MS;
+
+  // Weighted random winner
+  const total = g.players.reduce((s, p) => s + p.bet, 0);
+  let rand = Math.random() * total;
+  let winner = g.players[g.players.length - 1];
+  for (const p of g.players) { rand -= p.bet; if (rand <= 0) { winner = p; break; } }
+  g.winner = winner;
+
+  // Credit winner
+  const u = DB.users[winner.uid];
+  if (u) { u.balance += total; }
+  saveDB();
+
+  pvpTimer = setTimeout(() => {
+    if (DB.pvp.game) {
+      DB.pvp.game.state = 'done';
+      saveDB();
+      setTimeout(() => { DB.pvp.game = null; saveDB(); }, 15000);
+    }
+  }, PVP_SPIN_MS);
+}
+
+app.post('/api/pvp/join', (req, res) => {
+  const { userId, username, firstName, bet } = req.body;
+  if (!userId || !bet) return res.json({ ok: false, error: 'missing params' });
+  const betN = Number(bet);
+  if (betN < PVP_MIN_BET) return res.json({ ok: false, error: `Минимум ${PVP_MIN_BET} монет` });
+  const u = getUser(userId);
+  if (u.balance < betN) return res.json({ ok: false, error: 'Недостаточно монет' });
+
+  let g = DB.pvp.game;
+
+  if (g && !['done'].includes(g.state)) {
+    if (g.players.find(p => p.uid === String(userId))) return res.json({ ok: false, error: 'Вы уже в игре' });
+    if (['countdown','spinning'].includes(g.state)) return res.json({ ok: false, error: 'Игра уже началась' });
+    if (g.players.length >= PVP_MAX_PLAYERS) return res.json({ ok: false, error: 'Игра заполнена' });
+
+    u.balance -= betN;
+    g.players.push({ uid: String(userId), username: username||'', firstName: firstName||'User', bet: betN, color: PVP_COLORS[g.players.length % 10] });
+    g.totalBet += betN;
+
+    if (g.players.length === 2) startPvpFilling();
+    if (g.players.length >= PVP_MAX_PLAYERS) { clearPvpTimers(); startPvpCountdown(); }
+  } else {
+    u.balance -= betN;
+    DB.pvp.game = {
+      id: Date.now(), state: 'waiting',
+      players: [{ uid: String(userId), username: username||'', firstName: firstName||'User', bet: betN, color: PVP_COLORS[0] }],
+      totalBet: betN, winner: null, createdAt: Date.now(),
+      fillEndsAt: null, countdownEndsAt: null, spinEndsAt: null,
+    };
+    g = DB.pvp.game;
+  }
+
+  saveDB();
+  res.json({ ok: true, game: DB.pvp.game });
+});
+
+app.get('/api/pvp/state', (req, res) => {
+  res.json({ ok: true, game: DB.pvp.game });
+});
+
+app.post('/api/pvp/leave', (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.json({ ok: false });
+  const g = DB.pvp.game;
+  if (!g) return res.json({ ok: false, error: 'Нет игры' });
+  if (!['waiting','filling'].includes(g.state)) return res.json({ ok: false, error: 'Нельзя выйти после старта' });
+
+  const idx = g.players.findIndex(p => p.uid === String(userId));
+  if (idx === -1) return res.json({ ok: false, error: 'Вы не в игре' });
+
+  const player = g.players[idx];
+  const u = getUser(userId);
+  u.balance += player.bet;
+  g.totalBet -= player.bet;
+  g.players.splice(idx, 1);
+
+  if (g.players.length === 0) { clearPvpTimers(); DB.pvp.game = null; }
+  else if (g.players.length === 1 && g.state === 'filling') {
+    clearPvpTimers(); g.state = 'waiting'; g.fillEndsAt = null;
+  }
+
+  saveDB();
+  res.json({ ok: true, refunded: player.bet });
+});
+
 /* ══ SERVER ══ */
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
