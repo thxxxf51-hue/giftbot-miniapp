@@ -29,11 +29,18 @@ function go(name){
 
 /* ══ TOAST ══ */
 let _tt;
-function toast(msg,type='g'){
+function toast(msg,type='g',icon=''){
   const el=document.getElementById('toast');
-  el.textContent=msg;el.className='toast '+type+' show';
+  if(icon){
+    el.innerHTML=`<span class="toast-ico">${icon}</span><span>${msg}</span>`;
+  } else {
+    el.textContent=msg;
+  }
+  el.className='toast '+type+' show';
   clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);
 }
+
+const PROMO_ICO='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11.5 14.5 16 9.5"/></svg>';
 
 /* ══ GENERAL MODAL ══ */
 let _gmCb=null;
