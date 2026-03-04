@@ -370,3 +370,20 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .dp-empty-t{font-size:13px;font-weight:600;color:var(--muted)}
 .dp-show-btn{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px;font-size:12px;font-weight:600;color:var(--muted2);cursor:pointer;font-family:inherit;transition:background .15s,color .15s;margin-top:10px;position:relative;z-index:1}
 .dp-show-btn:active{background:rgba(255,255,255,.09);color:var(--text)}
+
+/* ══ PvP ══ */
+.pvp-player-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.pvp-player-row:last-child{border-bottom:none}
+.pvp-player-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.pvp-player-info{flex:1;min-width:0}
+.pvp-player-name{font-size:12px;font-weight:600;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pvp-player-bar-wrap{background:rgba(255,255,255,.07);border-radius:3px;height:4px}
+.pvp-player-bar{height:4px;border-radius:3px;transition:width .4s ease}
+.pvp-player-right{text-align:right;flex-shrink:0}
+.pvp-player-bet{font-size:12px;font-weight:700;color:var(--green)}
+.pvp-player-pct{font-size:10px;color:var(--muted2)}
+
+/* ══ Stars tabs ══ */
+.stars-tabs{display:flex;gap:5px;padding:10px 16px 0;margin-bottom:0}
+.stars-tab-btn{flex:1;padding:9px 4px;border-radius:10px;border:1.5px solid rgba(255,215,0,.2);background:transparent;color:var(--muted2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.stars-tab-btn.active{background:rgba(255,215,0,.12);color:var(--star);border-color:rgba(255,215,0,.4)}
