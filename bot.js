@@ -257,6 +257,7 @@ app.post('/api/user/sync', (req, res) => {
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
   if (firstName) u.firstName = firstName;
+  u.lastSeen = Date.now();
 
   // Если забанен по username — применяем бан к uid
   if (username) {
@@ -890,6 +891,70 @@ bot.command('bc_count', (ctx) => {
 
 /* ══ ADMIN: СБРОС СТАТИСТИКИ ══ */
 
+
+// /stat @username — статистика пользователя
+bot.command('stat', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const args = ctx.message.text.split(' ').slice(1);
+  if (!args.length) return ctx.reply('❌ Укажи: /stat @username');
+  const username = args[0].replace('@','').toLowerCase();
+  const uid = findUidByUsername(username);
+  if (!uid) return ctx.reply(`❌ Пользователь @${username} не найден в базе`);
+  const u = DB.users[uid];
+  if (!u) return ctx.reply('❌ Данные не найдены');
+
+  const now = Date.now();
+  const balance = (u.balance||0).toLocaleString('ru');
+  const stars   = u.starsBalance||0;
+
+  // VIP
+  let vipStr = '❌ Нет';
+  if (u.vipExpiry && u.vipExpiry > now) {
+    const daysLeft = Math.ceil((u.vipExpiry - now) / 86400000);
+    vipStr = `✅ Активен (${daysLeft} дн. осталось)`;
+  }
+
+  // Last seen
+  let lastSeen = '—';
+  if (u.lastSeen) {
+    const d = new Date(u.lastSeen);
+    const diff = now - u.lastSeen;
+    const mins = Math.floor(diff/60000);
+    const hours= Math.floor(diff/3600000);
+    const days = Math.floor(diff/86400000);
+    const timeStr = days>0?`${days}д назад`:hours>0?`${hours}ч назад`:mins>0?`${mins}м назад`:'только что';
+    lastSeen = `${d.toLocaleDateString('ru')} ${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})} (${timeStr})`;
+  }
+
+  // Reg date
+  let regDate = '—';
+  if (u.regDate) {
+    const d = new Date(u.regDate);
+    regDate = d.toLocaleDateString('ru');
+  }
+
+  // Crown / Legend
+  const hasCrown = u.hasCrown ? '👑 Есть' : '—';
+  let legendStr = '—';
+  if (u.legendExpiry && u.legendExpiry > now) {
+    const ld = Math.ceil((u.legendExpiry - now) / 86400000);
+    legendStr = `✨ Активна (${ld} дн.)`;
+  }
+
+  const msg = `👤 Профиль @${username}
+
+💰 Баланс: ${balance} монет
+⭐ Stars: ${stars}
+👑 VIP: ${vipStr}
+✨ Легенда: ${legendStr}
+${hasCrown !== '—' ? '👑 Корона: Есть
+' : ''}📅 Зарегистрирован: ${regDate}
+🕐 Последний вход: ${lastSeen}
+🆔 UID: ${uid}`;
+
+  ctx.reply(msg);
+});
+
 // /dstats — сбросить статистику ВСЕХ пользователей (кроме Stars)
 bot.command('dstats', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
@@ -906,6 +971,70 @@ bot.command('dstats', async (ctx) => {
     for (const uid of uids) { if (resetUserStats(uid)) count++; }
     c.reply(`✅ Статистика сброшена у ${count} пользователей.\n⭐ Stars не тронуты.`);
   });
+});
+
+
+// /stat @username — статистика пользователя
+bot.command('stat', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const args = ctx.message.text.split(' ').slice(1);
+  if (!args.length) return ctx.reply('❌ Укажи: /stat @username');
+  const username = args[0].replace('@','').toLowerCase();
+  const uid = findUidByUsername(username);
+  if (!uid) return ctx.reply(`❌ Пользователь @${username} не найден в базе`);
+  const u = DB.users[uid];
+  if (!u) return ctx.reply('❌ Данные не найдены');
+
+  const now = Date.now();
+  const balance = (u.balance||0).toLocaleString('ru');
+  const stars   = u.starsBalance||0;
+
+  // VIP
+  let vipStr = '❌ Нет';
+  if (u.vipExpiry && u.vipExpiry > now) {
+    const daysLeft = Math.ceil((u.vipExpiry - now) / 86400000);
+    vipStr = `✅ Активен (${daysLeft} дн. осталось)`;
+  }
+
+  // Last seen
+  let lastSeen = '—';
+  if (u.lastSeen) {
+    const d = new Date(u.lastSeen);
+    const diff = now - u.lastSeen;
+    const mins = Math.floor(diff/60000);
+    const hours= Math.floor(diff/3600000);
+    const days = Math.floor(diff/86400000);
+    const timeStr = days>0?`${days}д назад`:hours>0?`${hours}ч назад`:mins>0?`${mins}м назад`:'только что';
+    lastSeen = `${d.toLocaleDateString('ru')} ${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})} (${timeStr})`;
+  }
+
+  // Reg date
+  let regDate = '—';
+  if (u.regDate) {
+    const d = new Date(u.regDate);
+    regDate = d.toLocaleDateString('ru');
+  }
+
+  // Crown / Legend
+  const hasCrown = u.hasCrown ? '👑 Есть' : '—';
+  let legendStr = '—';
+  if (u.legendExpiry && u.legendExpiry > now) {
+    const ld = Math.ceil((u.legendExpiry - now) / 86400000);
+    legendStr = `✨ Активна (${ld} дн.)`;
+  }
+
+  const msg = `👤 Профиль @${username}
+
+💰 Баланс: ${balance} монет
+⭐ Stars: ${stars}
+👑 VIP: ${vipStr}
+✨ Легенда: ${legendStr}
+${hasCrown !== '—' ? '👑 Корона: Есть
+' : ''}📅 Зарегистрирован: ${regDate}
+🕐 Последний вход: ${lastSeen}
+🆔 UID: ${uid}`;
+
+  ctx.reply(msg);
 });
 
 // /dstats_user @username — сбросить статистику конкретного пользователя
