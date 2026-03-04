@@ -37,11 +37,13 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .stars-pill .star-ico{font-size:13px;line-height:1}
 .hbal-row{display:flex;align-items:center;gap:6px}
 
-.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-70px);padding:8px 14px;border-radius:14px;font-size:12px;font-weight:600;z-index:9999;transition:transform .3s cubic-bezier(.34,1.4,.64,1);white-space:nowrap;pointer-events:none;max-width:80vw;text-align:center}
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-90px);padding:13px 20px;border-radius:18px;font-size:15px;font-weight:700;z-index:9999;transition:transform .35s cubic-bezier(.34,1.4,.64,1);white-space:nowrap;pointer-events:none;max-width:88vw;text-align:center;display:flex;align-items:center;gap:10px;box-shadow:0 4px 24px rgba(0,0,0,.35)}
+.toast-ico{display:flex;align-items:center;flex-shrink:0}
 .toast.show{transform:translateX(-50%) translateY(0)}
-.toast.g{background:#1a2e1a;border:1px solid rgba(46,204,113,.35);color:var(--green)}
-.toast.r{background:#2e1a1a;border:1px solid rgba(255,96,96,.35);color:var(--red)}
-.toast.s{background:#2a2500;border:1px solid rgba(255,215,0,.35);color:var(--star)}
+.toast.g{background:linear-gradient(135deg,#0d1f14,#122010);border:1px solid rgba(46,204,113,.4);color:#fff}
+.toast.g .toast-ico svg{stroke:#2ecc71}
+.toast.r{background:linear-gradient(135deg,#1f0d0d,#200d0d);border:1px solid rgba(255,96,96,.4);color:#fff}
+.toast.s{background:linear-gradient(135deg,#2a2500,#1f1c00);border:1px solid rgba(255,215,0,.4);color:#fff}
 
 .hhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .huser{display:flex;align-items:center;gap:10px}
