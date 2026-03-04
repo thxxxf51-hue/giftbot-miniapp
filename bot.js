@@ -57,6 +57,19 @@ setInterval(saveDB, 30000);
 process.on('SIGTERM', () => { saveDB(); process.exit(0); });
 process.on('SIGINT',  () => { saveDB(); process.exit(0); });
 
+
+/* ══ TRANSACTIONS ══ */
+function addTx(uid, type, amount, details) {
+  const u = getUser(uid);
+  if (!u.transactions) u.transactions = [];
+  u.transactions.unshift({
+    type, amount, details,
+    date: new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'short',year:'numeric'})
+  });
+  // Keep last 100
+  if (u.transactions.length > 100) u.transactions = u.transactions.slice(0, 100);
+}
+
 function getUser(uid) {
   uid = String(uid);
   if (!DB.users[uid]) DB.users[uid] = {
@@ -345,6 +358,8 @@ app.post('/api/promo', (req, res) => {
   u.usedPromos.push(c);
   u.balance += p.reward;
   p.usedCount++;
+  addTx(userId, 'promo_code', '+'+p.reward, 'Промокод ' + c);
+  saveDB();
   res.json({ ok: true, reward: p.reward, balance: u.balance });
 });
 
@@ -448,6 +463,7 @@ bot.on('message', async (ctx, next) => {
       const stars = Number(payload.amount);
       const u = getUser(userId);
       u.starsBalance = (u.starsBalance || 0) + stars;
+      addTx(userId, 'stars_buy', '+'+stars, 'Пополнение Stars');
 
       // Помечаем инвойс как оплаченный
       for (const inv of Object.values(DB.starsInvoices)) {
@@ -960,15 +976,15 @@ bot.command('stat', async (ctx) => {
     legendStr = `✨ Активна (${ld} дн.)`;
   }
 
-  const msg = `┠👤 Профиль @${username}
+  const msg = `👤 Профиль @${username}
 
-┠💰 Баланс: ${balance} монет
-┠⭐ Stars: ${stars}
-┠👑 VIP: ${vipStr}
-┠✨ Легенда: ${legendStr}
-${hasCrown !== '—' ? '👑 Корона: Есть | ' : ''}┠📅 Зарегистрирован: ${regDate}
-┠🕐 Последний вход: ${lastSeen}
-┖🆔 UID: ${uid}`;
+💰 Баланс: ${balance} монет
+⭐ Stars: ${stars}
+👑 VIP: ${vipStr}
+✨ Легенда: ${legendStr}
+${hasCrown !== '—' ? '👑 Корона: Есть | ' : ''}📅 Зарегистрирован: ${regDate}
+🕐 Последний вход: ${lastSeen}
+🆔 UID: ${uid}`;
 
   ctx.reply(msg);
 });
@@ -1208,8 +1224,26 @@ app.post('/api/stars/exchange', (req, res) => {
   if (u.starsBalance < amt) return res.json({ ok: false, error: 'Недостаточно Stars' });
   u.starsBalance -= amt;
   u.balance += amt * 100;
+  addTx(userId, 'stars_exchange', '+'+(amt*100), 'Обмен '+amt+' Stars → '+(amt*100)+' монет');
   saveDB();
   res.json({ ok: true, starsBalance: u.starsBalance, balance: u.balance, coins: amt * 100 });
+});
+
+/* ══ TRANSACTIONS API ══ */
+app.get('/api/transactions', (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.json({ ok: false });
+  const u = DB.users[String(userId)];
+  if (!u) return res.json({ ok: true, transactions: [] });
+  res.json({ ok: true, transactions: u.transactions || [] });
+});
+
+app.post('/api/transactions/add', (req, res) => {
+  const { userId, type, amount, details } = req.body;
+  if (!userId || !type) return res.json({ ok: false });
+  addTx(userId, type, amount, details);
+  saveDB();
+  res.json({ ok: true });
 });
 
 /* ══ PvP WHEEL ══ */
