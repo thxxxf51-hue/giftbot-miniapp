@@ -1108,7 +1108,7 @@ function startPvpSpin() {
 }
 
 app.post('/api/pvp/join', (req, res) => {
-  const { userId, username, firstName, bet } = req.body;
+  const { userId, username, firstName, photoUrl, bet } = req.body;
   if (!userId || !bet) return res.json({ ok: false, error: 'missing params' });
   const betN = Number(bet);
   if (betN < PVP_MIN_BET) return res.json({ ok: false, error: `Минимум ${PVP_MIN_BET} монет` });
@@ -1123,7 +1123,7 @@ app.post('/api/pvp/join', (req, res) => {
     if (g.players.length >= PVP_MAX_PLAYERS) return res.json({ ok: false, error: 'Игра заполнена' });
 
     u.balance -= betN;
-    g.players.push({ uid: String(userId), username: username||'', firstName: firstName||'User', bet: betN, color: PVP_COLORS[g.players.length % 10] });
+    g.players.push({ uid: String(userId), username: username||'', firstName: firstName||'User', photoUrl: photoUrl||'', bet: betN, color: PVP_COLORS[g.players.length % 10] });
     g.totalBet += betN;
 
     if (g.players.length === 2) startPvpFilling();
@@ -1132,7 +1132,7 @@ app.post('/api/pvp/join', (req, res) => {
     u.balance -= betN;
     DB.pvp.game = {
       id: Date.now(), state: 'waiting',
-      players: [{ uid: String(userId), username: username||'', firstName: firstName||'User', bet: betN, color: PVP_COLORS[0] }],
+      players: [{ uid: String(userId), username: username||'', firstName: firstName||'User', photoUrl: photoUrl||'', bet: betN, color: PVP_COLORS[0] }],
       totalBet: betN, winner: null, createdAt: Date.now(),
       fillEndsAt: null, countdownEndsAt: null, spinEndsAt: null,
     };
