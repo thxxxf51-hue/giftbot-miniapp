@@ -1,19 +1,29 @@
 /* ══ NAVIGATION ══ */
-const PAGES=['home','tasks','shop','inventory','raffles','friends','profile'];
+const PAGES=['home','tasks','shop','inventory','raffles','friends','profile','pvp'];
 let curPage='home',navLk=false;
 
 function go(name){
   if(name===curPage||navLk)return;
   navLk=true;
+  // Page leave hooks
+  if(curPage==='pvp') onPvpPageLeave?.();
+
   const old=document.getElementById('page-'+curPage);
   const nw=document.getElementById('page-'+name);
   old.classList.add('exit');
   old.addEventListener('animationend',()=>{old.classList.remove('active','exit');old.style.display='none';},{once:true});
-  setTimeout(()=>{nw.style.display='block';nw.classList.add('active');nw.addEventListener('animationend',()=>{navLk=false;},{once:true});},60);
+  setTimeout(()=>{
+    nw.style.display='block';
+    nw.classList.add('active');
+    nw.addEventListener('animationend',()=>{navLk=false;},{once:true});
+  },60);
   PAGES.forEach(p=>document.getElementById('nb-'+p)?.classList.remove('active'));
   document.getElementById('nb-'+name)?.classList.add('active');
   curPage=name;syncB();
+
+  // Page enter hooks
   if(name==='inventory')renderInv();
+  if(name==='pvp')onPvpPageEnter?.();
 }
 
 /* ══ TOAST ══ */
