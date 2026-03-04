@@ -17,7 +17,7 @@ let _pvpHistoryFor = null;   // game.id we added to history
 let _pvpCanvas     = null;
 let _pvpCtx        = null;
 let _pvpAvatars    = {};     // uid -> Image|null
-let _pvpHistory    = [];     // [{time, players, totalBet, winner, winnerColor}]
+let _pvpHistory    = [];     // loaded from server
 
 const $ = id => document.getElementById(id);
 
@@ -48,6 +48,20 @@ async function _fetchPvp() {
     _pvpGame = d.game;
     if (_pvpGame?.players) _preloadAvatars(_pvpGame.players);
     _pvpRender();
+  } catch {}
+}
+
+async function _fetchHistory() {
+  try {
+    const r = await fetch('/api/pvp/history');
+    const d = await r.json();
+    if (d.ok) {
+      _pvpHistory = d.history || [];
+      _renderHistoryModal();
+      // Update count badge
+      const cnt = $('pvp-hist-count');
+      if (cnt) cnt.textContent = _pvpHistory.length ? _pvpHistory.length + ' игр' : '';
+    }
   } catch {}
 }
 
@@ -443,12 +457,10 @@ function _showResult(g) {
   prEl.textContent = isMe ? '+' + g.totalBet.toLocaleString('ru') + ' монет!' : '';
   prEl.style.color = isMe ? 'var(--green)' : 'var(--muted2)';
 
-  // Add to history ONCE per game
+  // Refresh history from server after result (with delay so server has saved it)
   if (_pvpHistoryFor !== g.id) {
     _pvpHistoryFor = g.id;
-    _pvpHistory.unshift({ time: Date.now(), players: g.players.length, totalBet: g.totalBet, winner: w.username ? '@'+w.username : w.firstName, winnerColor: wCol });
-    // Trim entries older than 1 hour
-    _pvpHistory = _pvpHistory.filter(h => Date.now() - h.time < 3600000);
+    setTimeout(_fetchHistory, 6000);
   }
 
   // Countdown → back to idle
@@ -471,41 +483,47 @@ function _showResult(g) {
 }
 
 /* ─── HISTORY ─── */
-function _renderHistoryInto(containerId) {
-  const block = $(containerId + '-block') || $('pvp-history-section-' + containerId);
-  // Use a generic approach: find by id
-  const wrap = $(containerId);
-  if (!wrap) return;
-
-  // Clean old
-  _pvpHistory = _pvpHistory.filter(h => Date.now() - h.time < 3600000);
-
-  const section = wrap.parentElement;
-  const hdr = section?.querySelector('.pvp-hist-hdr');
-
-  if (!_pvpHistory.length) {
-    wrap.innerHTML = '';
-    if (hdr) hdr.style.display = 'none';
-    return;
-  }
-  if (hdr) hdr.style.display = 'block';
-
-  wrap.innerHTML = _pvpHistory.map(h => {
+function _historyHTML(list) {
+  if (!list.length) return '<div style="padding:20px;text-align:center;color:var(--muted2);font-size:13px">Нет игр за последний час</div>';
+  return list.map(h => {
     const d   = new Date(h.time);
     const hh  = String(d.getHours()).padStart(2,'0');
     const mm  = String(d.getMinutes()).padStart(2,'0');
     const ago = Math.floor((Date.now()-h.time)/60000);
-    const agoStr = ago < 1 ? 'только что' : ago + 'мин назад';
-    return `<div class="gc" style="padding:10px 14px;margin-bottom:7px">
+    const agoStr = ago < 1 ? 'только что' : ago+'м назад';
+    const col = h.winnerColor || 'var(--green)';
+    return `<div class="gc" style="padding:11px 14px;margin-bottom:7px">
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div>
           <div style="font-size:11px;color:var(--muted2);margin-bottom:3px">${hh}:${mm} · ${h.players} игр. · ${agoStr}</div>
-          <div style="font-size:13px;font-weight:700">🏆 <span style="color:${h.winnerColor}">${h.winner}</span></div>
+          <div style="font-size:13px;font-weight:700">🏆 <span style="color:${col}">${h.winnerName||h.winner||'?'}</span></div>
         </div>
-        <div style="font-size:14px;font-weight:800;color:var(--green)">${h.totalBet.toLocaleString('ru')} 🪙</div>
+        <div style="font-size:14px;font-weight:800;color:var(--green)">${(h.totalBet||0).toLocaleString('ru')} 🪙</div>
       </div>
     </div>`;
   }).join('');
+}
+
+function _renderHistoryInto(containerId) {
+  const wrap = $(containerId);
+  if (!wrap) return;
+  wrap.innerHTML = _historyHTML(_pvpHistory);
+}
+
+function _renderHistoryModal() {
+  const list = $('pvp-hist-modal-list');
+  if (list) list.innerHTML = _historyHTML(_pvpHistory);
+}
+
+function openPvpHistory() {
+  _fetchHistory();
+  const mo = $('pvp-hist-mo');
+  if (mo) mo.classList.add('show');
+}
+
+function closePvpHistory() {
+  const mo = $('pvp-hist-mo');
+  if (mo) mo.classList.remove('show');
 }
 
 /* ─── JOIN / LEAVE ─── */
@@ -545,5 +563,5 @@ async function pvpLeave() {
 }
 
 /* ─── PAGE HOOKS ─── */
-function onPvpPageEnter() { startPvpPolling(); _pvpRender(); }
+function onPvpPageEnter() { startPvpPolling(); _pvpRender(); _fetchHistory(); }
 function onPvpPageLeave() {}
