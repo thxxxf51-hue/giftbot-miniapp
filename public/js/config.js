@@ -8,7 +8,7 @@ const INV_DEF={
   super:{ico:'🌟',name:'Супер',desc:'Смени цвет ника бесплатно (1 раз)',action:'useSuper'},
   crown:{ico:'👑',name:'Корона',desc:'Надень корону или обменяй за 777 🪙',action:'wearCrown'},
   legend:{ico:'✨',name:'Легенда',desc:'Активируй свечение или обменяй за 333 🪙',action:'activateLegendItem'},
-  megagift:{ico:'🎁',name:'Мега-подарок',desc:'Крути мега-рулетку: VIP 7д, Билеты х10, Корона, Кейс Золотой',action:'openMegaGift'},
+  megagift:{ico:'🎁',name:'Мега-подарок',desc:'Крути мега-рулетку: VIP 7д, Билеты х10, Корона, Кейс Богача',action:'openMegaGift'},
 };
 
 /* ══ CASES ══ */
