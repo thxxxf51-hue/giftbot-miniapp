@@ -941,14 +941,15 @@ bot.command('stat', async (ctx) => {
     legendStr = `✨ Активна (${ld} дн.)`;
   }
 
-  const msg = `👤 Профиль @${username}
+  const msg = 
+`👤 Профиль @${username}
 
 💰 Баланс: ${balance} монет
 ⭐ Stars: ${stars}
 👑 VIP: ${vipStr}
 ✨ Легенда: ${legendStr}
-${hasCrown !== '—' ? '👑 Корона: Есть
-' : ''}📅 Зарегистрирован: ${regDate}
+${u.hasCrown ? '👑 Корона: Есть\n' : ''}
+📅 Зарегистрирован: ${regDate}
 🕐 Последний вход: ${lastSeen}
 🆔 UID: ${uid}`;
 
