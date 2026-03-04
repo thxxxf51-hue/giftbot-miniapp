@@ -131,25 +131,17 @@ function _pvpRender() {
 
   /* DONE — server says done */
   if (g.state === 'done') {
-    // If we already showed result for this game — ignore server polling
+    // Already handled this game fully — ignore all future polls
     if (_pvpResultFor === g.id) return;
 
-    // Spin was never started (user joined late / refreshed during done)
-    // → show result immediately
-    pvpShow('pvp-ingame-block');
-    _renderIngamePlayers(g);
-    _initCanvas();
-
-    if (_pvpSpunFor !== g.id) {
-      _pvpSpunFor = g.id;
-      _startSpin(g, () => {
-        if (_pvpResultFor !== g.id) {
-          _pvpResultFor = g.id;
-          pvpShow('pvp-result-block');
-          _showResult(g);
-        }
-      });
-    }
+    // User refreshed/joined while game was in 'done' state on server
+    // Don't replay spin — just mark as handled and go to idle immediately
+    _pvpResultFor  = g.id;
+    _pvpSpunFor    = g.id;
+    _pvpHistoryFor = g.id;
+    _pvpGame = null;
+    pvpShow('pvp-idle-block');
+    _fetchHistory();
     return;
   }
 }
@@ -518,12 +510,16 @@ function _renderHistoryModal() {
 function openPvpHistory() {
   _fetchHistory();
   const mo = $('pvp-hist-mo');
-  if (mo) mo.classList.add('show');
+  if (!mo) return;
+  mo.style.display = 'flex';
+  requestAnimationFrame(() => mo.classList.add('show'));
 }
 
 function closePvpHistory() {
   const mo = $('pvp-hist-mo');
-  if (mo) mo.classList.remove('show');
+  if (!mo) return;
+  mo.classList.remove('show');
+  setTimeout(() => { mo.style.display = 'none'; }, 250);
 }
 
 /* ─── JOIN / LEAVE ─── */
