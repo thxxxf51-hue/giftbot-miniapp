@@ -193,7 +193,7 @@ function openInvActionMo(key, cnt) {
   const extra = document.getElementById('gm-extra');
   if (extra) {
     extra.innerHTML =
-      '<div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">' +
+      '<div class="inv-act-btns-wrap">' +
         '<button onclick="doWearItem(\''+key+'\')" class="inv-act-btn inv-act-wear">' +
           (isCrown ? '👑 Надеть' : '✨ Активировать') +
         '</button>' +
@@ -202,6 +202,10 @@ function openInvActionMo(key, cnt) {
         '</button>' +
       '</div>';
   }
+
+  // Make modal taller
+  const sheet = document.querySelector('#genmo .modal-sheet');
+  if (sheet) sheet.style.paddingBottom = '28px';
 
   // Hide default action button, show modal
   const aBtn = document.getElementById('gm-a');
