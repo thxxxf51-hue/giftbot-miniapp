@@ -927,10 +927,15 @@ bot.command('stat', async (ctx) => {
   }
 
   // Reg date
+  // regDate already stored as formatted string OR as timestamp
   let regDate = '—';
   if (u.regDate) {
-    const d = new Date(u.regDate);
-    regDate = d.toLocaleDateString('ru');
+    const asNum = Number(u.regDate);
+    if (!isNaN(asNum) && asNum > 1000000000000) {
+      regDate = new Date(asNum).toLocaleDateString('ru');
+    } else {
+      regDate = String(u.regDate); // already a readable string
+    }
   }
 
   // Crown / Legend
@@ -1008,10 +1013,15 @@ bot.command('stat', async (ctx) => {
   }
 
   // Reg date
+  // regDate already stored as formatted string OR as timestamp
   let regDate = '—';
   if (u.regDate) {
-    const d = new Date(u.regDate);
-    regDate = d.toLocaleDateString('ru');
+    const asNum = Number(u.regDate);
+    if (!isNaN(asNum) && asNum > 1000000000000) {
+      regDate = new Date(asNum).toLocaleDateString('ru');
+    } else {
+      regDate = String(u.regDate); // already a readable string
+    }
   }
 
   // Crown / Legend
