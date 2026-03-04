@@ -32,7 +32,14 @@ let _tt;
 function toast(msg,type='g',icon=''){
   const el=document.getElementById('toast');
   if(icon){
-    el.innerHTML=`<span class="toast-ico">${icon}</span><span>${msg}</span>`;
+    el.innerHTML='';
+    const wrap=document.createElement('span');
+    wrap.className='toast-ico';
+    wrap.innerHTML=icon;
+    const txt=document.createElement('span');
+    txt.textContent=msg;
+    el.appendChild(wrap);
+    el.appendChild(txt);
   } else {
     el.textContent=msg;
   }
@@ -40,7 +47,7 @@ function toast(msg,type='g',icon=''){
   clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);
 }
 
-const PROMO_ICO='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11.5 14.5 16 9.5"/></svg>';
+const PROMO_ICO='<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block;flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11.5 14.5 16 9.5"/></svg>';
 
 /* ══ GENERAL MODAL ══ */
 let _gmCb=null;
