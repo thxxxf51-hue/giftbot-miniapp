@@ -45,5 +45,5 @@ function openGenMo(title,sub,label,cb){
   _gmCb=cb;
   document.getElementById('genmo').classList.add('show');
 }
-function closeGenMo(){document.getElementById('genmo').classList.remove('show');_gmCb=null;}
+function closeGenMo(){document.getElementById('genmo').classList.remove('show');_gmCb=null;const a=document.getElementById('gm-a');if(a)a.style.display='';const ex=document.getElementById('gm-extra');if(ex)ex.innerHTML='';}
 function doGenMo(){if(_gmCb)_gmCb();}

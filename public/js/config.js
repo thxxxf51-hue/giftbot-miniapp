@@ -6,8 +6,8 @@ const INV_DEF={
   bonus5:{ico:'🔥',name:'Бонус х5',desc:'Следующий денежный приз из кейса умножается на 5 (1 раз)',action:'activateBonus5'},
   ticket:{ico:'🎟️',name:'Билет',desc:'Используй для участия в розыгрышах требующих билеты',action:'useTicket'},
   super:{ico:'🌟',name:'Супер',desc:'Смени цвет ника бесплатно (1 раз)',action:'useSuper'},
-  crown:{ico:'👑',name:'Корона',desc:'Надень корону на аватарку. Если короны >3 — можно продать за 777 🪙 каждую',action:'wearCrown'},
-  legend:{ico:'✨',name:'Легенда',desc:'Свечение вокруг аватарки. Если легенд >3 — можно продать за 333 🪙 каждую',action:'activateLegendItem'},
+  crown:{ico:'👑',name:'Корона',desc:'Надень корону или обменяй за 777 🪙',action:'wearCrown'},
+  legend:{ico:'✨',name:'Легенда',desc:'Активируй свечение или обменяй за 333 🪙',action:'activateLegendItem'},
   megagift:{ico:'🎁',name:'Мега-подарок',desc:'Крути мега-рулетку: VIP 7д, Билеты х10, Корона, Кейс Золотой',action:'openMegaGift'},
 };
 
@@ -51,7 +51,7 @@ const CASES=[
      {i:'💎',n:'Кристалл',v:'х5',inv:'crystal',cnt:5},
      {i:'🎁',n:'Подарок',v:'х5',inv:'gift',cnt:5},
      {i:'🌟',n:'Супер',v:'х1',inv:'super',cnt:1},
-     {i:'👑',n:'Корона',v:'5 дней',crownDays:5},
+     {i:'👑',n:'Корона',v:'х1',inv:'crown',cnt:1},
      {i:'💰',n:'Монеты',v:'+2222',coins:2222},
      {i:'🔥',n:'Бонус',v:'х5',inv:'bonus5',cnt:1},
      {i:'🪙',n:'Монеты',v:'+999',coins:999},
@@ -61,10 +61,10 @@ const CASES=[
   {id:4,name:'Кейс Миллионера',price:7777,bg:'linear-gradient(145deg,#200a0a,#1a0808)',ic:'#FF4D4D',ib:'rgba(255,77,77,.15)',
    icon:`<svg viewBox="0 0 24 24" stroke="#FF4D4D" fill="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/><circle cx="12" cy="12" r="3"/></svg>`,
    drops:[
-     {i:'👑',n:'Корона',v:'10 дней',crownDays:10},
+     {i:'👑',n:'Корона',v:'х1',inv:'crown',cnt:1},
      {i:'💰',n:'Монеты',v:'+1000',coins:1000},
      {i:'🏆',n:'VIP',v:'7 дней',vipDays:7},
-     {i:'✨',n:'Легенда',v:'2 дня',legendDays:2},
+     {i:'✨',n:'Легенда',v:'х1',inv:'legend',cnt:1},
      {i:'🌟',n:'Супер',v:'х1',inv:'super',cnt:1},
      {i:'🎁',n:'Мега-подарок',v:'х1',inv:'megagift',cnt:1},
      {i:'🏆',n:'VIP',v:'3 дня',vipDays:3},
