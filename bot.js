@@ -252,7 +252,7 @@ async function finishDraw(id) {
 /* ══ REST API ══ */
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName, balance, starsBalance } = req.body;
+  const { userId, username, firstName, balance, starsBalance, vipExpiry } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
@@ -287,6 +287,12 @@ app.post('/api/user/sync', (req, res) => {
   }
   if (starsBalance !== undefined && Number(starsBalance) > u.starsBalance) {
     u.starsBalance = Number(starsBalance);
+  }
+  // Sync vipExpiry from client (stored in localStorage)
+  if (vipExpiry && Number(vipExpiry) > Date.now()) {
+    u.vipExpiry = Number(vipExpiry);
+  } else if (vipExpiry === null) {
+    u.vipExpiry = null;
   }
 
   saveDB();
@@ -1240,11 +1246,16 @@ function startPvpSpin() {
   g.state = 'spinning';
   g.spinEndsAt = Date.now() + PVP_SPIN_MS;
 
-  // Weighted random winner
+  // Square-root weighted random — smooths bet advantage, everyone has real chance
   const total = g.players.reduce((s, p) => s + p.bet, 0);
-  let rand = Math.random() * total;
+  const sqrtWeights = g.players.map(p => Math.sqrt(p.bet));
+  const sqrtTotal   = sqrtWeights.reduce((s, w) => s + w, 0);
+  let rand = Math.random() * sqrtTotal;
   let winner = g.players[g.players.length - 1];
-  for (const p of g.players) { rand -= p.bet; if (rand <= 0) { winner = p; break; } }
+  for (let i = 0; i < g.players.length; i++) {
+    rand -= sqrtWeights[i];
+    if (rand <= 0) { winner = g.players[i]; break; }
+  }
   g.winner = winner;
 
   // Credit winner
