@@ -501,7 +501,7 @@
   <button class="nb active" id="nb-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Главная</span></button>
   <button class="nb" id="nb-tasks" onclick="go('tasks')"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Задания</span></button>
   <button class="nb" id="nb-shop" onclick="go('shop')"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg><span>Магазин</span></button>
-  <button class="nb" id="nb-pvp" onclick="go('pvp')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2.5L21 9l-3 3-1.5-1.5-7 7L8 17l-1.5 1.5L3 15l1.5-1.5L6 12l-1.5-1.5 3-3L9 9l7-7z"/><line x1="3" y1="21" x2="6" y2="18"/><line x1="7" y1="17" x2="10" y2="14"/></svg><span>PvP</span></button>
+  <button class="nb" id="nb-pvp" onclick="go('pvp')"><img src="icons/pvp.svg" width="24" height="24" style="display:block;opacity:0.65" class="nb-pvp-ico"><span>PvP</span></button>
   <button class="nb" id="nb-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></button>
 </nav>
 </div>
@@ -520,8 +520,8 @@
 
 <!-- PvP History Modal -->
 <div id="pvp-hist-mo" onclick="if(event.target===this)closePvpHistory()"
-  style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:flex-end">
-  <div style="background:#18191c;border-radius:20px 20px 0 0;width:100%;max-height:80vh;display:flex;flex-direction:column">
+  style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);align-items:flex-end;transition:opacity .2s">
+  <div style="background:#18191c;border-radius:20px 20px 0 0;width:100%;max-height:80vh;display:flex;flex-direction:column;transform:translateY(0);transition:transform .25s ease">
     <!-- Drag handle -->
     <div style="display:flex;justify-content:center;padding:10px 0 4px">
       <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15)"></div>
