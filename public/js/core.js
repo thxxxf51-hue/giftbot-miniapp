@@ -168,15 +168,58 @@ function useInvItem(key){
   } else if(a==='useSuper'){
     openGenMo('🌟 Супер','Позволяет сменить цвет ника 1 раз бесплатно.\nПосле выбора предмет спишется.','🌟 Выбрать цвет',()=>{closeGenMo();removeInv('super',1);save();renderInv();openColorPicker(true);});
   } else if(a==='wearCrown'){
-    openGenMo('👑 Корона','Надень корону на аватарку навсегда!\nКорона отображается над фото профиля на главном экране и в профиле.','👑 Надеть',()=>{removeInv('crown',1);S.hasCrown=true;save();applyCrown();closeGenMo();toast('👑 Корона надета!','g');renderInv();});
+    if(cnt>3){
+      // Offer sell
+      const sellCoins=777;
+      const extra=document.getElementById('gm-extra');
+      openGenMo('👑 Корона (×'+cnt+')','У вас больше 3 корон! Можно носить или продать лишние за '+sellCoins+' 🪙 каждую.','👑 Надеть',()=>{removeInv('crown',1);S.hasCrown=true;save();applyCrown();closeGenMo();toast('👑 Корона надета!','g');renderInv();});
+      if(extra){extra.innerHTML='<button onclick="sellInvItem('crown')" style="width:100%;background:rgba(255,215,0,.12);color:#F4C430;border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">💰 Продать 1 корону за '+sellCoins+' монет</button>';}
+    } else {
+      openGenMo('👑 Корона','Надень корону на аватарку навсегда!\nКорона отображается над фото профиля на главном экране и в профиле.','👑 Надеть',()=>{removeInv('crown',1);S.hasCrown=true;save();applyCrown();closeGenMo();toast('👑 Корона надета!','g');renderInv();});
+    }
   } else if(a==='activateLegendItem'){
-    closeGenMo();
-    renderLegendColors();
-    document.getElementById('lgmo').classList.add('show');
+    if(cnt>3){
+      const sellCoins=333;
+      openGenMo('✨ Легенда (×'+cnt+')','У вас больше 3 легенд! Можно активировать или продать за '+sellCoins+' 🪙 каждую.','✨ Активировать',()=>{closeGenMo();renderLegendColors();document.getElementById('lgmo').classList.add('show');});
+      const extra=document.getElementById('gm-extra');
+      if(extra){extra.innerHTML='<button onclick="sellInvItem('legend')" style="width:100%;background:rgba(255,215,0,.12);color:#F4C430;border:1px solid rgba(255,215,0,.3);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px">💰 Продать 1 легенду за '+sellCoins+' монет</button>';}
+    } else {
+      closeGenMo();
+      renderLegendColors();
+      document.getElementById('lgmo').classList.add('show');
+    }
   } else if(a==='openMegaGift'){
     removeInv('megagift',1);save();renderInv();closeGenMo();
     openMegaGift();
   }
+}
+
+/* ══ SELL INVENTORY ITEMS ══ */
+function sellInvItem(key){
+  const rates={crown:777,legend:333};
+  const rate=rates[key];if(!rate)return;
+  const cnt=invCount(key);if(!cnt){toast('Нет предмета','r');closeGenMo();return;}
+  removeInv(key,1);
+  S.balance+=rate;syncB();
+  closeGenMo();
+  toast('💰 Продано за +'+rate+' монет!','g');
+  renderInv();
+}
+
+/* ══ TIMED CROWN / LEGEND ══ */
+function activateCrownTimed(days){
+  const exp=Date.now()+days*86400000;
+  if(!S.crownExpiry||S.crownExpiry<exp)S.crownExpiry=exp;
+  S.hasCrown=true;save();applyCrown();
+  toast('👑 Корона на '+days+' дн. активирована!','g');
+}
+
+function activateLegendTimed(days){
+  const exp=Date.now()+days*86400000;
+  if(!S.legendExpiry||S.legendExpiry<exp)S.legendExpiry=exp;
+  if(!S.legendColor)S.legendColor=LEGEND_COLORS[0];
+  save();applyLegend();
+  toast('✨ Легенда на '+days+' дн. активирована!','g');
 }
 
 /* ══ LEGEND COLOR PICKER ══ */

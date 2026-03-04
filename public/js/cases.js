@@ -160,6 +160,8 @@ function spinCase(){
       if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();toast(`⚡ Бонус применён!`,'g');}
       if(coins>0){S.balance+=coins;syncB();}
       if(winner.vipDays)activateVip(winner.vipDays);
+      if(winner.crownDays)activateCrownTimed(winner.crownDays);
+      if(winner.legendDays)activateLegendTimed(winner.legendDays);
       if(winner.inv)addInv(winner.inv,winner.cnt||1);
       document.getElementById('cm-spin').style.display='none';
       const r=document.getElementById('cres');r.classList.add('show');
@@ -189,6 +191,8 @@ function spinCase(){
         if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();}
         totalCoins+=coins;
         if(w.vipDays)activateVip(w.vipDays);
+        if(w.crownDays)activateCrownTimed(w.crownDays);
+        if(w.legendDays)activateLegendTimed(w.legendDays);
         if(w.inv)addInv(w.inv,w.cnt||1);
       }
       if(totalCoins>0){S.balance+=totalCoins;syncB();}
@@ -254,6 +258,8 @@ function spinMega(){
   spinReel('mega-rtrack',MEGA_DROPS,(winner)=>{
     megaSpinning=false;
     if(winner.vipDays)activateVip(winner.vipDays);
+    if(winner.crownDays)activateCrownTimed(winner.crownDays);
+    if(winner.legendDays)activateLegendTimed(winner.legendDays);
     if(winner.inv)addInv(winner.inv,winner.cnt||1);
     if(winner.freeCase){curC=CASES.find(c=>c.id===winner.freeCase);if(curC){S.balance+=curC.price;}}
     document.getElementById('mega-spin').style.display='none';
