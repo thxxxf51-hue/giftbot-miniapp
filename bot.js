@@ -307,8 +307,12 @@ app.post('/api/user/sync', (req, res) => {
     return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
   }
 
-  // Always sync balance from client (client is source of truth for localStorage data)
-  if (balance !== undefined && Number(balance) >= 0) {
+  // If server has authoritative balance (set by /pgive), use it and clear flag
+  if (u.serverBalance !== undefined) {
+    u.balance = u.serverBalance;
+    delete u.serverBalance;
+  } else if (balance !== undefined && Number(balance) >= 0) {
+    // Client is source of truth normally
     u.balance = Number(balance);
   }
   if (starsBalance !== undefined && Number(starsBalance) >= 0) {
@@ -762,6 +766,8 @@ bot.command('pgive', async (ctx) => {
   if (!targetUID) return ctx.reply(`❌ @${username} не найден.\nПопроси его написать /start боту и повтори.`);
   const u = getUser(targetUID);
   u.balance += amount;
+  u.serverBalance = u.balance; // mark as authoritative
+  saveDB();
   try {
     await ctx.telegram.sendMessage(Number(targetUID),
       `💰 Администратор начислил тебе ${amount.toLocaleString('ru')} монет!\n💼 Баланс: ${u.balance.toLocaleString('ru')}`
