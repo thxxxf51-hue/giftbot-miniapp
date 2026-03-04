@@ -38,17 +38,16 @@ function saveDB() {
 const _saved = loadDB();
 
 const DB = {
-  users: _saved?.users || {},
-  promos: _saved?.promos || {},
-  draws: _saved?.draws || {},
-  finished: _saved?.finished || {},
-  drawCounter: _saved?.drawCounter || 0,
-  pendingDraw: _saved?.pendingDraw || {},
+  users:         _saved?.users         || {},
+  promos:        _saved?.promos        || {},
+  draws:         _saved?.draws         || {},
+  finished:      _saved?.finished      || {},
+  drawCounter:   _saved?.drawCounter   || 0,
+  pendingDraw:   _saved?.pendingDraw   || {},
   starsInvoices: _saved?.starsInvoices || {},
-  invoiceCounter: _saved?.invoiceCounter || 0,
-  bans: _saved?.bans || {},
-  bansByUid: _saved?.bansByUid || {},
-  pvp: _saved?.pvp || { game: null, history: [] },
+  invoiceCounter:_saved?.invoiceCounter|| 0,
+  bans:          _saved?.bans          || {},
+  bansByUid:     _saved?.bansByUid     || {},
 };
 
 // Автосохранение каждые 30 секунд
@@ -56,20 +55,13 @@ setInterval(saveDB, 30000);
 
 // Сохранение при завершении процесса
 process.on('SIGTERM', () => { saveDB(); process.exit(0); });
-process.on('SIGINT', () => { saveDB(); process.exit(0); });
+process.on('SIGINT',  () => { saveDB(); process.exit(0); });
 
 function getUser(uid) {
   uid = String(uid);
   if (!DB.users[uid]) DB.users[uid] = {
-    balance: 1000,
-    starsBalance: 0,
-    refs: [],
-    refBy: null,
-    refEarned: 0,
-    usedPromos: [],
-    vipExpiry: null,
-    username: '',
-    firstName: '',
+    balance: 1000, starsBalance: 0, refs: [], refBy: null, refEarned: 0,
+    usedPromos: [], vipExpiry: null, username: '', firstName: '',
     regDate: new Date().toLocaleDateString('ru-RU', {day:'numeric',month:'long',year:'numeric'})
   };
   // Убедимся что starsBalance существует у старых юзеров
@@ -82,11 +74,13 @@ function isMoney(prize) { return /^\d+$/.test(String(prize).trim()); }
 
 /* ══ HELPERS ══ */
 
+// Найти uid по username
 function findUidByUsername(username) {
   username = username.replace(/^@/, '').toLowerCase();
   return Object.keys(DB.users).find(uid => (DB.users[uid].username||'').toLowerCase() === username) || null;
 }
 
+// Сбросить статистику пользователя (кроме starsBalance)
 function resetUserStats(uid) {
   uid = String(uid);
   const u = DB.users[uid];
@@ -111,11 +105,12 @@ function resetUserStats(uid) {
     vipDiscount: false,
     doneTasks: [],
     task3refsDone: false,
-    resetAt: Date.now(),
+    resetAt: Date.now(), // флаг: приложение должно сбросить localStorage
   };
   return true;
 }
 
+// Проверить забанен ли пользователь
 function isBanned(uid, username) {
   const now = Date.now();
   const banUid = DB.bansByUid[String(uid)];
@@ -134,15 +129,16 @@ function isBanned(uid, username) {
   return null;
 }
 
+// Парсинг времени бана: "1 час", "7 дней", "0" = навсегда
 function parseBanDuration(str) {
   if (!str || str === '0') return 0;
   str = str.toLowerCase().trim();
   const map = {
-    'мин':60, 'минут':60, 'минута':60, 'минуты':60, 'min':60,
-    'час':3600, 'часа':3600, 'часов':3600, 'hour':3600, 'h':3600,
-    'день':86400, 'дня':86400, 'дней':86400, 'day':86400, 'd':86400,
-    'неделя':604800, 'недели':604800, 'недель':604800, 'week':604800, 'w':604800,
-    'год':31536000, 'года':31536000, 'лет':31536000, 'year':31536000, 'y':31536000,
+    'мин':60,'минут':60,'минута':60,'минуты':60,'min':60,
+    'час':3600,'часа':3600,'часов':3600,'hour':3600,'h':3600,
+    'день':86400,'дня':86400,'дней':86400,'day':86400,'d':86400,
+    'неделя':604800,'недели':604800,'недель':604800,'week':604800,'w':604800,
+    'год':31536000,'года':31536000,'лет':31536000,'year':31536000,'y':31536000,
   };
   const match = str.match(/^(\d+)\s*(.+)$/);
   if (!match) return null;
@@ -221,6 +217,7 @@ async function finishDraw(id) {
   delete DB.draws[id];
   saveDB();
 
+  // Уведомление админу
   const winList = winners.map(w => `${w.name} (ID: ${w.uid})`).join('\n');
   const pList = draw.participants.map(p => p.name).join(', ');
   try {
@@ -232,6 +229,7 @@ async function finishDraw(id) {
     );
   } catch {}
 
+  // Уведомляем победителей
   for (const winner of winners) {
     if (moneyPrize) {
       const u = getUser(winner.uid);
@@ -261,6 +259,7 @@ app.post('/api/user/sync', (req, res) => {
   if (firstName) u.firstName = firstName;
   u.lastSeen = Date.now();
 
+  // Если забанен по username — применяем бан к uid
   if (username) {
     const un = username.replace(/^@/, '').toLowerCase();
     if (DB.bans[un] && !DB.bansByUid[String(userId)]) {
@@ -268,13 +267,16 @@ app.post('/api/user/sync', (req, res) => {
     }
   }
 
+  // Проверяем бан
   const ban = isBanned(userId, username);
   if (ban) {
     return res.json({ ok: true, banned: true, banUntil: ban.until, balance: u.balance, starsBalance: u.starsBalance });
   }
 
+  // Если был сброс — говорим клиенту очистить localStorage
   const wasReset = u.resetAt ? u.resetAt : null;
   if (wasReset) {
+    // Сбрасываем флаг чтобы не сбрасывать повторно
     delete u.resetAt;
     saveDB();
     return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
@@ -291,6 +293,7 @@ app.post('/api/user/sync', (req, res) => {
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
 
+// Проверка бана (вызывается из приложения при каждом открытии)
 app.get('/api/user/ban-status', (req, res) => {
   const { userId, username } = req.query;
   if (!userId) return res.json({ ok: false });
@@ -341,6 +344,12 @@ app.post('/api/promo', (req, res) => {
 
 /* ══ STARS PAYMENT API ══ */
 
+/**
+ * POST /api/stars/create-invoice
+ * Создаёт инвойс Telegram Stars для оплаты
+ * Body: { userId, amount }
+ * Response: { ok, invoiceId, invoiceLink }
+ */
 app.post('/api/stars/create-invoice', async (req, res) => {
   const { userId, amount } = req.body;
   if (!userId || !amount || Number(amount) < 1) {
@@ -348,7 +357,10 @@ app.post('/api/stars/create-invoice', async (req, res) => {
   }
   const stars = Math.floor(Number(amount));
   if (stars > 99999) return res.json({ ok: false, error: 'Максимум 99 999 Stars за раз' });
+
   try {
+    // Создаём invoice через Telegram Bot API
+    // createInvoiceLink — доступен через sendInvoice или через прямой вызов API
     const apiRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -356,7 +368,7 @@ app.post('/api/stars/create-invoice', async (req, res) => {
         title: '⭐ Пополнение Stars',
         description: `Зачисление ${stars} Stars на баланс GiftBot`,
         payload: JSON.stringify({ userId: String(userId), amount: stars }),
-        currency: 'XTR',
+        currency: 'XTR',              // XTR = Telegram Stars
         prices: [{ label: 'Stars', amount: stars }],
       })
     });
@@ -383,31 +395,47 @@ app.post('/api/stars/create-invoice', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/stars/check
+ * Проверяет был ли оплачен инвойс и зачисляет Stars
+ * Body: { userId, invoiceId, amount }
+ * Response: { ok, credited, starsBalance, amount } или { ok, pending }
+ */
 app.post('/api/stars/check', (req, res) => {
   const { userId, invoiceId, amount } = req.body;
   if (!userId) return res.json({ ok: false, error: 'Не авторизован' });
+
+  // Если invoiceId передан — проверяем конкретный инвойс
   if (invoiceId) {
     const inv = DB.starsInvoices[invoiceId];
     if (!inv) return res.json({ ok: false, error: 'Счёт не найден' });
     if (String(inv.userId) !== String(userId)) return res.json({ ok: false, error: 'Доступ запрещён' });
 
     if (inv.paid) {
+      // Уже зачислено ранее
       const u = getUser(userId);
       return res.json({ ok: true, credited: true, starsBalance: u.starsBalance, amount: inv.amount });
     }
+
+    // Проверяем — оплачен ли (флаг устанавливается в pre_checkout + successful_payment)
     return res.json({ ok: true, pending: true });
   }
+
+  // Fallback: без invoiceId — не должно использоваться
   return res.json({ ok: false, error: 'invoiceId обязателен' });
 });
 
 /* ══ Обработка успешной оплаты Stars ══ */
 bot.on('pre_checkout_query', async (ctx) => {
+  // Всегда отвечаем OK — Telegram требует ответ в течение 10 секунд
   try { await ctx.answerPreCheckoutQuery(true); } catch (e) { console.error('pre_checkout error:', e); }
 });
 
 bot.on('message', async (ctx, next) => {
+  // Обработка successful_payment (оплата Stars)
   if (ctx.message?.successful_payment) {
     const payment = ctx.message.successful_payment;
+    // payload — JSON строка { userId, amount }
     try {
       const payload = JSON.parse(payment.invoice_payload);
       const userId = String(payload.userId);
@@ -415,10 +443,11 @@ bot.on('message', async (ctx, next) => {
       const u = getUser(userId);
       u.starsBalance = (u.starsBalance || 0) + stars;
 
+      // Помечаем инвойс как оплаченный
       for (const inv of Object.values(DB.starsInvoices)) {
         if (String(inv.userId) === userId && inv.amount === stars && !inv.paid) {
           const age = Date.now() - inv.createdAt;
-          if (age < 3600000) {
+          if (age < 3600000) { // не старше 1 часа
             inv.paid = true;
             break;
           }
@@ -445,6 +474,7 @@ bot.on('message', async (ctx, next) => {
     return;
   }
 
+  // Обновляем данные пользователя при любом сообщении
   const u = getUser(ctx.from.id);
   u.username = (ctx.from.username||'').toLowerCase();
   u.firstName = ctx.from.first_name||'';
@@ -484,6 +514,7 @@ app.post('/api/draws/join', (req, res) => {
   if (!draw || draw.finished || draw.endsAt < Date.now()) return res.json({ ok: false, error: 'Розыгрыш не найден или завершён' });
   if (draw.participants.find(p => String(p.uid) === String(userId))) return res.json({ ok: false, error: 'Вы уже участвуете' });
 
+  // Проверка билета
   if (draw.requireTicket) {
     const u = getUser(userId);
     const tickets = u.tickets || 0;
@@ -627,17 +658,23 @@ async function handleCdraw(ctx, text, photo) {
   setTimeout(() => finishDraw(id), ms);
 }
 
-bot.command('cdraw', (ctx) => handleCdraw(ctx, ctx.message.text, null));
+bot.command('cdraw', (ctx) => {
+  handleCdraw(ctx, ctx.message.text, null);
+});
 
 bot.on('photo', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const caption = ctx.message.caption || '';
 
+  // /cdraw с фото
   if (caption.startsWith('/cdraw')) {
     handleCdraw(ctx, caption, ctx.message.photo);
     return;
   }
 
+  // /broadcast_photo — рассылка с фото
+  // Использование: прикрепи фото и напиши в подписи:
+  // /broadcast_photo Текст сообщения
   if (caption.startsWith('/broadcast_photo')) {
     const text = caption.replace('/broadcast_photo', '').trim();
     if (!text) return ctx.reply('Добавь текст после команды.\nПример: /broadcast_photo 🎁 Новый розыгрыш!');
@@ -699,6 +736,7 @@ bot.command('pgive', async (ctx) => {
   ctx.reply(`✅ @${username} получил ${amount.toLocaleString('ru')} монет\n💼 Баланс: ${u.balance.toLocaleString('ru')}`);
 });
 
+/* ══ /sgive — начисление Stars вручную (для тестирования) ══ */
 bot.command('sgive', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const parts = ctx.message.text.split(' ');
@@ -710,7 +748,7 @@ bot.command('sgive', async (ctx) => {
   for (const [uid, u] of Object.entries(DB.users)) {
     if (u.username === username) { targetUID = uid; break; }
   }
-  if (!targetUID) return ctx.reply('❌ @${username} не найден. Попроси написать /start.');
+  if (!targetUID) return ctx.reply(`❌ @${username} не найден. Попроси написать /start.`);
   const u = getUser(targetUID);
   u.starsBalance = (u.starsBalance || 0) + amount;
   try {
@@ -736,7 +774,7 @@ bot.command('ddelete', (ctx) => {
 bot.command('promos', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const list = Object.entries(DB.promos)
-    .map(([c, p]) => `• ${c}: +${p.reward}🪙 ${p.usedCount}/${p.maxUses}${p.vipOnly ? ' 👑' : ''}`)
+    .map(([c, p]) => `• ${c}: +${p.reward}🪙  ${p.usedCount}/${p.maxUses}${p.vipOnly ? ' 👑' : ''}`)
     .join('\n');
   ctx.reply(list ? `📋 Промокоды:\n\n${list}` : 'Промокодов нет');
 });
@@ -779,6 +817,7 @@ bot.command('stars', (ctx) => {
 
 /* ══ РАССЫЛКА ══ */
 
+// /broadcast ТЕКСТ — отправить всем пользователям
 bot.command('broadcast', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const text = ctx.message.text.replace('/broadcast', '').trim();
@@ -806,6 +845,7 @@ bot.command('broadcast', async (ctx) => {
   );
 });
 
+// /broadcast_vip ТЕКСТ — отправить только VIP пользователям
 bot.command('broadcast_vip', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const text = ctx.message.text.replace('/broadcast_vip', '').trim();
@@ -831,6 +871,7 @@ bot.command('broadcast_vip', async (ctx) => {
   );
 });
 
+// /bc_count — статистика перед рассылкой
 bot.command('bc_count', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const total = Object.keys(DB.users).length;
@@ -847,8 +888,11 @@ bot.command('bc_count', (ctx) => {
   );
 });
 
+
 /* ══ ADMIN: СБРОС СТАТИСТИКИ ══ */
 
+
+// /stat @username — статистика пользователя
 bot.command('stat', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const args = ctx.message.text.split(' ').slice(1);
@@ -861,31 +905,35 @@ bot.command('stat', async (ctx) => {
 
   const now = Date.now();
   const balance = (u.balance||0).toLocaleString('ru');
-  const stars = u.starsBalance||0;
+  const stars   = u.starsBalance||0;
 
+  // VIP
   let vipStr = '❌ Нет';
   if (u.vipExpiry && u.vipExpiry > now) {
     const daysLeft = Math.ceil((u.vipExpiry - now) / 86400000);
     vipStr = `✅ Активен (${daysLeft} дн. осталось)`;
   }
 
+  // Last seen
   let lastSeen = '—';
   if (u.lastSeen) {
     const d = new Date(u.lastSeen);
     const diff = now - u.lastSeen;
     const mins = Math.floor(diff/60000);
-    const hours = Math.floor(diff/3600000);
+    const hours= Math.floor(diff/3600000);
     const days = Math.floor(diff/86400000);
-    let timeStr = 'только что';
-    if (days > 0) timeStr = `${days}д назад`;
-    else if (hours > 0) timeStr = `${hours}ч назад`;
-    else if (mins > 0) timeStr = `${mins}м назад`;
+    const timeStr = days>0?`${days}д назад`:hours>0?`${hours}ч назад`:mins>0?`${mins}м назад`:'только что';
     lastSeen = `${d.toLocaleDateString('ru')} ${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})} (${timeStr})`;
   }
 
+  // Reg date
   let regDate = '—';
-  if (u.regDate) regDate = new Date(u.regDate).toLocaleDateString('ru');
+  if (u.regDate) {
+    const d = new Date(u.regDate);
+    regDate = d.toLocaleDateString('ru');
+  }
 
+  // Crown / Legend
   const hasCrown = u.hasCrown ? '👑 Есть' : '—';
   let legendStr = '—';
   if (u.legendExpiry && u.legendExpiry > now) {
@@ -893,25 +941,27 @@ bot.command('stat', async (ctx) => {
     legendStr = `✨ Активна (${ld} дн.)`;
   }
 
-  const msg = 
-`👤 Профиль @${username}
+  const msg = `👤 Профиль @${username}
 
 💰 Баланс: ${balance} монет
 ⭐ Stars: ${stars}
 👑 VIP: ${vipStr}
 ✨ Легенда: ${legendStr}
-${hasCrown !== '—' ? '👑 Корона: Есть\n' : ''}📅 Зарегистрирован: ${regDate}
+${hasCrown !== '—' ? '👑 Корона: Есть
+' : ''}📅 Зарегистрирован: ${regDate}
 🕐 Последний вход: ${lastSeen}
 🆔 UID: ${uid}`;
 
   ctx.reply(msg);
 });
 
+// /dstats — сбросить статистику ВСЕХ пользователей (кроме Stars)
 bot.command('dstats', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const uids = Object.keys(DB.users);
   if (!uids.length) return ctx.reply('❌ Нет пользователей в базе');
   const msg = await ctx.reply(`⚠️ Сбросить статистику ВСЕХ ${uids.length} пользователей?\n\nБудет сброшено: баланс, VIP, инвентарь, корона, легенда, задания.\n⭐ Stars не тронутся.\n\nОтвет: да / нет`);
+  // Ждём подтверждения через следующее сообщение
   bot.on('text', async (c) => {
     if (!isAdmin(c.from.id)) return;
     if (c.message.reply_to_message?.message_id !== msg.message_id) return;
@@ -923,6 +973,7 @@ bot.command('dstats', async (ctx) => {
   });
 });
 
+// /dstats_user @username — сбросить статистику конкретного пользователя
 bot.command('dstats_user', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const args = ctx.message.text.split(/\s+/);
@@ -955,6 +1006,8 @@ bot.command('dstats_user', async (ctx) => {
 
 /* ══ ADMIN: БАН ══ */
 
+// /ban @username время — забанить пользователя
+// время: "1 час", "7 дней", "0" = навсегда
 bot.command('ban', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const parts = ctx.message.text.replace('/ban', '').trim().split(/\s+/);
@@ -983,6 +1036,7 @@ bot.command('ban', async (ctx) => {
   const banData = { until, bannedAt: Date.now() };
   DB.bans[username] = banData;
 
+  // Если пользователь уже в базе — баним и по uid
   const uid = findUidByUsername(username);
   if (uid) DB.bansByUid[uid] = banData;
   saveDB();
@@ -990,6 +1044,7 @@ bot.command('ban', async (ctx) => {
   const untilStr = until === 0 ? '🔴 Навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
   const durationStr = until === 0 ? 'навсегда' : formatDuration(until);
 
+  // Пытаемся уведомить пользователя
   if (uid) {
     try {
       await bot.telegram.sendMessage(Number(uid),
@@ -1003,11 +1058,12 @@ bot.command('ban', async (ctx) => {
   ctx.reply(
     `🚫 @${username} забанен!\n\n` +
     `⏱ ${untilStr}\n` +
-    (uid ? `👤 UID найден: ${uid}\n` : '⚠️ Пользователь ещё не в базе — бан применится при первом входе\n') +
+    `${uid ? `👤 UID найден: ${uid}` : '⚠️ Пользователь ещё не в базе — бан применится при первом входе'}\n\n` +
     `Разбанить: /unban @${username}`
   );
 });
 
+// /unban @username — снять бан
 bot.command('unban', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const parts = ctx.message.text.split(/\s+/);
@@ -1032,6 +1088,7 @@ bot.command('unban', (ctx) => {
   }
 });
 
+// /bans — список забаненных
 bot.command('bans', (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const list = Object.entries(DB.bans);
@@ -1044,6 +1101,8 @@ bot.command('bans', (ctx) => {
   });
   ctx.reply('🚫 Забаненные:\n\n' + rows.join('\n'));
 });
+
+
 
 /* ══ STARS EXCHANGE ══ */
 app.post('/api/stars/exchange', (req, res) => {
@@ -1067,6 +1126,7 @@ const PVP_FILL_MS = 20000;
 const PVP_COUNTDOWN_MS = 5000;
 const PVP_SPIN_MS = 5000;
 
+if (!DB.pvp) DB.pvp = { game: null, history: [] };
 if (!DB.pvp.history) DB.pvp.history = [];
 let pvpTimer = null;
 
@@ -1092,12 +1152,14 @@ function startPvpSpin() {
   g.state = 'spinning';
   g.spinEndsAt = Date.now() + PVP_SPIN_MS;
 
+  // Weighted random winner
   const total = g.players.reduce((s, p) => s + p.bet, 0);
   let rand = Math.random() * total;
   let winner = g.players[g.players.length - 1];
   for (const p of g.players) { rand -= p.bet; if (rand <= 0) { winner = p; break; } }
   g.winner = winner;
 
+  // Credit winner
   const u = DB.users[winner.uid];
   if (u) { u.balance += total; }
   saveDB();
@@ -1106,15 +1168,17 @@ function startPvpSpin() {
     if (DB.pvp.game) {
       const doneGame = DB.pvp.game;
       doneGame.state = 'done';
+      // Save to history
       if (doneGame.winner) {
         DB.pvp.history.unshift({
-          id: doneGame.id,
-          time: Date.now(),
-          players: doneGame.players.length,
-          totalBet: doneGame.totalBet,
-          winnerName: doneGame.winner.username ? '@'+doneGame.winner.username : doneGame.winner.firstName,
-          winnerUid: doneGame.winner.uid,
+          id:          doneGame.id,
+          time:        Date.now(),
+          players:     doneGame.players.length,
+          totalBet:    doneGame.totalBet,
+          winnerName:  doneGame.winner.username ? '@'+doneGame.winner.username : doneGame.winner.firstName,
+          winnerUid:   doneGame.winner.uid,
         });
+        // Keep only last hour
         DB.pvp.history = DB.pvp.history.filter(h => Date.now() - h.time < 3600000);
       }
       saveDB();
@@ -1188,7 +1252,8 @@ app.post('/api/pvp/leave', (req, res) => {
   res.json({ ok: true, refunded: player.bet });
 });
 
-/* ══ AVATAR PROXY ══ */
+
+/* ══ AVATAR PROXY (решает CORS для canvas) ══ */
 app.get('/api/avatar', async (req, res) => {
   const url = req.query.url;
   if (!url || !url.startsWith('https://')) return res.status(400).end();
@@ -1196,7 +1261,7 @@ app.get('/api/avatar', async (req, res) => {
     const r = await fetch(url);
     if (!r.ok) return res.status(404).end();
     const buf = await r.arrayBuffer();
-    const ct = r.headers.get('content-type') || 'image/jpeg';
+    const ct  = r.headers.get('content-type') || 'image/jpeg';
     res.set('Content-Type', ct);
     res.set('Cache-Control', 'public, max-age=86400');
     res.set('Access-Control-Allow-Origin', '*');
@@ -1206,14 +1271,16 @@ app.get('/api/avatar', async (req, res) => {
   }
 });
 
+
 /* ══ PvP HISTORY ══ */
 app.get('/api/pvp/history', (req, res) => {
+  // Clean entries older than 1 hour
   DB.pvp.history = (DB.pvp.history || []).filter(h => Date.now() - h.time < 3600000);
   res.json({ ok: true, history: DB.pvp.history });
 });
 
 /* ══ SERVER ══ */
-app.get('', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
