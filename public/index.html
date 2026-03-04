@@ -393,98 +393,101 @@
 <div class="page" id="page-pvp">
   <div class="phdr"><div class="ptitle">⚔️ PvP Дуэль</div><div class="bpill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span id="b-pvp">0</span></div></div>
 
-  <!-- Пусто -->
-  <div id="pvp-empty" style="display:flex;flex-direction:column;align-items:center;padding:30px 20px 16px;gap:6px">
-    <div style="font-size:52px;margin-bottom:4px">⚔️</div>
-    <div style="font-size:17px;font-weight:800">Нет активной игры</div>
-    <div style="font-size:12px;color:var(--muted2);text-align:center;line-height:1.5">Поставь монеты и жди соперников.<br>Побеждает тот, кому повезёт!</div>
-  </div>
-
-  <!-- Правила -->
-  <div class="gc" style="padding:12px 14px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start">
-    <div style="font-size:20px;flex-shrink:0">📋</div>
-    <div>
-      <div style="font-size:12px;font-weight:700;margin-bottom:3px">Как играть</div>
-      <div style="font-size:11px;color:var(--muted2);line-height:1.6">Минимальная ставка: <span style="color:var(--green);font-weight:700">50 🪙</span><br>Игроков: <span style="color:var(--green);font-weight:700">2–10</span><br>Шанс выиграть = доля твоей ставки в банке<br>Победитель забирает весь банк</div>
+  <!-- ── IDLE: нет игры ── -->
+  <div id="pvp-idle-block">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:24px 20px 16px;gap:6px">
+      <div style="font-size:52px;margin-bottom:4px">⚔️</div>
+      <div style="font-size:17px;font-weight:800">Нет активной игры</div>
+      <div style="font-size:12px;color:var(--muted2);text-align:center;line-height:1.5">Поставь монеты и жди соперников.<br>Побеждает тот, кому повезёт!</div>
     </div>
-  </div>
-
-  <!-- Ставка -->
-  <div class="gc" style="padding:13px 14px;margin-bottom:10px" id="pvp-join-wrap">
-    <div style="font-size:13px;font-weight:700;margin-bottom:10px">Твоя ставка</div>
-    <div style="display:flex;gap:7px" id="pvp-join-section">
-      <input id="pvp-bet-input" type="number" min="50" placeholder="Мин. 50 монет"
-        style="flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:10px 12px;color:var(--green);font-size:15px;font-weight:700;outline:none;font-family:inherit;min-width:0"
-        oninput="this.value=Math.max(0,parseInt(this.value)||0)||''">
-      <button id="pvp-join-btn" onclick="pvpJoin()"
-        style="background:var(--green);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">
-        ⚔️ Участвовать
-      </button>
+    <!-- Правила -->
+    <div class="gc" style="padding:12px 14px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start">
+      <div style="font-size:20px;flex-shrink:0">📋</div>
+      <div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:3px">Как играть</div>
+        <div style="font-size:11px;color:var(--muted2);line-height:1.6">Минимальная ставка: <span style="color:var(--green);font-weight:700">50 🪙</span><br>Игроков: <span style="color:var(--green);font-weight:700">2–10</span><br>Шанс выиграть = доля твоей ставки в банке<br>Победитель забирает весь банк</div>
+      </div>
     </div>
-    <button id="pvp-leave-btn" onclick="pvpLeave()" style="display:none;width:100%;background:var(--rdim);color:var(--red);border:1px solid rgba(255,96,96,.3);border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
-      ↩️ Выйти (вернуть монеты)
-    </button>
-  </div>
-
-  <!-- Лобби -->
-  <div id="pvp-lobby" style="display:none">
+    <!-- Ставка (idle) -->
     <div class="gc" style="padding:13px 14px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Твоя ставка</div>
+      <div style="display:flex;gap:7px">
+        <input id="pvp-bet-input" type="number" min="50" placeholder="Мин. 50 монет"
+          style="flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:10px 12px;color:var(--green);font-size:15px;font-weight:700;outline:none;font-family:inherit;min-width:0"
+          oninput="this.value=Math.max(0,parseInt(this.value)||0)||''">
+        <button id="pvp-join-btn" onclick="pvpJoin()"
+          style="background:var(--green);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">
+          ⚔️ Участвовать
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LOBBY: ожидание / наполнение ── -->
+  <div id="pvp-lobby-block" style="display:none">
+    <div class="gc" style="padding:13px 14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div>
           <div id="pvp-state-label" style="font-size:13px;font-weight:700;color:var(--green)">⏳ Ожидание</div>
-          <div style="font-size:11px;color:var(--muted2);margin-top:2px">Игроков: <span id="pvp-count" style="color:var(--text);font-weight:700">0 / 10</span></div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:2px">Игроков: <span id="pvp-count" style="color:var(--text);font-weight:700">0/10</span></div>
         </div>
         <div style="text-align:right">
           <div style="font-size:10px;color:var(--muted2)">Банк</div>
           <div id="pvp-total" style="font-size:18px;font-weight:900;color:var(--green)">0 🪙</div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-size:11px;color:var(--muted2)">До старта:</div>
         <div id="pvp-timer" style="font-size:18px;font-weight:900;color:var(--star)"></div>
       </div>
       <div id="pvp-players-list" style="display:flex;flex-direction:column;gap:7px"></div>
     </div>
-  </div>
-
-  <!-- Колесо -->
-  <div id="pvp-wheel-wrap" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:10px 0">
-    <div style="font-size:14px;font-weight:700;color:var(--muted2)">Колесо крутится...</div>
-    <div style="position:relative;display:flex;align-items:center;justify-content:center">
-      <canvas id="pvp-canvas" width="300" height="300" style="display:block;border-radius:50%"></canvas>
-    </div>
-  </div>
-
-  <!-- Результат -->
-  <div id="pvp-result" style="display:none;flex-direction:column;align-items:center;padding:20px;gap:10px">
-    <div id="pvp-res-ico" style="font-size:56px"></div>
-    <div id="pvp-res-title" style="font-size:20px;font-weight:800"></div>
-    <div id="pvp-res-name" style="font-size:13px;color:var(--muted2);text-align:center"></div>
-    <div id="pvp-res-prize" style="font-size:22px;font-weight:900"></div>
-    <div id="pvp-res-countdown" style="font-size:12px;color:var(--muted2);margin-top:4px"></div>
-  </div>
-
-  <!-- PvP Stats (last game) -->
-  <div id="pvp-stats" style="display:none">
-    <div class="sec" style="margin-top:8px">Последняя игра</div>
-    <div class="gc" style="padding:13px 14px">
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:12px;color:var(--muted2)">👥 Участников</div>
-          <div id="pvp-stat-players" style="font-size:14px;font-weight:700"></div>
-        </div>
-        <div style="height:1px;background:rgba(255,255,255,.05)"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:12px;color:var(--muted2)">💰 Общая ставка</div>
-          <div id="pvp-stat-total" style="font-size:14px;font-weight:700;color:var(--green)"></div>
-        </div>
-        <div style="height:1px;background:rgba(255,255,255,.05)"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:12px;color:var(--muted2)">🏆 Победитель</div>
-          <div id="pvp-stat-winner" style="font-size:14px;font-weight:700;color:var(--star);text-align:right;max-width:60%"></div>
-        </div>
+    <!-- Ставка (lobby) -->
+    <div class="gc" style="padding:13px 14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Твоя ставка</div>
+      <div style="display:flex;gap:7px" id="pvp-lobby-join-section">
+        <input id="pvp-bet-input2" type="number" min="50" placeholder="Мин. 50 монет"
+          style="flex:1;background:rgba(0,0,0,.4);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:10px 12px;color:var(--green);font-size:15px;font-weight:700;outline:none;font-family:inherit;min-width:0"
+          oninput="this.value=Math.max(0,parseInt(this.value)||0)||''">
+        <button id="pvp-join-btn2" onclick="pvpJoin2()"
+          style="background:var(--green);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">
+          ⚔️ Участвовать
+        </button>
       </div>
+      <button id="pvp-leave-btn" onclick="pvpLeave()" style="display:none;width:100%;background:var(--rdim);color:var(--red);border:1px solid rgba(255,96,96,.3);border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">
+        ↩️ Выйти (вернуть монеты)
+      </button>
     </div>
+  </div>
+
+  <!-- ── IN-GAME: колесо + игроки (без правил) ── -->
+  <div id="pvp-ingame-block" style="display:none">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0 6px">
+      <div id="pvp-ingame-label" style="font-size:13px;font-weight:700;color:var(--muted2)">🎡 Колесо крутится...</div>
+      <canvas id="pvp-canvas" style="display:block;margin:0 auto;border-radius:50%"></canvas>
+    </div>
+    <!-- Участники -->
+    <div class="gc" style="padding:13px 14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700">👥 Участники</div>
+        <div id="pvp-ingame-total" style="font-size:12px;font-weight:800;color:var(--green)"></div>
+      </div>
+      <div id="pvp-ingame-players" style="display:flex;flex-direction:column;gap:0"></div>
+    </div>
+    <!-- Результат (поверх) -->
+    <div id="pvp-result-block" style="display:none;flex-direction:column;align-items:center;padding:16px 20px;gap:8px">
+      <div id="pvp-res-ico" style="font-size:52px"></div>
+      <div id="pvp-res-title" style="font-size:20px;font-weight:800"></div>
+      <div id="pvp-res-name" style="font-size:13px;color:var(--muted2);text-align:center"></div>
+      <div id="pvp-res-prize" style="font-size:22px;font-weight:900"></div>
+      <div id="pvp-res-countdown" style="font-size:11px;color:var(--muted2)"></div>
+    </div>
+  </div>
+
+  <!-- ── ИСТОРИЯ ── -->
+  <div id="pvp-history-block" style="display:none">
+    <div class="sec" style="margin-top:6px">🕐 История (последний час)</div>
+    <div id="pvp-history-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
   </div>
 </div>
 </div><!-- /pages -->
