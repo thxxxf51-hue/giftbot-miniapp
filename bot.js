@@ -919,11 +919,19 @@ bot.command('stat', async (ctx) => {
   if (u.lastSeen) {
     const d = new Date(u.lastSeen);
     const diff = now - u.lastSeen;
-    const mins = Math.floor(diff/60000);
-    const hours= Math.floor(diff/3600000);
-    const days = Math.floor(diff/86400000);
-    const timeStr = days>0?`${days}д назад`:hours>0?`${hours}ч назад`:mins>0?`${mins}м назад`:'только что';
-    lastSeen = `${d.toLocaleDateString('ru')} ${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})} (${timeStr})`;
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    const timeOnly = d.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
+    if (days > 0) {
+      lastSeen = `${d.toLocaleDateString('ru')} в ${timeOnly} (${days}д назад)`;
+    } else if (hours > 0) {
+      lastSeen = `Сегодня в ${timeOnly} (${hours}ч ${mins % 60}м назад)`;
+    } else if (mins > 0) {
+      lastSeen = `Сегодня в ${timeOnly} (${mins}м назад)`;
+    } else {
+      lastSeen = `Сегодня в ${timeOnly} (только что)`;
+    }
   }
 
   // Reg date
@@ -1005,11 +1013,19 @@ bot.command('stat', async (ctx) => {
   if (u.lastSeen) {
     const d = new Date(u.lastSeen);
     const diff = now - u.lastSeen;
-    const mins = Math.floor(diff/60000);
-    const hours= Math.floor(diff/3600000);
-    const days = Math.floor(diff/86400000);
-    const timeStr = days>0?`${days}д назад`:hours>0?`${hours}ч назад`:mins>0?`${mins}м назад`:'только что';
-    lastSeen = `${d.toLocaleDateString('ru')} ${d.toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})} (${timeStr})`;
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    const timeOnly = d.toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
+    if (days > 0) {
+      lastSeen = `${d.toLocaleDateString('ru')} в ${timeOnly} (${days}д назад)`;
+    } else if (hours > 0) {
+      lastSeen = `Сегодня в ${timeOnly} (${hours}ч ${mins % 60}м назад)`;
+    } else if (mins > 0) {
+      lastSeen = `Сегодня в ${timeOnly} (${mins}м назад)`;
+    } else {
+      lastSeen = `Сегодня в ${timeOnly} (только что)`;
+    }
   }
 
   // Reg date
