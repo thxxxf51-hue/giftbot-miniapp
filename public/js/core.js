@@ -57,7 +57,7 @@ const S={
 function syncB(){
   const b=S.balance.toLocaleString('ru');
   const sb=S.starsBalance;
-  ['home','tasks','shop','inv','raffles','friends','profile'].forEach(k=>{const el=document.getElementById('b-'+k);if(el)el.textContent=b;});
+  ['home','tasks','shop','inv','raffles','friends','profile','pvp'].forEach(k=>{const el=document.getElementById('b-'+k);if(el)el.textContent=b;});
   document.getElementById('p-bal').textContent=S.balance.toLocaleString('ru');
   const sbh=document.getElementById('b-stars-h');if(sbh)sbh.textContent=sb;
   const sbm=document.getElementById('sm-bal');if(sbm)sbm.textContent=sb;
