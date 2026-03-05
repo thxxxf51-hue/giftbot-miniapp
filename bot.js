@@ -572,22 +572,27 @@ app.post('/api/draws/join', (req, res) => {
 app.get('/api/health', (req, res) => res.json({ ok: true, users: Object.keys(DB.users).length }));
 
 /* PvP online counters */
+app.post('/api/ping', (req, res) => {
+  const { userId, mode } = req.body;
+  if (!userId) return res.json({ ok: false });
+  const u = getUser(userId);
+  u.lastSeen = Date.now();
+  if (mode) u.lastMode = mode;
+  res.json({ ok: true });
+});
+
 app.get('/api/pvp-online', (req, res) => {
   const now = Date.now();
-  // Count users active in last 5 min (polling counts as active)
-  let total = 0, duel = 0, solo = 0;
+  // Count users active in last 3 min AND actually IN a game (not just on menu)
+  let duel = 0, solo = 0;
   for (const u of Object.values(DB.users)) {
-    if (u.lastSeen && now - u.lastSeen < 5 * 60 * 1000) {
-      total++;
+    if (u.lastSeen && now - u.lastSeen < 3 * 60 * 1000) {
       if (u.lastMode === 'solo') solo++;
-      else duel++;
+      else if (u.lastMode === 'duel') duel++;
+      // 'menu' mode is excluded intentionally
     }
   }
-  // Minimum 1 if any users exist at all (looks better)
-  if (Object.keys(DB.users).length > 0 && total === 0) {
-    total = 1; duel = 1;
-  }
-  res.json({ total, duel, solo });
+  res.json({ duel, solo, total: duel + solo });
 });
 
 /* ══ BOT COMMANDS ══ */
