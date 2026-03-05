@@ -48,7 +48,7 @@ async function usePromo(inputId){
       S.balance=d.balance;
       el.value='';
       syncB();rShopItems();
-      toast(`✅ +${d.reward} монет!`,'g');
+      toast(`+${d.reward} монет!`,'g',PROMO_ICO);
     } else {
       toast(d.error||'❌ Неверный промокод','r');
     }

@@ -47,7 +47,7 @@ function toast(msg,type='g',icon=''){
   clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),2500);
 }
 
-const PROMO_ICO='<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiUyMzJlY2M3MSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PHBvbHlsaW5lIHBvaW50cz0iOSAxMiAxMS41IDE0LjUgMTYgOS41Ii8+PC9zdmc+" width="18" height="18" style="display:block;flex-shrink:0">';
+const PROMO_ICO='<img src="/icons/check-circle.svg" width="18" height="18" style="display:block;flex-shrink:0">';
 
 /* ══ GENERAL MODAL ══ */
 let _gmCb=null;
