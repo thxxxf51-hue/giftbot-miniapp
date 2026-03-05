@@ -37,10 +37,10 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .stars-pill .star-ico{font-size:13px;line-height:1}
 .hbal-row{display:flex;align-items:center;gap:6px}
 
-.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-70px);padding:10px 16px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;transition:transform .3s cubic-bezier(.34,1.4,.64,1);white-space:nowrap;pointer-events:none;max-width:85vw;text-align:center;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-70px);opacity:0;padding:10px 16px;border-radius:16px;font-size:13px;font-weight:700;z-index:9999;transition:transform .35s cubic-bezier(.34,1.4,.64,1),opacity .25s ease;white-space:nowrap;pointer-events:none;max-width:85vw;text-align:center;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
 .toast-ico{display:flex;align-items:center;flex-shrink:0}
 .toast-ico svg{width:18px;height:18px;stroke:#2ecc71}
-.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 .toast.g{background:linear-gradient(135deg,#0d1f14,#122010);border:1px solid rgba(46,204,113,.4);color:#fff}
 .toast.r{background:linear-gradient(135deg,#1f0d0d,#200d0d);border:1px solid rgba(255,96,96,.4);color:#fff}
 .toast.s{background:linear-gradient(135deg,#2a2500,#1f1c00);border:1px solid rgba(255,215,0,.4);color:#fff}
@@ -470,3 +470,13 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 
 /* ══ Solo Wheel ══ */
 .solo-pgrid-btn { padding:10px 4px; border-radius:10px; font-size:11px; font-weight:700; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:1px; transition:all .15s; font-family:inherit; }
+
+/* ══ Solo Prize Grid Modal ══ */
+.solo-pgrid-btn { padding:14px 6px; border-radius:12px; font-size:13px; font-weight:800; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; transition:all .15s; font-family:inherit; }
+
+/* ══ PvP Menu Cards ══ */
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes glow-pulse{0%,100%{opacity:.7}50%{opacity:1}}
+@keyframes twinkle{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+@keyframes ripple-card{0%{transform:scale(0);opacity:1}60%{transform:scale(1);opacity:.4}100%{transform:scale(1.05);opacity:0}}
