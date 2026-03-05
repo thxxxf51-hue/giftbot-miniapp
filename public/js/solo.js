@@ -10,7 +10,7 @@ const SOLO_COLORS = [
 function soloColor(idx){ return SOLO_COLORS[idx%SOLO_COLORS.length]; }
 function soloCost(prize,pct){ return Math.max(10,Math.round(prize*(pct/100)*1.18/10)*10); }
 
-let _soloCanvas=null,_soloRot=0,_soloSpinning=false;
+let _soloCanvas=null,_soloRot=0,_soloSpinning=false,_soloCountdown=0;
 let _soloPrizeIdx=0,_soloChanceIdx=4;
 let _soloDragging=false,_soloSliderEl=null;
 
@@ -71,11 +71,22 @@ function _soloDrawWheel(canvas,chancePct,prizeIdx,rotation){
   ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1.5;ctx.stroke();
   ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=2;ctx.stroke();
 
-  // center text: "Ожидание" / "..."
-  ctx.fillStyle='rgba(255,255,255,0.42)';
-  ctx.font=`600 ${Math.min(innerR*0.35,12)}px -apple-system,sans-serif`;
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(_soloSpinning?'...':'Ожидание',cx,cy);
+  // center text: countdown during spin, "Ожидание" when idle
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  if(_soloSpinning && _soloCountdown > 0){
+    // big number
+    ctx.font=`900 ${Math.round(innerR*0.72)}px -apple-system,sans-serif`;
+    ctx.fillStyle='#ffffff';
+    ctx.fillText(_soloCountdown, cx, cy - innerR*0.08);
+    // small "сек" below
+    ctx.font=`600 ${Math.round(innerR*0.3)}px -apple-system,sans-serif`;
+    ctx.fillStyle='rgba(255,255,255,0.4)';
+    ctx.fillText('сек', cx, cy + innerR*0.44);
+  } else {
+    ctx.fillStyle='rgba(255,255,255,0.42)';
+    ctx.font=`600 ${Math.min(innerR*0.35,12)}px -apple-system,sans-serif`;
+    ctx.fillText(_soloSpinning?'...':'Ожидание', cx, cy);
+  }
   ctx.textBaseline='alphabetic';
 
   // sparkles
@@ -182,14 +193,18 @@ function soloSpin(){
   const needed=((targetOffset-currentNorm)+Math.PI*2*10)%(Math.PI*2);
   const endRot=startRot+extraSpins+needed;
   const dur=4200,t0=performance.now();
+  _soloCountdown=Math.ceil(dur/1000); // start at 4
   const ease=t=>1-Math.pow(1-t,4);
 
   function frame(now){
     const t=Math.min((now-t0)/dur,1);
+    // update countdown: remaining seconds (1..4), clamp to 1 when nearly done
+    _soloCountdown=Math.max(1,Math.ceil((1-t)*dur/1000));
     _soloRot=startRot+(endRot-startRot)*ease(t);
     _soloDrawWheel(_soloCanvas,pct,_soloPrizeIdx,_soloRot);
     if(t<1){requestAnimationFrame(frame);}
     else{
+      _soloCountdown=0;
       _soloSpinning=false;
       if(win){S.balance+=prize;syncB();}
       soloRenderUI();
