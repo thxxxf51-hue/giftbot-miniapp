@@ -101,9 +101,11 @@ function _drawLoop(type, H) {
 
 function launchEntryEffect() {
   if (!S.entryEffect) return;
-  if (S.entryEffectExpiry && Date.now() > S.entryEffectExpiry) {
+  const expiries = S.effectExpiries || {};
+  const exp = expiries[S.entryEffect];
+  if (exp && Date.now() > exp) {
     // expired — clear active, but keep in ownedEffects
-    S.entryEffect = null; S.entryEffectExpiry = null; save(); return;
+    S.entryEffect = null; save(); return;
   }
   const type = S.entryEffect;
   _efxCanvas = document.getElementById('effect-canvas');
@@ -131,7 +133,8 @@ function launchEntryEffect() {
 function openEffectPicker() {
   const isVip  = vipStatus() === 'active';
   const owned  = S.ownedEffects || [];
-  const activeExpired = !S.entryEffect || (S.entryEffectExpiry && Date.now() > S.entryEffectExpiry);
+  const expiries = S.effectExpiries || {};
+  const activeExpired = !S.entryEffect || (expiries[S.entryEffect] && Date.now() > expiries[S.entryEffect]);
 
   const grid = document.getElementById('efx-grid');
   if (!grid) return;
@@ -144,7 +147,8 @@ function openEffectPicker() {
     let btnHtml;
     if (isCurrent) {
       // currently active
-      const hoursLeft = S.entryEffectExpiry ? Math.ceil((S.entryEffectExpiry - Date.now()) / 3600000) : '∞';
+      const exp = (S.effectExpiries||{})[e.id];
+      const hoursLeft = exp ? Math.ceil((exp - Date.now()) / 3600000) : '∞';
       btnHtml = `<div class="efx-active">Активен (${hoursLeft}ч)</div>`;
     } else if (isOwned) {
       // owned but not active — free to switch
@@ -187,13 +191,24 @@ function activateOwnedEffect(effectId) {
   // Close picker first, then confirm
   closeEffectPicker();
   setTimeout(() => {
+    const expiries = S.effectExpiries || {};
+    const existingExp = expiries[effectId];
+    const isExpired = !existingExp || Date.now() > existingExp;
+    const hoursLeft = !isExpired ? Math.ceil((existingExp - Date.now()) / 3600000) : null;
+    const descText = isExpired
+      ? `Активировать бесплатно на ${isVip ? '48' : '24'} ч.`
+      : `Осталось ${hoursLeft} ч. — таймер не сбросится`;
     openGenMo(
       `${ef.ico} ${ef.name}`,
-      `Активировать бесплатно на ${isVip ? '48' : '24'} ч.`,
+      descText,
       `✨ Активировать`,
       () => {
         S.entryEffect = effectId;
-        S.entryEffectExpiry = Date.now() + dur;
+        // If expired or never set — start fresh timer. Otherwise keep existing.
+        if (isExpired) {
+          if (!S.effectExpiries) S.effectExpiries = {};
+          S.effectExpiries[effectId] = Date.now() + dur;
+        }
         save();
         closeGenMo();
         toast(`${ef.ico} Эффект «${ef.name}» активирован!`, 'g');
@@ -222,7 +237,8 @@ function confirmBuyEffect(effectId) {
       () => {
         S.balance -= price;
         S.entryEffect = effectId;
-        S.entryEffectExpiry = Date.now() + dur;
+        if (!S.effectExpiries) S.effectExpiries = {};
+        S.effectExpiries[effectId] = Date.now() + dur;
         // add to owned collection
         if (!S.ownedEffects) S.ownedEffects = [];
         if (!S.ownedEffects.includes(effectId)) S.ownedEffects.push(effectId);
@@ -240,12 +256,14 @@ function confirmBuyEffect(effectId) {
 function updateEffectUI() {
   const el = document.getElementById('p-effect');
   if (!el) return;
-  const activeExpired = S.entryEffectExpiry && Date.now() > S.entryEffectExpiry;
+  const expiries = S.effectExpiries || {};
+  const exp = expiries[S.entryEffect];
+  const activeExpired = exp && Date.now() > exp;
   const ef = ENTRY_EFFECTS.find(e => e.id === S.entryEffect);
   const active = S.entryEffect && !activeExpired;
 
   if (active && ef) {
-    const hoursLeft = S.entryEffectExpiry ? Math.ceil((S.entryEffectExpiry - Date.now()) / 3600000) : '∞';
+    const hoursLeft = exp ? Math.ceil((exp - Date.now()) / 3600000) : '∞';
     el.innerHTML = `<span style="color:var(--green)">${ef.ico} ${ef.name}</span> <span style="font-size:10px;color:var(--muted2)">(${hoursLeft}ч)</span>`;
   } else if ((S.ownedEffects||[]).length > 0) {
     el.innerHTML = `<span style="color:var(--muted2)">Нет активного</span>`;
