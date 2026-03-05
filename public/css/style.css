@@ -464,3 +464,6 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .efx-buy-btn { width: 100%; background: var(--green); color: #000; border: none; border-radius: 9px; padding: 7px 6px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; transition: opacity .2s; }
 .efx-buy-btn.nomoney { background: rgba(255,255,255,.08); color: var(--muted2); cursor: not-allowed; }
 .efx-active { font-size: 11px; font-weight: 700; color: var(--green); background: rgba(46,204,113,.12); border-radius: 8px; padding: 5px 10px; text-align: center; width: 100%; }
+.efx-owned { border-color: rgba(91,141,239,.35); background: rgba(91,141,239,.06); }
+.efx-owned-badge { font-size: 9px; color: #5b8def; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-top: -4px; }
+.efx-buy-btn.efx-free { background: rgba(91,141,239,.2); color: #5b8def; border: 1px solid rgba(91,141,239,.35); }
