@@ -41,6 +41,8 @@ function startPvpPolling() {
 }
 
 async function _fetchPvp() {
+  // ping server that user is in duel mode
+  try { const uid=window.S?.uid||window.tgUserId||''; if(uid) fetch('/api/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,mode:'duel'})}).catch(()=>{}); } catch{}
   try {
     const r = await fetch('/api/pvp/state');
     const d = await r.json();
@@ -631,8 +633,20 @@ async function pvpLeave() {
 }
 
 /* ─── PAGE HOOKS ─── */
-function onPvpPageEnter() { startPvpPolling(); _pvpRender(); _fetchHistory(); }
-function onPvpPageLeave() {}
+function onPvpPageEnter() {
+  // Always show menu cards first when entering PvP page
+  const menu = $('pvp-menu-block');
+  const duel = $('pvp-duel-wrap');
+  const solo = $('pvp-solo-wrap');
+  if (menu) menu.style.display = 'block';
+  if (duel) duel.style.display = 'none';
+  if (solo) solo.style.display = 'none';
+  startPvpPolling(); _pvpRender(); _fetchHistory();
+}
+function onPvpPageLeave() {
+  // Stop online timer when leaving page
+  if (window._pvpOnlineTimer) { clearInterval(window._pvpOnlineTimer); window._pvpOnlineTimer = null; }
+}
 
 /* ── MODE SWITCH ── */
 function pvpSwitchMode(btn, mode) {
@@ -670,7 +684,55 @@ function pvpBackToMenu() {
 
 /* ══ PvP MENU: wheel + lightning + online ══ */
 (function(){
-  /* ── Solo Wheel ── */
+  /* ── Swords illustration (canvas, pixel-perfect) ── */
+  function drawMenuSwords(){
+    const cv = document.getElementById('pvp-swords-cv');
+    if(!cv) return;
+    const ctx = cv.getContext('2d');
+    const W=340, H=296;
+    ctx.clearRect(0,0,W,H);
+
+    function drawSword(tipX,tipY,angle,color1,color2,guardColor,glowColor){
+      ctx.save();
+      ctx.translate(tipX,tipY);
+      ctx.rotate(angle);
+
+      // blade glow
+      ctx.shadowColor=glowColor; ctx.shadowBlur=22;
+      const bg=ctx.createLinearGradient(0,0,0,192);
+      bg.addColorStop(0,'#ffffff'); bg.addColorStop(0.4,color1); bg.addColorStop(1,color2);
+      ctx.beginPath();
+      ctx.roundRect(-4,0,8,192,4);
+      ctx.fillStyle=bg; ctx.fill();
+
+      // guard
+      ctx.shadowBlur=14;
+      const gg=ctx.createLinearGradient(-22,30,22,30);
+      gg.addColorStop(0,guardColor); gg.addColorStop(1,'#fff');
+      ctx.beginPath(); ctx.roundRect(-22,28,44,9,4);
+      ctx.fillStyle=gg; ctx.fill();
+
+      // pommel
+      ctx.beginPath(); ctx.roundRect(-7,185,14,16,5);
+      ctx.fillStyle=color2; ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Sword 1 (blue) - left, pointing top-right
+    drawSword(140,22,-0.52,'#7aaeff','#3a6bdf','#5b8def','rgba(91,141,239,0.8)');
+    // Sword 2 (red) - right, pointing top-left
+    drawSword(200,28,0.52,'#ff8c5a','#e74c3c','#e74c3c','rgba(231,76,60,0.8)');
+
+    // Stars
+    ctx.shadowBlur=0;
+    [[76,42,3],[56,132,2],[108,190,3],[56,56,2],[320,36,2],[300,180,3]].forEach(([x,y,r])=>{
+      ctx.globalAlpha=0.6;
+      ctx.fillStyle='#fff';
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+  }
   function drawMenuWheel(){
     const cv = document.getElementById('pvp-solo-wheel-cv');
     if(!cv) return;
@@ -713,9 +775,13 @@ function pvpBackToMenu() {
     if(!cv) return;
     const ctx=cv.getContext('2d');
     const W=cv.width, H=cv.height;
+    // Swords cross at approx center-right of card
+    // Canvas is full card width (340px), swords are on right half (170-340px)
+    // Sword tips: blue~(310,22), red~(370,28) scaled to canvas coords
+    // Cross point approx x=255, y=60 on the 340px canvas
     const DIRS=[
-      {x0:55,y0:4,  x1:185,y1:140,cx:115,cy:52},
-      {x0:185,y0:4, x1:55, y1:140,cx:115,cy:52},
+      {x0:200, y0:4,   x1:310, y1:142, cx:252, cy:62},  // top-left → bottom-right
+      {x0:310, y0:4,   x1:200, y1:142, cx:252, cy:62},  // top-right → bottom-left
     ];
     function rand(a,b){return a+Math.random()*(b-a);}
     function makeBolt(sx,sy,ex,ey,segs,spread){
@@ -733,7 +799,7 @@ function pvpBackToMenu() {
       ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
       ctx.stroke();ctx.restore();
     }
-    let frame=0,bolt=null,running=false,fcx=115,fcy=52;
+    let frame=0,bolt=null,running=false,fcx=252,fcy=62;
     function flash(){
       if(running)return;
       running=true;
@@ -790,19 +856,26 @@ function pvpBackToMenu() {
   }
 
   /* ── Real online counter ── */
+  function pingActivity(mode){
+    const uid = window.S?.uid || window.tgUserId || '';
+    if(!uid) return;
+    fetch('/api/ping',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,mode})}).catch(()=>{});
+  }
+
   function updateMenuOnline(){
+    pingActivity('menu');
     fetch('/api/pvp-online').then(r=>r.json()).then(d=>{
-      const tot = document.getElementById('b-pvp');
-      const du  = document.getElementById('pvp-duel-online');
-      const so  = document.getElementById('pvp-solo-online');
-      if(tot) tot.textContent = (d.total||0);
-      if(du)  du.textContent  = (d.duel||0)+' онлайн';
-      if(so)  so.textContent  = (d.solo||0)+' онлайн';
+      // Never touch b-pvp — that's the balance pill managed by syncB()
+      const du = document.getElementById('pvp-duel-online');
+      const so = document.getElementById('pvp-solo-online');
+      if(du) du.textContent = (d.duel||0)+' онлайн';
+      if(so) so.textContent = (d.solo||0)+' онлайн';
     }).catch(()=>{});
   }
 
   /* init when page becomes visible */
   function onPvpPageVisible(){
+    drawMenuSwords();
     drawMenuWheel();
     initLightning();
     initCardPress();
@@ -815,8 +888,8 @@ function pvpBackToMenu() {
   const _origGo = window.go;
   window.go = function(page){
     if(_origGo) _origGo(page);
-    if(page==='pvp') setTimeout(onPvpPageVisible, 50);
+    if(page==='pvp') setTimeout(onPvpPageVisible, 80);
   };
   // Also init on load if pvp is default page
-  setTimeout(()=>{ if(document.getElementById('pvp-menu-block')) onPvpPageVisible(); }, 300);
+  setTimeout(()=>{ if(document.getElementById('pvp-menu-block')) onPvpPageVisible(); }, 400);
 })();
