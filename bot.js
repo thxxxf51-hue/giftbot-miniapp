@@ -825,7 +825,7 @@ bot.command('sprom', async (ctx) => {
 
   const reward = promo.reward;
 
-  // Draw promo image: sharp + simple SVG (no filters — Railway compatible)
+  // Draw promo image: sharp + SVG (librsvg-compatible, no rgba/paint-order)
   let imgBuffer;
   try {
     const bgPath = path.join(__dirname, 'promo_bg.jpg');
@@ -836,38 +836,34 @@ bot.command('sprom', async (ctx) => {
     const fontSize = Math.round(H * 0.056);
     const ls = Math.round(fontSize * 0.26);
 
-    // Build glow layers manually (no feGaussianBlur — just stroke offsets)
-    // Each layer is a slightly larger/more-transparent stroke = glow illusion
-    const layers = [];
-    const glowSteps = [
-      { sw: 18, op: 0.08, col: '100,190,255' },
-      { sw: 10, op: 0.15, col: '130,210,255' },
-      { sw:  5, op: 0.25, col: '160,225,255' },
-      { sw:  2, op: 0.45, col: '200,235,255' },
-    ];
-    for (const g of glowSteps) {
-      layers.push(
-        `<text x="50%" y="${fieldCy}" text-anchor="middle" dominant-baseline="middle" ` +
-        `font-family="Arial Black,Impact,sans-serif" font-size="${fontSize}" font-weight="900" ` +
-        `letter-spacing="${ls}" fill="none" ` +
-        `stroke="rgba(${g.col},${g.op})" stroke-width="${g.sw}" stroke-linejoin="round">${code}</text>`
-      );
-    }
-    // Glass body — near-transparent fill, crisp white stroke
-    layers.push(
-      `<text x="50%" y="${fieldCy}" text-anchor="middle" dominant-baseline="middle" ` +
-      `font-family="Arial Black,Impact,sans-serif" font-size="${fontSize}" font-weight="900" ` +
-      `letter-spacing="${ls}" fill="rgba(200,230,255,0.07)" ` +
-      `stroke="rgba(255,255,255,0.80)" stroke-width="1" paint-order="stroke">${code}</text>`
-    );
-    // Top highlight — brighter upper portion
-    layers.push(
-      `<text x="50%" y="${Math.round(fieldCy - fontSize * 0.1)}" text-anchor="middle" dominant-baseline="middle" ` +
-      `font-family="Arial Black,Impact,sans-serif" font-size="${fontSize}" font-weight="900" ` +
-      `letter-spacing="${ls}" fill="rgba(255,255,255,0.32)" stroke="none">${code}</text>`
-    );
+    // librsvg requires: hex colors + fill-opacity/stroke-opacity (no rgba())
+    // glow = wide strokes at decreasing opacity (cyan tint)
+    const t = (x, y, fs, sw, fill, fo, stroke, so, extra) =>
+      `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" ` +
+      `font-family="Impact,Arial Black,sans-serif" font-size="${fs}" font-weight="bold" ` +
+      `letter-spacing="${ls}" fill="${fill}" fill-opacity="${fo}" ` +
+      `stroke="${stroke}" stroke-opacity="${so}" stroke-width="${sw}" ${extra}>${code}</text>`;
 
-    const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${layers.join('')}</svg>`;
+    const svg = [
+      `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`,
+
+      // glow layer 1 — widest, very faint cyan
+      t('50%', fieldCy, fontSize, 22, '#64c8ff', 0,   '#64c8ff', 0.12, ''),
+      // glow layer 2
+      t('50%', fieldCy, fontSize, 12, '#96d8ff', 0,   '#96d8ff', 0.22, ''),
+      // glow layer 3
+      t('50%', fieldCy, fontSize,  5, '#c8eaff', 0,   '#c8eaff', 0.40, ''),
+      // glow layer 4 — tightest
+      t('50%', fieldCy, fontSize,  2, '#dff2ff', 0,   '#dff2ff', 0.60, ''),
+
+      // glass body — stroke first (below fill)
+      t('50%', fieldCy, fontSize,  2, '#aad4f0', 0.10, '#ffffff', 0.82, ''),
+
+      // top highlight — offset up slightly, semi-transparent white
+      t('50%', fieldCy - Math.round(fontSize * 0.08), fontSize, 0, '#ffffff', 0.30, 'none', 0, ''),
+
+      `</svg>`
+    ].join('');
 
     imgBuffer = await sharp(bgPath)
       .composite([{ input: Buffer.from(svg), blend: 'over' }])
