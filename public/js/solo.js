@@ -71,11 +71,11 @@ function _soloDrawWheel(canvas,chancePct,prizeIdx,rotation){
   ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1.5;ctx.stroke();
   ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=2;ctx.stroke();
 
-  // center text: "Ожидание" / "..."
+  // center text: "Ожидание" / "Крутится"
   ctx.fillStyle='rgba(255,255,255,0.42)';
   ctx.font=`600 ${Math.min(innerR*0.35,12)}px -apple-system,sans-serif`;
   ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText(_soloSpinning?'...':'Ожидание',cx,cy);
+  ctx.fillText(_soloSpinning?'Крутится':'Ожидание',cx,cy);
   ctx.textBaseline='alphabetic';
 
   // sparkles
