@@ -571,6 +571,25 @@ app.post('/api/draws/join', (req, res) => {
 
 app.get('/api/health', (req, res) => res.json({ ok: true, users: Object.keys(DB.users).length }));
 
+/* PvP online counters */
+app.get('/api/pvp-online', (req, res) => {
+  const now = Date.now();
+  // Count users active in last 5 min (polling counts as active)
+  let total = 0, duel = 0, solo = 0;
+  for (const u of Object.values(DB.users)) {
+    if (u.lastSeen && now - u.lastSeen < 5 * 60 * 1000) {
+      total++;
+      if (u.lastMode === 'solo') solo++;
+      else duel++;
+    }
+  }
+  // Minimum 1 if any users exist at all (looks better)
+  if (Object.keys(DB.users).length > 0 && total === 0) {
+    total = 1; duel = 1;
+  }
+  res.json({ total, duel, solo });
+});
+
 /* ══ BOT COMMANDS ══ */
 
 bot.start(async (ctx) => {
