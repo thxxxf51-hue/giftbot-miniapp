@@ -516,14 +516,8 @@
     </div>
   </div>
 
-  <!-- ═══ RESULT ═══ -->
-  <div id="pvp-result-block" style="display:none;flex-direction:column;align-items:center;padding:28px 20px;gap:10px">
-    <div id="pvp-res-ico" style="font-size:60px"></div>
-    <div id="pvp-res-title" style="font-size:21px;font-weight:800"></div>
-    <div id="pvp-res-name" style="font-size:13px;color:var(--muted2);text-align:center;line-height:1.5"></div>
-    <div id="pvp-res-prize" style="font-size:24px;font-weight:900;margin-top:4px"></div>
-    <div id="pvp-res-countdown" style="font-size:12px;color:var(--muted2);margin-top:6px"></div>
-  </div>
+  <!-- ═══ RESULT (placeholder, result shown as bottom sheet) ═══ -->
+  <div id="pvp-result-block" style="display:none"></div>
 
   </div><!-- /pvp-duel-wrap -->
 
@@ -567,13 +561,13 @@
         <button onclick="soloPrizePlus()" style="width:46px;height:48px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:24px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">+</button>
       </div>
       <!-- prize button -->
-      <button id="solo-prize-btn" onclick="soloTogglePrize()" style="width:100%;height:48px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.65);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit">
+      <button id="solo-prize-btn" onclick="soloOpenPrizePicker()" style="width:100%;height:48px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.65);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit">
         <span>Выбрать приз</span>
         <span id="solo-prize-val" style="font-weight:800">500 🪙</span>
         <span style="font-size:9px;opacity:.4">▼</span>
       </button>
       <!-- prize grid -->
-      <div id="solo-prize-picker" style="display:none;grid-template-columns:repeat(4,1fr);gap:7px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:11px"></div>
+      
       <div style="height:8px"></div>
     </div>
   </div><!-- /pvp-solo-wrap -->
@@ -588,6 +582,57 @@
   <button class="nb" id="nb-pvp" onclick="go('pvp')"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m2.75 9.25 1.5 2.5 2 1.5m-4.5 0 1 1m1.5-2.5-1.5 1.5m3-1 8.5-8.5v-2h-2l-8.5 8.5"/><path d="m10.25 12.25-2.25-2.25m2-2 2.25 2.25m1-1-1.5 2.5-2 1.5m4.5 0-1 1m-1.5-2.5 1.5 1.5m-7.25-5.25-4.25-4.25v-2h2l4.25 4.25"/></svg><span>PvP</span></button>
   <button class="nb" id="nb-profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Профиль</span></button>
 </nav>
+</div>
+
+
+<!-- SOLO Prize Picker Modal -->
+<div id="solo-prize-mo" class="cpmo" onclick="if(event.target===this)soloClosePrizePicker()">
+  <div class="cpbox">
+    <div class="cphdr"><div class="cptitle">🎯 Выбрать приз</div><button class="cpclose" onclick="soloClosePrizePicker()">✕</button></div>
+    <div class="efx-subtitle">Чем больше приз — тем дороже кручение</div>
+    <div id="solo-prize-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:4px 4px 8px"></div>
+  </div>
+</div>
+
+
+<!-- PvP Result Bottom Sheet -->
+<div id="pvp-res-sheet" onclick="if(event.target===this)pvpCloseResSheet()"
+  style="position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0);pointer-events:none;transition:background .3s ease;display:flex;align-items:flex-end">
+  <div id="pvp-res-sheet-box"
+    style="width:100%;background:#111118;border-radius:24px 24px 0 0;padding:0 0 34px;transform:translateY(100%);transition:transform .4s cubic-bezier(.32,1.2,.64,1);border-top:1px solid rgba(255,255,255,.08);box-shadow:0 -8px 40px rgba(0,0,0,.6)">
+    <!-- drag handle -->
+    <div style="display:flex;justify-content:center;padding:12px 0 4px">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.15)"></div>
+    </div>
+    <!-- game id -->
+    <div id="pvp-res-gameid" style="text-align:center;font-size:13px;font-weight:700;color:rgba(255,255,255,.3);padding:2px 0 14px;letter-spacing:.5px"></div>
+    <!-- winner row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px 18px">
+      <!-- left: avatar + name -->
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="pvp-res-av" style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.1);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800"></div>
+        <div>
+          <div id="pvp-res-name2" style="font-size:15px;font-weight:800;color:#fff"></div>
+          <div id="pvp-res-un" style="font-size:12px;color:rgba(255,255,255,.4);margin-top:1px"></div>
+        </div>
+      </div>
+      <!-- right: won amount + chance -->
+      <div style="text-align:right">
+        <div id="pvp-res-won" style="font-size:15px;font-weight:800;color:var(--green)"></div>
+        <div id="pvp-res-chance" style="font-size:12px;color:rgba(255,255,255,.35);margin-top:2px"></div>
+      </div>
+    </div>
+    <!-- bank card -->
+    <div style="margin:0 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:6px">
+      <div style="font-size:12px;color:rgba(255,255,255,.35);font-weight:600;text-transform:uppercase;letter-spacing:.8px">Банк игры</div>
+      <div id="pvp-res-bank" style="font-size:32px;font-weight:900;color:#fff"></div>
+      <div id="pvp-res-players" style="font-size:11px;color:rgba(255,255,255,.3)"></div>
+    </div>
+    <!-- countdown -->
+    <div id="pvp-res-countdown" style="text-align:center;font-size:12px;color:rgba(255,255,255,.3);margin-top:14px;padding:0 20px"></div>
+    <!-- my result badge -->
+    <div id="pvp-res-mybadge" style="display:none;margin:12px 16px 0;padding:13px;border-radius:14px;text-align:center;font-size:15px;font-weight:800"></div>
+  </div>
 </div>
 
 <script src="js/config.js"></script>
