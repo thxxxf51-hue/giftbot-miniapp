@@ -561,3 +561,19 @@ async function pvpLeave() {
 /* ─── PAGE HOOKS ─── */
 function onPvpPageEnter() { startPvpPolling(); _pvpRender(); _fetchHistory(); }
 function onPvpPageLeave() {}
+
+/* ── MODE SWITCH ── */
+function pvpSwitchMode(btn, mode) {
+  document.querySelectorAll(".stab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  const duel = document.getElementById("pvp-duel-wrap");
+  const solo = document.getElementById("pvp-solo-wrap");
+  if (mode === "solo") {
+    if (duel) duel.style.display = "none";
+    if (solo) { solo.style.display = "block"; initSoloPage(); }
+  } else {
+    if (solo) solo.style.display = "none";
+    if (duel) duel.style.display = "block";
+  }
+}
+
