@@ -50,7 +50,7 @@ async function usePromo(inputId){
       syncB();rShopItems();
       toast(`+${d.reward} монет!`,'g',PROMO_ICO);
     } else {
-      toast(d.error||'Неверный промокод','r',PROMO_ERR_ICO);
+      toast((d.error||'Неверный промокод').replace(/[\u{1F000}-\u{1FFFF}]|[\u2000-\u2BFF]|❌|✅/gu,'').trim(),'r',PROMO_ERR_ICO);
     }
   }catch(e){
     toast('Ошибка соединения с сервером','r',PROMO_ERR_ICO);
