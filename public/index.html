@@ -430,25 +430,14 @@
         <div style="position:absolute;width:200px;height:200px;right:-30px;top:-40px;border-radius:50%;filter:blur(55px);background:radial-gradient(circle,rgba(91,141,239,.55),transparent 70%);pointer-events:none"></div>
         <!-- lightning canvas -->
         <canvas id="pvp-lightning-cv" width="340" height="148" style="position:absolute;inset:0;pointer-events:none;z-index:5"></canvas>
-        <!-- swords illustration -->
-        <div style="position:absolute;right:0;top:0;bottom:0;width:170px;z-index:1;pointer-events:none">
-          <div style="position:absolute;width:5px;height:96px;border-radius:2px 2px 8px 8px;background:linear-gradient(180deg,#fff,#7aaeff 40%,#3a6bdf);box-shadow:0 0 14px rgba(91,141,239,.8),0 0 30px rgba(91,141,239,.4);top:14px;left:66px;transform:rotate(-28deg)"></div>
-          <div style="position:absolute;width:22px;height:5px;border-radius:3px;background:linear-gradient(90deg,#5b8def,#aac8ff);box-shadow:0 0 8px rgba(91,141,239,.7);top:28px;left:57px;transform:rotate(-28deg)"></div>
-          <div style="position:absolute;width:5px;height:96px;border-radius:2px 2px 8px 8px;background:linear-gradient(180deg,#fff,#ff8c5a 40%,#e74c3c);box-shadow:0 0 14px rgba(231,76,60,.8),0 0 30px rgba(231,76,60,.4);top:18px;left:88px;transform:rotate(28deg)"></div>
-          <div style="position:absolute;width:22px;height:5px;border-radius:3px;background:linear-gradient(90deg,#e74c3c,#ffaa88);box-shadow:0 0 8px rgba(231,76,60,.7);top:32px;left:80px;transform:rotate(28deg)"></div>
-          <!-- stars -->
-          <div style="position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:.6;top:20px;left:38px;animation:twinkle 2s .2s infinite"></div>
-          <div style="position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.6;top:65px;left:28px;animation:twinkle 2.5s .5s infinite"></div>
-          <div style="position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:.6;top:95px;left:52px;animation:twinkle 1.8s .8s infinite"></div>
-          <div style="position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:.6;top:28px;right:18px;animation:twinkle 2.2s 0s infinite"></div>
-          <div style="position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;opacity:.6;bottom:18px;right:28px;animation:twinkle 2s 1s infinite"></div>
-        </div>
+        <!-- swords illustration: drawn by canvas in pvp.js for pixel-perfect result -->
+        <canvas id="pvp-swords-cv" width="340" height="296" style="position:absolute;right:0;top:0;width:170px;height:148px;pointer-events:none;z-index:1"></canvas>
         <!-- text -->
         <div style="position:relative;z-index:2;padding:22px 20px;height:100%;display:flex;flex-direction:column;justify-content:space-between">
           <div>
             <div style="display:flex;align-items:center;gap:8px">
               <div style="font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 10px;border-radius:20px;background:rgba(91,141,239,.2);color:#7aaeff;border:1px solid rgba(91,141,239,.3);text-transform:uppercase">ПвП</div>
-              <div style="font-size:11px;color:rgba(255,255,255,.35);font-weight:600;display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;animation:pulse-dot 2s infinite;flex-shrink:0"></div><span id="pvp-duel-online">…</span></div>
+              <div style="font-size:11px;color:rgba(255,255,255,.35);font-weight:600;display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;animation:pulse-dot 2s infinite;flex-shrink:0"></div><span id="pvp-duel-online">0 онлайн</span></div>
             </div>
             <div style="font-family:var(--font-head,sans-serif);font-size:22px;font-weight:900;letter-spacing:-.5px;margin-top:6px;line-height:1">Дуэль</div>
             <div style="font-size:13px;color:rgba(255,255,255,.35);font-weight:500;margin-top:5px">Сразись с другими игроками</div>
@@ -475,7 +464,7 @@
           <div>
             <div style="display:flex;align-items:center;gap:8px">
               <div style="font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 10px;border-radius:20px;background:rgba(46,204,113,.15);color:#2ecc71;border:1px solid rgba(46,204,113,.25);text-transform:uppercase">Соло</div>
-              <div style="font-size:11px;color:rgba(255,255,255,.35);font-weight:600;display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;animation:pulse-dot 2s infinite;flex-shrink:0"></div><span id="pvp-solo-online">…</span></div>
+              <div style="font-size:11px;color:rgba(255,255,255,.35);font-weight:600;display:flex;align-items:center;gap:5px"><div style="width:7px;height:7px;border-radius:50%;background:#2ecc71;box-shadow:0 0 6px #2ecc71;animation:pulse-dot 2s infinite;flex-shrink:0"></div><span id="pvp-solo-online">0 онлайн</span></div>
             </div>
             <div style="font-family:var(--font-head,sans-serif);font-size:22px;font-weight:900;letter-spacing:-.5px;margin-top:6px;line-height:1">Соло</div>
             <div style="font-size:13px;color:rgba(255,255,255,.35);font-weight:500;margin-top:5px">Крути колесо удачи</div>
@@ -490,8 +479,14 @@
   </div>
 
   <div id="pvp-duel-wrap" style="display:none">
-
-  <!-- ═══ IDLE: нет игры ═══ -->
+  <!-- back button -->
+  <div style="display:flex;align-items:center;padding:2px 4px 12px;gap:10px">
+    <button onclick="pvpBackToMenu()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;padding:7px 14px 7px 10px;cursor:pointer;letter-spacing:.2px">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+      Назад
+    </button>
+    <span style="font-family:var(--font-head,sans-serif);font-size:16px;font-weight:800">Дуэль</span>
+  </div>
   <div id="pvp-idle-block">
     <div style="display:flex;flex-direction:column;align-items:center;padding:22px 20px 14px;gap:5px">
       <div style="font-size:48px;margin-bottom:2px">⚔️</div>
@@ -590,6 +585,14 @@
 
   <!-- ═══ SOLO WHEEL ═══ -->
   <div id="pvp-solo-wrap" style="display:none">
+  <!-- back button -->
+  <div style="display:flex;align-items:center;padding:2px 4px 12px;gap:10px">
+    <button onclick="pvpBackToMenu()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;color:rgba(255,255,255,0.7);font-size:13px;font-weight:600;padding:7px 14px 7px 10px;cursor:pointer;letter-spacing:.2px">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+      Назад
+    </button>
+    <span style="font-family:var(--font-head,sans-serif);font-size:16px;font-weight:800">Соло</span>
+  </div>
     <div style="display:flex;flex-direction:column;align-items:center;padding:6px 0 0">
       <!-- pointer -->
       <div style="margin-bottom:-14px;z-index:10">
