@@ -7,7 +7,7 @@ const ENTRY_EFFECTS = [
   { id:'galaxy',   ico:'🌌', name:'Галактика' },
 ];
 
-const EFFECT_PRICE_NORMAL    = 2500;
+const EFFECT_PRICE_NORMAL    = 3000;
 const EFFECT_PRICE_VIP       = 1500;
 const EFFECT_DURATION_NORMAL = 24 * 3600 * 1000;
 const EFFECT_DURATION_VIP    = 48 * 3600 * 1000;
@@ -29,7 +29,7 @@ function _spawnParticle(type, W) {
       y:      r(H * 0.2, H + 20),          // start scattered across screen
       vx:     r(-0.35, 0.35),               // gentle horizontal drift
       vy:     r(-1.4, -0.4),               // float UPWARD
-      radius: r(1.5, 4.2),
+      radius: r(0.7, 2.0),
       alpha:  r(0.4, 1.0),                  // initial opacity
       twinkleSpeed: r(0.018, 0.045),        // how fast it pulses
       twinklePhase: r(0, Math.PI * 2),      // offset so they're not in sync
@@ -167,8 +167,8 @@ function launchEntryEffect() {
   _stopEffect(); _efxParticles = []; _efxSpawning = true;
   const isMeteor = type === 'meteors';
   const isGalaxy = type === 'galaxy';
-  const interval = isMeteor ? 150 : isGalaxy ? 40 : 65;
-  const maxSpawn = isMeteor ? 45  : isGalaxy ? 120 : 85;
+  const interval = isMeteor ? 150 : isGalaxy ? 80 : 65;
+  const maxSpawn = isMeteor ? 45  : isGalaxy ? 45 : 85;
   let count = 0;
   function spawnNext() {
     if (!_efxSpawning || count >= maxSpawn) { _efxSpawning = false; return; }
