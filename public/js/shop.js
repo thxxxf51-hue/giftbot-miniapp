@@ -17,7 +17,7 @@ function rShopItems(){
     const ok=S.balance>=x.price;
     let btn,price=x.price;
     if(x.id===3&&S.vipDiscount)price=250;
-    if(x.special==='effect'&&vipStatus()==='active')price=1000;
+    if(x.special==='effect'&&vipStatus()==='active')price=1500;
     const ok2=S.balance>=price;
     if(x.wip)btn=`<button class="sbuy wip" disabled>В разработке</button>`;
     else if(x.special==='color')btn=`<button class="sbuy" onclick="openColorPicker(false)">Выбрать цвет</button>`;
