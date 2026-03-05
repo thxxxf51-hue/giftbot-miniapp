@@ -2,6 +2,7 @@ const { Telegraf } = require('telegraf');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const { createCanvas, loadImage } = require('canvas');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
@@ -809,6 +810,93 @@ bot.command('ddelete', (ctx) => {
   if (!DB.finished[id]) return ctx.reply(`❌ Завершённый розыгрыш #${id} не найден.`);
   delete DB.finished[id];
   ctx.reply(`✅ Розыгрыш #${id} удалён из архива.`);
+});
+
+
+/* ══ ADMIN: /sprom — рассылка промокода с картинкой ══ */
+bot.command('sprom', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.trim().split(/\s+/);
+  if (parts.length < 2) return ctx.reply('Формат: /sprom ПРОМОКОД\nПример: /sprom GIFT2024');
+
+  const code = parts[1].toUpperCase();
+  const promo = DB.promos[code];
+  if (!promo) return ctx.reply(`❌ Промокод "${code}" не найден.\nСписок: /promos`);
+
+  const reward = promo.reward;
+
+  // Draw promo image
+  let imgBuffer;
+  try {
+    const bgPath = path.join(__dirname, 'promo_bg.jpg');
+    const bg = await loadImage(bgPath);
+    const W = bg.width, H = bg.height;
+    const canvas = createCanvas(W, H);
+    const ctx2 = canvas.getContext('2d');
+
+    // Draw background
+    ctx2.drawImage(bg, 0, 0, W, H);
+
+    // Promo code text inside the glass field at bottom
+    // Field is roughly: y from 78% to 92% of H, full width with padding
+    const fieldY = H * 0.78;
+    const fieldH = H * 0.14;
+    const fieldCx = W / 2;
+    const fieldCy = fieldY + fieldH / 2;
+
+    // Text style — matches the glassmorphism look
+    const fontSize = Math.round(fieldH * 0.52);
+    ctx2.font = \`700 \${fontSize}px -apple-system, "Helvetica Neue", Arial, sans-serif\`;
+    ctx2.textAlign = 'center';
+    ctx2.textBaseline = 'middle';
+
+    // Subtle glow
+    ctx2.shadowColor = 'rgba(180,230,255,0.8)';
+    ctx2.shadowBlur = 18;
+    ctx2.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx2.fillText(code, fieldCx, fieldCy);
+
+    // Second pass sharper
+    ctx2.shadowBlur = 6;
+    ctx2.fillStyle = 'rgba(255,255,255,1)';
+    ctx2.fillText(code, fieldCx, fieldCy);
+
+    imgBuffer = canvas.toBuffer('image/jpeg', { quality: 0.92 });
+  } catch (e) {
+    console.error('canvas error:', e);
+    return ctx.reply('❌ Ошибка генерации картинки: ' + e.message);
+  }
+
+  const caption = \`🎁 Лови промокод на \${reward.toLocaleString('ru')} 🪙!\n\nАктивируй в приложении 👇🏻\`;
+  const userIds = Object.keys(DB.users);
+  if (!userIds.length) return ctx.reply('❌ Нет пользователей в базе');
+
+  const statusMsg = await ctx.reply(\`📤 Рассылка промокода \${code}...\n👥 Получателей: \${userIds.length}\`);
+  let sent = 0, failed = 0, blocked = 0;
+
+  for (const uid of userIds) {
+    try {
+      await bot.telegram.sendPhoto(Number(uid), { source: imgBuffer }, {
+        caption,
+        parse_mode: 'HTML',
+        reply_markup: {
+          inline_keyboard: [[{
+            text: '🎁 Открыть GiftBot',
+            web_app: { url: APP_URL }
+          }]]
+        }
+      });
+      sent++;
+    } catch (e) {
+      if (e.description?.includes('blocked') || e.description?.includes('deactivated')) blocked++;
+      else failed++;
+    }
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
+    \`✅ Рассылка завершена!\n\n🎟 Промокод: \${code}\n💰 Награда: \${reward.toLocaleString('ru')} 🪙\n\n📤 Отправлено: \${sent}\n🚫 Заблокировали: \${blocked}\n❌ Ошибки: \${failed}\n👥 Всего: \${userIds.length}\`
+  );
 });
 
 bot.command('promos', (ctx) => {
