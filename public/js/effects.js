@@ -4,14 +4,16 @@ const ENTRY_EFFECTS = [
   { id:'confetti', ico:'🎊', name:'Конфетти' },
   { id:'snow',     ico:'❄️', name:'Снег'     },
   { id:'meteors',  ico:'💫', name:'Метеоры'  },
+  { id:'galaxy',   ico:'🌌', name:'Галактика' },
 ];
 
-const EFFECT_PRICE_NORMAL    = 2500;
-const EFFECT_PRICE_VIP       = 1000;
+const EFFECT_PRICE_NORMAL    = 3000;
+const EFFECT_PRICE_VIP       = 1500;
 const EFFECT_DURATION_NORMAL = 24 * 3600 * 1000;
 const EFFECT_DURATION_VIP    = 48 * 3600 * 1000;
 
 const CONFETTI_COLORS = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff6bdf','#ff9f43','#a8edea','#ffb347'];
+const GALAXY_COLORS  = ['#c084fc','#818cf8','#38bdf8','#a5f3fc','#e879f9','#f0abfc','#7dd3fc','#ffffff'];
 const r = (a, b) => a + Math.random() * (b - a);
 
 /* ══ PARTICLE FACTORY ══ */
@@ -19,6 +21,22 @@ function _spawnParticle(type, W) {
   if (type === 'snow')     return { type, x:r(0,W), y:r(-25,-2), vx:r(-0.2,0.2),   vy:r(0.55,1.3),  radius:r(2,4.5) };
   if (type === 'petals')   return { type, x:r(0,W), y:r(-25,-2), vx:r(-0.3,0.3),   vy:r(0.6,1.5),   rot:r(0,Math.PI*2), rotV:r(-0.018,0.018), w:r(4,7),  h:r(2.5,5) };
   if (type === 'confetti') return { type, x:r(0,W), y:r(-25,-2), vx:r(-0.45,0.45), vy:r(0.7,1.8),   rot:r(0,Math.PI*2), rotV:r(-0.045,0.045), w:r(4,9),  h:r(3,6), isRect:Math.random()>0.45, color:CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)] };
+  if (type === 'galaxy') {
+    const H = window.innerHeight;
+    return {
+      type,
+      x:      r(0, W),
+      y:      r(H * 0.2, H + 20),          // start scattered across screen
+      vx:     r(-0.35, 0.35),               // gentle horizontal drift
+      vy:     r(-1.4, -0.4),               // float UPWARD
+      radius: r(1.5, 4.2),
+      alpha:  r(0.4, 1.0),                  // initial opacity
+      twinkleSpeed: r(0.018, 0.045),        // how fast it pulses
+      twinklePhase: r(0, Math.PI * 2),      // offset so they're not in sync
+      color:  GALAXY_COLORS[Math.floor(Math.random() * GALAXY_COLORS.length)],
+      pulse:  Math.random() > 0.4,          // ~60% twinkle
+    };
+  }
   if (type === 'meteors') {
     const fromTop = Math.random() > 0.3;
     const angle   = r(28, 40) * Math.PI / 180;
@@ -67,6 +85,39 @@ function _drawLoop(type, H) {
 
     p.x += p.vx; p.y += p.vy;
     if (p.rot !== undefined) p.rot += p.rotV;
+
+    // Galaxy rises upward — use its own fade logic (fade out at top, kill off-screen)
+    if (p.type === 'galaxy') {
+      if (p.y < -20) return false; // gone off top
+      // fade near top
+      const fadeTopA = p.y < 60 ? Math.max(0, p.y / 60) : 1;
+      const a = fadeTopA;
+      _efxCtx.save();
+      p.twinklePhase += p.twinkleSpeed;
+      const twinkle = p.pulse ? 0.45 + 0.55 * Math.abs(Math.sin(p.twinklePhase)) : 1;
+      const baseA   = Math.min(1, Math.max(0, a)) * twinkle;
+      // outer glow
+      const glow = _efxCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+      glow.addColorStop(0,   p.color + 'bb');
+      glow.addColorStop(0.4, p.color + '44');
+      glow.addColorStop(1,   p.color + '00');
+      _efxCtx.globalAlpha = baseA * 0.9;
+      _efxCtx.beginPath();
+      _efxCtx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+      _efxCtx.fillStyle = glow;
+      _efxCtx.fill();
+      // bright core
+      _efxCtx.globalAlpha = baseA;
+      _efxCtx.beginPath();
+      _efxCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      _efxCtx.fillStyle   = p.color;
+      _efxCtx.shadowColor = p.color;
+      _efxCtx.shadowBlur  = p.radius * 5;
+      _efxCtx.fill();
+      _efxCtx.restore();
+      return true;
+    }
+
     let a = 1;
     if (p.y < 12)          a = Math.max(0, p.y / 12);
     if (p.y >= FADE_START) a = Math.max(0, 1 - (p.y - FADE_START) / (H + 15 - FADE_START));
@@ -115,14 +166,15 @@ function launchEntryEffect() {
   _efxCtx = _efxCanvas.getContext('2d');
   _stopEffect(); _efxParticles = []; _efxSpawning = true;
   const isMeteor = type === 'meteors';
-  const interval = isMeteor ? 150 : 65;
-  const maxSpawn = isMeteor ? 45  : 85;
+  const isGalaxy = type === 'galaxy';
+  const interval = isMeteor ? 150 : isGalaxy ? 40 : 65;
+  const maxSpawn = isMeteor ? 45  : isGalaxy ? 120 : 85;
   let count = 0;
   function spawnNext() {
     if (!_efxSpawning || count >= maxSpawn) { _efxSpawning = false; return; }
     _efxParticles.push(_spawnParticle(type, W));
     count++;
-    _efxSpawnTimer = setTimeout(spawnNext, interval + r(0, isMeteor ? 70 : 30));
+    _efxSpawnTimer = setTimeout(spawnNext, interval + r(0, isMeteor ? 70 : isGalaxy ? 15 : 30));
   }
   spawnNext();
   setTimeout(() => { _efxSpawning = false; clearTimeout(_efxSpawnTimer); }, 3500);
