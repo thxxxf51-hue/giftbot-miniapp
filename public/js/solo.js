@@ -75,13 +75,13 @@ function _soloDrawWheel(canvas,chancePct,prizeIdx,rotation){
   ctx.textAlign='center'; ctx.textBaseline='middle';
   if(_soloSpinning && _soloCountdown > 0){
     // big number
-    ctx.font=`900 ${Math.round(innerR*0.72)}px -apple-system,sans-serif`;
+    ctx.font=`900 ${Math.round(innerR*0.36)}px -apple-system,sans-serif`;
     ctx.fillStyle='#ffffff';
-    ctx.fillText(_soloCountdown, cx, cy - innerR*0.08);
+    ctx.fillText(_soloCountdown, cx, cy - innerR*0.04);
     // small "сек" below
-    ctx.font=`600 ${Math.round(innerR*0.3)}px -apple-system,sans-serif`;
+    ctx.font=`600 ${Math.round(innerR*0.15)}px -apple-system,sans-serif`;
     ctx.fillStyle='rgba(255,255,255,0.4)';
-    ctx.fillText('сек', cx, cy + innerR*0.44);
+    ctx.fillText('сек', cx, cy + innerR*0.28);
   } else {
     ctx.fillStyle='rgba(255,255,255,0.42)';
     ctx.font=`600 ${Math.min(innerR*0.35,12)}px -apple-system,sans-serif`;
