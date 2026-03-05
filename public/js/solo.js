@@ -189,7 +189,7 @@ function soloSpin(){
       const ico=win
         ?'<img src="/icons/check-circle.svg" width="16" height="16" style="display:block;flex-shrink:0">'
         :'<img src="/icons/x-circle.svg" width="16" height="16" style="display:block;flex-shrink:0">';
-      toast(win?`+${prize.toLocaleString('ru')} 🪙 Победа!`:'❌ Не повезло',win?'g':'r',ico);
+      toast(win?`+${prize.toLocaleString('ru')} 🪙 Победа!`:'Не повезло',win?'g':'r',ico);
     }
   }
   requestAnimationFrame(frame);
