@@ -31,7 +31,6 @@ function pvpShow(id) {
     if (b === id) { el.style.display = 'block'; }
     else el.style.display = 'none';
   });
-  if (id !== 'pvp-result-block') pvpCloseResSheet?.();
 }
 
 /* ─── POLLING ─── */
@@ -122,7 +121,6 @@ function _pvpRender() {
         // spin finished — show result
         if (_pvpResultFor !== g.id) {
           _pvpResultFor = g.id;
-          pvpShow('pvp-result-block');
           _showResult(g);
         }
       });
@@ -521,7 +519,7 @@ function _showResult(g) {
         _pvpGame = null;
         pvpShow('pvp-idle-block');
         _renderHistoryInto('pvp-idle-history');
-      }, 400);
+      }, 450);
       return;
     }
     left--;
