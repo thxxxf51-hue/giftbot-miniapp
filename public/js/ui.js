@@ -48,6 +48,7 @@ function toast(msg,type='g',icon=''){
 }
 
 const PROMO_ICO='<img src="/icons/check-circle.svg" width="18" height="18" style="display:block;flex-shrink:0">';
+const PROMO_ERR_ICO='<img src="/icons/x-circle.svg" width="18" height="18" style="display:block;flex-shrink:0">';
 
 /* ══ GENERAL MODAL ══ */
 let _gmCb=null;

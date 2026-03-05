@@ -31,7 +31,7 @@ async function usePromo(inputId){
   const el=document.getElementById(inputId);
   const code=(el.value||'').trim().toUpperCase();
   if(!code){toast('Введите промокод','r');return;}
-  if(S.usedPromos.has(code)){toast('❌ Уже использован','r');el.value='';return;}
+  if(S.usedPromos.has(code)){toast('Уже использован','r',PROMO_ERR_ICO);el.value='';return;}
   el.disabled=true;
   const btn=el.nextElementSibling;
   const oldTxt=btn.textContent;btn.textContent='...';btn.disabled=true;
@@ -50,10 +50,10 @@ async function usePromo(inputId){
       syncB();rShopItems();
       toast(`+${d.reward} монет!`,'g',PROMO_ICO);
     } else {
-      toast(d.error||'❌ Неверный промокод','r');
+      toast(d.error||'Неверный промокод','r',PROMO_ERR_ICO);
     }
   }catch(e){
-    toast('❌ Ошибка соединения с сервером','r');
+    toast('Ошибка соединения с сервером','r',PROMO_ERR_ICO);
   }
   el.disabled=false;btn.textContent=oldTxt;btn.disabled=false;
 }
