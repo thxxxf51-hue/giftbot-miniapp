@@ -17,9 +17,11 @@ function rShopItems(){
     const ok=S.balance>=x.price;
     let btn,price=x.price;
     if(x.id===3&&S.vipDiscount)price=250;
+    if(x.special==='effect'&&vipStatus()==='active')price=1000;
     const ok2=S.balance>=price;
     if(x.wip)btn=`<button class="sbuy wip" disabled>В разработке</button>`;
     else if(x.special==='color')btn=`<button class="sbuy" onclick="openColorPicker(false)">Выбрать цвет</button>`;
+    else if(x.special==='effect')btn=`<button class="sbuy" onclick="openEffectPicker()">Выбрать эффект</button>`;
     else btn=`<button class="sbuy${ok2?'':' nomoney'}"${ok2?'':' disabled'} onclick="buyItem(${x.id})">${ok2?'Купить':'Мало монет'}</button>`;
     const priceLabel=x.id===3&&S.vipDiscount?`<span style="text-decoration:line-through;opacity:.5">${x.price}</span> <span style="color:var(--green)">${price} 🪙</span>`:`${price} 🪙`;
     return`<div class="gc sitem">

@@ -85,6 +85,7 @@ const ITEMS=[
   {id:4,ico:'🎰',name:'Доп. попытка',price:200,wip:true},
   {id:5,ico:'🌈',name:'Цветной ник',price:250,wip:false,special:'color'},
   {id:6,ico:'✨',name:'Буст рефералов',price:400,wip:true},
+  {id:8,ico:'🎆',name:'Эффект входа',price:2500,wip:false,special:'effect'},
 ];
 
 /* ══ TASKS ══ */

@@ -79,6 +79,7 @@ async function init(){
   applyCrown();
   applyLegend();
   updateVipUI();
+  updateEffectUI();
   syncB();
   renderTasks();
   rShopItems();
@@ -110,6 +111,9 @@ async function init(){
 
   loadDraws();
   setInterval(loadDraws,30000);
+
+  // Launch entry effect if active
+  launchEntryEffect();
 
   // Проверка бана каждые 30 сек
   setInterval(async()=>{
