@@ -417,7 +417,12 @@
 
 <!-- PvP -->
 <div class="page" id="page-pvp">
-  <div class="phdr"><div class="ptitle">⚔️ PvP Дуэль</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-pvp">0</span></div></div>
+  <div class="phdr"><div class="ptitle">⚔️ PvP</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-pvp">0</span></div></div>
+  <div class="stabs" style="margin-bottom:12px">
+    <button class="stab active" id="pvp-tab-duel" onclick="pvpSwitchMode(this,'duel')">⚔️ Дуэль</button>
+    <button class="stab" id="pvp-tab-solo" onclick="pvpSwitchMode(this,'solo')">🎰 Соло</button>
+  </div>
+  <div id="pvp-duel-wrap">
 
   <!-- ═══ IDLE: нет игры ═══ -->
   <div id="pvp-idle-block">
@@ -520,6 +525,59 @@
     <div id="pvp-res-countdown" style="font-size:12px;color:var(--muted2);margin-top:6px"></div>
   </div>
 
+  </div><!-- /pvp-duel-wrap -->
+
+  <!-- ═══ SOLO WHEEL ═══ -->
+  <div id="pvp-solo-wrap" style="display:none">
+    <div style="display:flex;flex-direction:column;align-items:center;padding:6px 0 0">
+      <!-- pointer -->
+      <div style="margin-bottom:-14px;z-index:10">
+        <svg width="30" height="24" viewBox="0 0 30 24">
+          <polygon points="15,22 2,2 28,2" fill="#1a1a24" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <!-- canvas -->
+      <div style="width:min(86vw,320px);aspect-ratio:1/1;position:relative">
+        <canvas id="solo-canvas" style="width:100%;height:100%;border-radius:50%;display:block"></canvas>
+      </div>
+    </div>
+
+    <!-- controls -->
+    <div style="padding:12px 16px 0;display:flex;flex-direction:column;gap:10px">
+      <!-- chance label -->
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.28);padding:0 2px">
+        <span>1% шанс</span>
+        <span id="solo-chance-lbl" style="font-weight:700;font-size:11px">Шанс 10%</span>
+        <span>65% шанс</span>
+      </div>
+      <!-- slider -->
+      <div id="solo-slider"
+        onmousedown="soloSliderDown(event)" ontouchstart="soloSliderDown(event)"
+        onmousemove="soloSliderMove(event)" ontouchmove="soloSliderMove(event)"
+        onmouseup="soloSliderUp()" ontouchend="soloSliderUp()"
+        style="position:relative;height:34px;display:flex;align-items:center;padding:0 8px;cursor:pointer">
+        <div style="position:absolute;left:8px;right:8px;height:3px;background:rgba(255,255,255,.1);border-radius:4px"></div>
+        <div id="solo-slider-fill" style="position:absolute;left:8px;height:3px;border-radius:4px;transition:width .05s"></div>
+        <div id="solo-dots"></div>
+      </div>
+      <!-- spin row -->
+      <div style="display:flex;gap:9px;align-items:center">
+        <button onclick="soloPrizeMinus()" style="width:46px;height:48px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:24px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">−</button>
+        <button id="solo-spin-btn" onclick="soloSpin()" style="flex:1;height:52px;border-radius:16px;border:none;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;font-family:inherit">Крутить</button>
+        <button onclick="soloPrizePlus()" style="width:46px;height:48px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:24px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">+</button>
+      </div>
+      <!-- prize button -->
+      <button id="solo-prize-btn" onclick="soloTogglePrize()" style="width:100%;height:48px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.65);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit">
+        <span>Выбрать приз</span>
+        <span id="solo-prize-val" style="font-weight:800">500 🪙</span>
+        <span style="font-size:9px;opacity:.4">▼</span>
+      </button>
+      <!-- prize grid -->
+      <div id="solo-prize-picker" style="display:none;grid-template-columns:repeat(4,1fr);gap:7px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:11px"></div>
+      <div style="height:8px"></div>
+    </div>
+  </div><!-- /pvp-solo-wrap -->
+
 </div>
 </div><!-- /pages -->
 
@@ -542,6 +600,7 @@
 <script src="js/stars.js"></script>
 <script src="js/draws.js"></script>
 <script src="js/pvp.js"></script>
+<script src="js/solo.js"></script>
 <script src="js/effects.js"></script>
 <script src="js/init.js"></script>
 
