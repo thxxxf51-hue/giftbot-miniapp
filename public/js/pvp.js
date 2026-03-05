@@ -28,9 +28,10 @@ function pvpShow(id) {
   PVP_BLOCKS.forEach(b => {
     const el = $(b);
     if (!el) return;
-    if (b === id) { el.style.display = b === 'pvp-result-block' ? 'flex' : 'block'; }
+    if (b === id) { el.style.display = 'block'; }
     else el.style.display = 'none';
   });
+  if (id !== 'pvp-result-block') pvpCloseResSheet?.();
 }
 
 /* ─── POLLING ─── */
@@ -433,7 +434,7 @@ function _startSpin(g, onDone) {
 
 /* ─── RESULT ─── */
 function _showResult(g) {
-  const w    = g.winner;
+  const w = g.winner;
   if (!w) return;
   const isMe = w.uid === UID;
   const wIdx = g.players.findIndex(p => p.uid === w.uid);
@@ -442,36 +443,109 @@ function _showResult(g) {
   // Credit only once
   if (isMe) { S.balance += g.totalBet; syncB(); }
 
-  $('pvp-res-ico').textContent   = isMe ? '🏆' : '😔';
-  $('pvp-res-title').textContent  = isMe ? 'Вы победили!' : 'Победил другой';
-  $('pvp-res-name').innerHTML    = `<span style="color:${wCol};font-weight:800">${w.username?'@'+w.username:w.firstName}</span> забирает ${g.totalBet.toLocaleString('ru')} 🪙`;
-  const prEl = $('pvp-res-prize');
-  prEl.textContent = isMe ? '+' + g.totalBet.toLocaleString('ru') + ' монет!' : '';
-  prEl.style.color = isMe ? 'var(--green)' : 'var(--muted2)';
+  // Chance = winner's bet / total bank
+  const wPlayer = g.players.find(p => p.uid === w.uid);
+  const chancePct = wPlayer && g.totalBet > 0
+    ? Math.round((wPlayer.bet / g.totalBet) * 1000) / 10
+    : 0;
 
-  // Refresh history from server after result (with delay so server has saved it)
+  // Fill bottom sheet
+  const gameid = $('pvp-res-gameid');
+  if (gameid) gameid.textContent = 'Игра #' + g.id;
+
+  // Avatar
+  const avEl = $('pvp-res-av');
+  if (avEl) {
+    if (w.photoUrl) {
+      avEl.innerHTML = `<img src="${w.photoUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='${(w.firstName||'?')[0].toUpperCase()}'">`;
+    } else {
+      avEl.textContent = (w.firstName || '?')[0].toUpperCase();
+      avEl.style.background = wCol + '33';
+      avEl.style.color = wCol;
+    }
+  }
+
+  const nm = $('pvp-res-name2');
+  if (nm) { nm.textContent = w.firstName || 'Игрок'; nm.style.color = wCol; }
+
+  const un = $('pvp-res-un');
+  if (un) un.textContent = w.username ? '@' + w.username : '';
+
+  const won = $('pvp-res-won');
+  if (won) { won.textContent = 'Выиграл ' + g.totalBet.toLocaleString('ru') + ' 🪙'; won.style.color = isMe ? 'var(--green)' : wCol; }
+
+  const ch = $('pvp-res-chance');
+  if (ch) ch.textContent = 'Шанс ' + chancePct + '%';
+
+  const bank = $('pvp-res-bank');
+  if (bank) bank.textContent = g.totalBet.toLocaleString('ru') + ' 🪙';
+
+  const pl = $('pvp-res-players');
+  if (pl) pl.textContent = g.players.length + ' ' + (g.players.length === 1 ? 'участник' : g.players.length < 5 ? 'участника' : 'участников');
+
+  const badge = $('pvp-res-mybadge');
+  if (badge) {
+    if (isMe) {
+      badge.style.display = 'block';
+      badge.style.background = 'rgba(46,204,113,.12)';
+      badge.style.border = '1px solid rgba(46,204,113,.3)';
+      badge.style.color = 'var(--green)';
+      badge.textContent = '🏆 Вы победили! +' + g.totalBet.toLocaleString('ru') + ' 🪙';
+    } else {
+      badge.style.display = 'block';
+      badge.style.background = 'rgba(255,255,255,.04)';
+      badge.style.border = '1px solid rgba(255,255,255,.08)';
+      badge.style.color = 'rgba(255,255,255,.4)';
+      badge.textContent = '😔 Победил другой игрок';
+    }
+  }
+
+  // Open bottom sheet
+  pvpOpenResSheet();
+
+  // Refresh history from server after result
   if (_pvpHistoryFor !== g.id) {
     _pvpHistoryFor = g.id;
     setTimeout(_fetchHistory, 6000);
   }
 
   // Countdown → back to idle
-  let left = 5;
+  let left = 7;
   clearTimeout(_pvpResTimer);
   const cdEl = $('pvp-res-countdown');
   const tick = () => {
-    if (cdEl) cdEl.textContent = 'Возврат через ' + left + 'с…';
+    if (cdEl) cdEl.textContent = 'Закроется через ' + left + 'с…';
     if (left <= 0) {
-      // Mark game as fully handled — future polls with same id will be ignored
-      _pvpGame = null;
-      pvpShow('pvp-idle-block');
-      _renderHistoryInto('pvp-idle-history');
+      pvpCloseResSheet();
+      setTimeout(() => {
+        _pvpGame = null;
+        pvpShow('pvp-idle-block');
+        _renderHistoryInto('pvp-idle-history');
+      }, 400);
       return;
     }
     left--;
     _pvpResTimer = setTimeout(tick, 1000);
   };
   tick();
+}
+
+function pvpOpenResSheet() {
+  const sheet = $('pvp-res-sheet');
+  const box   = $('pvp-res-sheet-box');
+  if (!sheet || !box) return;
+  sheet.style.pointerEvents = 'all';
+  sheet.style.background    = 'rgba(0,0,0,0.6)';
+  box.style.transform       = 'translateY(0)';
+}
+
+function pvpCloseResSheet() {
+  const sheet = $('pvp-res-sheet');
+  const box   = $('pvp-res-sheet-box');
+  if (!sheet || !box) return;
+  sheet.style.pointerEvents = 'none';
+  sheet.style.background    = 'rgba(0,0,0,0)';
+  box.style.transform       = 'translateY(100%)';
 }
 
 /* ─── HISTORY ─── */
