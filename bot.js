@@ -825,123 +825,49 @@ bot.command('sprom', async (ctx) => {
 
   const reward = promo.reward;
 
-  // Draw promo image: sharp + SVG liquid glass text overlay
+  // Draw promo image: sharp + simple SVG (no filters — Railway compatible)
   let imgBuffer;
   try {
     const bgPath = path.join(__dirname, 'promo_bg.jpg');
     const meta = await sharp(bgPath).metadata();
     const W = meta.width, H = meta.height;
 
-    // Field sits at ~78.5%–92% of image height, full width
     const fieldCy = Math.round(H * 0.854);
-    const fontSize = Math.round(H * 0.058);
-    const letterSpacing = Math.round(fontSize * 0.28);
+    const fontSize = Math.round(H * 0.056);
+    const ls = Math.round(fontSize * 0.26);
 
-    // SVG with liquid glass effect:
-    // layer 1 – wide cyan glow blur
-    // layer 2 – medium glow
-    // layer 3 – glass body (transparent fill + white stroke)
-    // layer 4 – top highlight gradient
-    const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="glow_wide" x="-40%" y="-200%" width="180%" height="500%">
-      <feGaussianBlur stdDeviation="10" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="0.4 0.7 1  0 0
-                0.3 0.6 0.9 0 0
-                0.4 0.8 1  0 0
-                0   0   0  0.45 0" result="c"/>
-    </filter>
-    <filter id="glow_mid" x="-20%" y="-150%" width="140%" height="400%">
-      <feGaussianBlur stdDeviation="4" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="0.5 0.8 1  0 0
-                0.4 0.7 1  0 0
-                0.5 0.9 1  0 0
-                0   0   0  0.55 0"/>
-    </filter>
-    <filter id="sharp_glow" x="-10%" y="-100%" width="120%" height="300%">
-      <feGaussianBlur stdDeviation="1.5" result="b"/>
-      <feColorMatrix in="b" type="matrix"
-        values="0.6 0.9 1  0 0
-                0.5 0.8 1  0 0
-                0.6 1   1  0 0
-                0   0   0  0.7 0"/>
-    </filter>
-    <linearGradient id="hiGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.72"/>
-      <stop offset="38%"  stop-color="#dff2ff" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#a8daff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#c8eeff" stop-opacity="0.13"/>
-      <stop offset="100%" stop-color="#7ab8e0" stop-opacity="0.06"/>
-    </linearGradient>
-  </defs>
+    // Build glow layers manually (no feGaussianBlur — just stroke offsets)
+    // Each layer is a slightly larger/more-transparent stroke = glow illusion
+    const layers = [];
+    const glowSteps = [
+      { sw: 18, op: 0.08, col: '100,190,255' },
+      { sw: 10, op: 0.15, col: '130,210,255' },
+      { sw:  5, op: 0.25, col: '160,225,255' },
+      { sw:  2, op: 0.45, col: '200,235,255' },
+    ];
+    for (const g of glowSteps) {
+      layers.push(
+        `<text x="50%" y="${fieldCy}" text-anchor="middle" dominant-baseline="middle" ` +
+        `font-family="Arial Black,Impact,sans-serif" font-size="${fontSize}" font-weight="900" ` +
+        `letter-spacing="${ls}" fill="none" ` +
+        `stroke="rgba(${g.col},${g.op})" stroke-width="${g.sw}" stroke-linejoin="round">${code}</text>`
+      );
+    }
+    // Glass body — near-transparent fill, crisp white stroke
+    layers.push(
+      `<text x="50%" y="${fieldCy}" text-anchor="middle" dominant-baseline="middle" ` +
+      `font-family="Arial Black,Impact,sans-serif" font-size="${fontSize}" font-weight="900" ` +
+      `letter-spacing="${ls}" fill="rgba(200,230,255,0.07)" ` +
+      `stroke="rgba(255,255,255,0.80)" stroke-width="1" paint-order="stroke">${code}</text>`
+    );
+    // Top highlight — brighter upper portion
+    layers.push(
+      `<text x="50%" y="${Math.round(fieldCy - fontSize * 0.1)}" text-anchor="middle" dominant-baseline="middle" ` +
+      `font-family="Arial Black,Impact,sans-serif" font-size="${fontSize}" font-weight="900" ` +
+      `letter-spacing="${ls}" fill="rgba(255,255,255,0.32)" stroke="none">${code}</text>`
+    );
 
-  <!-- layer 1: wide diffuse glow -->
-  <text
-    x="50%" y="${fieldCy}"
-    text-anchor="middle" dominant-baseline="middle"
-    font-family="'Arial Black', Impact, sans-serif"
-    font-size="${fontSize}"
-    font-weight="900"
-    letter-spacing="${letterSpacing}"
-    fill="none"
-    stroke="rgba(140,215,255,0.6)"
-    stroke-width="3"
-    filter="url(#glow_wide)">${code}</text>
-
-  <!-- layer 2: medium glow -->
-  <text
-    x="50%" y="${fieldCy}"
-    text-anchor="middle" dominant-baseline="middle"
-    font-family="'Arial Black', Impact, sans-serif"
-    font-size="${fontSize}"
-    font-weight="900"
-    letter-spacing="${letterSpacing}"
-    fill="none"
-    stroke="rgba(180,230,255,0.55)"
-    stroke-width="2"
-    filter="url(#glow_mid)">${code}</text>
-
-  <!-- layer 3: sharp inner glow -->
-  <text
-    x="50%" y="${fieldCy}"
-    text-anchor="middle" dominant-baseline="middle"
-    font-family="'Arial Black', Impact, sans-serif"
-    font-size="${fontSize}"
-    font-weight="900"
-    letter-spacing="${letterSpacing}"
-    fill="none"
-    stroke="rgba(210,240,255,0.45)"
-    stroke-width="1.5"
-    filter="url(#sharp_glow)">${code}</text>
-
-  <!-- layer 4: glass body — transparent fill, crisp white stroke -->
-  <text
-    x="50%" y="${fieldCy}"
-    text-anchor="middle" dominant-baseline="middle"
-    font-family="'Arial Black', Impact, sans-serif"
-    font-size="${fontSize}"
-    font-weight="900"
-    letter-spacing="${letterSpacing}"
-    fill="url(#bodyGrad)"
-    stroke="rgba(255,255,255,0.78)"
-    stroke-width="0.9"
-    paint-order="stroke">${code}</text>
-
-  <!-- layer 5: top highlight (upper half bright gradient) -->
-  <text
-    x="50%" y="${fieldCy}"
-    text-anchor="middle" dominant-baseline="middle"
-    font-family="'Arial Black', Impact, sans-serif"
-    font-size="${fontSize}"
-    font-weight="900"
-    letter-spacing="${letterSpacing}"
-    fill="url(#hiGrad)"
-    stroke="none">${code}</text>
-</svg>`;
+    const svg = `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${layers.join('')}</svg>`;
 
     imgBuffer = await sharp(bgPath)
       .composite([{ input: Buffer.from(svg), blend: 'over' }])
