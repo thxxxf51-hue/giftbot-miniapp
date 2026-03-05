@@ -636,16 +636,187 @@ function onPvpPageLeave() {}
 
 /* ── MODE SWITCH ── */
 function pvpSwitchMode(btn, mode) {
-  document.querySelectorAll(".stab").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  const duel = document.getElementById("pvp-duel-wrap");
-  const solo = document.getElementById("pvp-solo-wrap");
-  if (mode === "solo") {
-    if (duel) duel.style.display = "none";
-    if (solo) { solo.style.display = "block"; initSoloPage(); }
+  // legacy tab support — redirect to menu select
+  pvpMenuSelect(mode);
+}
+
+function pvpMenuSelect(mode) {
+  const menu = $('pvp-menu-block');
+  const duel = $('pvp-duel-wrap');
+  const solo = $('pvp-solo-wrap');
+  // haptic
+  try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch{}
+  if (mode === 'solo') {
+    if (menu) menu.style.display = 'none';
+    if (duel) duel.style.display = 'none';
+    if (solo) { solo.style.display = 'block'; initSoloPage(); }
   } else {
-    if (solo) solo.style.display = "none";
-    if (duel) duel.style.display = "block";
+    if (menu) menu.style.display = 'none';
+    if (solo) solo.style.display = 'none';
+    if (duel) duel.style.display = 'block';
   }
 }
 
+function pvpBackToMenu() {
+  const menu = $('pvp-menu-block');
+  const duel = $('pvp-duel-wrap');
+  const solo = $('pvp-solo-wrap');
+  if (duel) duel.style.display = 'none';
+  if (solo) solo.style.display = 'none';
+  if (menu) menu.style.display = 'block';
+}
+
+
+
+/* ══ PvP MENU: wheel + lightning + online ══ */
+(function(){
+  /* ── Solo Wheel ── */
+  function drawMenuWheel(){
+    const cv = document.getElementById('pvp-solo-wheel-cv');
+    if(!cv) return;
+    const ctx = cv.getContext('2d');
+    const S=224, cx=S/2, cy=S/2, R=S/2-4, inner=R*0.36;
+    const sectors=[
+      {a:.30,c1:'#2ecc71',c2:'#1a9e52'},
+      {a:.20,c1:'#5b8def',c2:'#1f6fa3'},
+      {a:.18,c1:'#9b59b6',c2:'#6c3483'},
+      {a:.14,c1:'#e74c3c',c2:'#a93226'},
+      {a:.18,c1:'#1a1a28',c2:'#111118'},
+    ];
+    let start=-Math.PI/2;
+    sectors.forEach(s=>{
+      const sweep=s.a*Math.PI*2, end=start+sweep, mid=start+sweep/2;
+      const g=ctx.createLinearGradient(cx+Math.cos(start)*R*.5,cy+Math.sin(start)*R*.5,cx+Math.cos(end)*R*.5,cy+Math.sin(end)*R*.5);
+      g.addColorStop(0,s.c1);g.addColorStop(1,s.c2);
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,start,end);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+      if(s.c1!=='#1a1a28'){
+        const sg=ctx.createRadialGradient(cx+Math.cos(mid)*R*.45,cy+Math.sin(mid)*R*.45,0,cx+Math.cos(mid)*R*.45,cy+Math.sin(mid)*R*.45,R*.5);
+        sg.addColorStop(0,'rgba(255,255,255,.17)');sg.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,start,end);ctx.closePath();ctx.fillStyle=sg;ctx.fill();
+      }
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(end)*R,cy+Math.sin(end)*R);
+      ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=2;ctx.stroke();
+      start=end;
+    });
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,.1)';ctx.lineWidth=2.5;ctx.stroke();
+    const ig=ctx.createRadialGradient(cx,cy,0,cx,cy,inner);
+    ig.addColorStop(0,'#0e0e16');ig.addColorStop(1,'#12121a');
+    ctx.beginPath();ctx.arc(cx,cy,inner,0,Math.PI*2);ctx.fillStyle=ig;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.38)';ctx.font='600 13px -apple-system,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('SPIN',cx,cy);
+  }
+
+  /* ── Lightning ── */
+  function initLightning(){
+    const cv = document.getElementById('pvp-lightning-cv');
+    if(!cv) return;
+    const ctx=cv.getContext('2d');
+    const W=cv.width, H=cv.height;
+    const DIRS=[
+      {x0:55,y0:4,  x1:185,y1:140,cx:115,cy:52},
+      {x0:185,y0:4, x1:55, y1:140,cx:115,cy:52},
+    ];
+    function rand(a,b){return a+Math.random()*(b-a);}
+    function makeBolt(sx,sy,ex,ey,segs,spread){
+      const pts=[{x:sx,y:sy}];
+      for(let i=1;i<segs;i++){
+        const t=i/segs,mx=sx+(ex-sx)*t,my=sy+(ey-sy)*t;
+        const dx=-(ey-sy),dy=ex-sx,len=Math.sqrt(dx*dx+dy*dy)||1;
+        pts.push({x:mx+(dx/len)*rand(-spread,spread),y:my+(dy/len)*rand(-spread,spread)});
+      }
+      pts.push({x:ex,y:ey});return pts;
+    }
+    function ds(pts,alpha,width,color,blur){
+      ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=width;
+      ctx.lineCap='round';ctx.lineJoin='round';ctx.shadowColor=color;ctx.shadowBlur=blur;
+      ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+      ctx.stroke();ctx.restore();
+    }
+    let frame=0,bolt=null,running=false,fcx=115,fcy=52;
+    function flash(){
+      if(running)return;
+      running=true;
+      const d=DIRS[Math.random()<0.5?0:1];
+      bolt=makeBolt(d.x0,d.y0,d.x1,d.y1,14,9);
+      fcx=d.cx;fcy=d.cy;frame=0;tick();
+    }
+    function tick(){
+      ctx.clearRect(0,0,W,H);frame++;
+      const DRAW=10,HOLD=4,FADE=14,total=DRAW+HOLD+FADE;
+      let vpts,a;
+      if(frame<=DRAW){const p=frame/DRAW;vpts=bolt.slice(0,Math.max(2,Math.round(bolt.length*p)));a=1;}
+      else if(frame<=DRAW+HOLD){vpts=bolt;a=1;}
+      else{vpts=bolt;a=1-(frame-DRAW-HOLD)/FADE;}
+      if(vpts&&vpts.length>1){
+        ds(vpts,a*.28,14,'#3a6bdf',22);ds(vpts,a*.55,6,'#7aaeff',14);
+        ds(vpts,a*.85,2.5,'#c8e4ff',7);ds(vpts,a,1.2,'#ffffff',3);
+        if(frame>=DRAW&&frame<=DRAW+HOLD+3){
+          ctx.save();ctx.globalAlpha=a*.8;
+          const rg=ctx.createRadialGradient(fcx,fcy,0,fcx,fcy,18);
+          rg.addColorStop(0,'rgba(255,255,255,1)');rg.addColorStop(0.3,'rgba(180,220,255,.6)');rg.addColorStop(1,'rgba(91,141,239,0)');
+          ctx.fillStyle=rg;ctx.beginPath();ctx.arc(fcx,fcy,18,0,Math.PI*2);ctx.fill();ctx.restore();
+        }
+      }
+      if(frame<total)requestAnimationFrame(tick);
+      else{ctx.clearRect(0,0,W,H);running=false;}
+    }
+    setTimeout(flash,400);
+    setInterval(flash,2000);
+  }
+
+  /* ── Card ripple + haptic ── */
+  function initCardPress(){
+    ['pvp-menu-duel','pvp-menu-solo'].forEach((id,idx)=>{
+      const card=document.getElementById(id);
+      if(!card)return;
+      const accent=idx===0?'rgba(91,141,239,0.35)':'rgba(46,204,113,0.35)';
+      card.addEventListener('pointerdown',function(e){
+        try{window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');}catch{}
+        card.style.transform='scale(0.96)';
+        card.style.boxShadow='0 0 0 1px '+accent+', inset 0 2px 16px rgba(0,0,0,.5)';
+        card.style.borderColor=accent;
+        const rect=card.getBoundingClientRect();
+        const x=e.clientX-rect.left, y=e.clientY-rect.top;
+        const rpl=document.createElement('span');
+        const sz=Math.max(rect.width,rect.height)*1.8;
+        rpl.style.cssText=`position:absolute;left:${x-sz/2}px;top:${y-sz/2}px;width:${sz}px;height:${sz}px;border-radius:50%;background:rgba(255,255,255,.07);transform:scale(0);pointer-events:none;z-index:10;animation:ripple-card .55s cubic-bezier(.4,0,.2,1) forwards;`;
+        card.appendChild(rpl);
+        rpl.addEventListener('animationend',()=>rpl.remove());
+      });
+      card.addEventListener('pointerup',()=>{card.style.transform='';card.style.boxShadow='';card.style.borderColor='';});
+      card.addEventListener('pointerleave',()=>{card.style.transform='';card.style.boxShadow='';card.style.borderColor='';});
+    });
+  }
+
+  /* ── Real online counter ── */
+  function updateMenuOnline(){
+    fetch('/api/pvp-online').then(r=>r.json()).then(d=>{
+      const tot = document.getElementById('b-pvp');
+      const du  = document.getElementById('pvp-duel-online');
+      const so  = document.getElementById('pvp-solo-online');
+      if(tot) tot.textContent = (d.total||0);
+      if(du)  du.textContent  = (d.duel||0)+' онлайн';
+      if(so)  so.textContent  = (d.solo||0)+' онлайн';
+    }).catch(()=>{});
+  }
+
+  /* init when page becomes visible */
+  function onPvpPageVisible(){
+    drawMenuWheel();
+    initLightning();
+    initCardPress();
+    updateMenuOnline();
+    if(window._pvpOnlineTimer) clearInterval(window._pvpOnlineTimer);
+    window._pvpOnlineTimer = setInterval(updateMenuOnline, 5000);
+  }
+
+  // Hook into existing go() navigation
+  const _origGo = window.go;
+  window.go = function(page){
+    if(_origGo) _origGo(page);
+    if(page==='pvp') setTimeout(onPvpPageVisible, 50);
+  };
+  // Also init on load if pvp is default page
+  setTimeout(()=>{ if(document.getElementById('pvp-menu-block')) onPvpPageVisible(); }, 300);
+})();
