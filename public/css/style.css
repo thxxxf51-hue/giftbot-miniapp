@@ -453,3 +453,14 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tx-det { font-size: 11px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tx-date { font-size: 11px; color: var(--muted2); text-align: right; }
 .tx-empty { padding: 22px 14px; font-size: 13px; color: var(--muted2); text-align: center; }
+
+/* ══ Entry Effect Picker ══ */
+.efx-subtitle { font-size: 11px; color: var(--muted2); text-align: center; padding: 0 16px 12px; }
+.efx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 6px 6px; }
+.efx-card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: border-color .2s; }
+.efx-card.efx-current { border-color: rgba(46,204,113,.4); background: rgba(46,204,113,.06); }
+.efx-ico { font-size: 28px; }
+.efx-name { font-size: 13px; font-weight: 700; color: #fff; }
+.efx-buy-btn { width: 100%; background: var(--green); color: #000; border: none; border-radius: 9px; padding: 7px 6px; font-size: 12px; font-weight: 800; cursor: pointer; font-family: inherit; transition: opacity .2s; }
+.efx-buy-btn.nomoney { background: rgba(255,255,255,.08); color: var(--muted2); cursor: not-allowed; }
+.efx-active { font-size: 11px; font-weight: 700; color: var(--green); background: rgba(46,204,113,.12); border-radius: 8px; padding: 5px 10px; text-align: center; width: 100%; }
