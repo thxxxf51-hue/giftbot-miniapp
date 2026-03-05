@@ -7,7 +7,7 @@ const ENTRY_EFFECTS = [
   { id:'galaxy',   ico:'🌌', name:'Галактика' },
 ];
 
-const EFFECT_PRICE_NORMAL    = 3000;
+const EFFECT_PRICE_NORMAL    = 2500;
 const EFFECT_PRICE_VIP       = 1500;
 const EFFECT_DURATION_NORMAL = 24 * 3600 * 1000;
 const EFFECT_DURATION_VIP    = 48 * 3600 * 1000;
