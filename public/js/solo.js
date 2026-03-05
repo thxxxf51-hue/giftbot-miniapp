@@ -113,6 +113,13 @@ function soloRenderUI(){
     btn.style.boxShadow=canAfford&&!_soloSpinning?`0 4px 22px ${c1}55`:'none';
     btn.disabled=_soloSpinning||!canAfford;
   }
+  // Disable prize picker button while spinning
+  const prizeBtn=document.getElementById('solo-prize-btn');
+  if(prizeBtn){
+    prizeBtn.disabled=_soloSpinning;
+    prizeBtn.style.opacity=_soloSpinning?'0.35':'1';
+    prizeBtn.style.cursor=_soloSpinning?'not-allowed':'pointer';
+  }
   const pval=document.getElementById('solo-prize-val');
   if(pval){pval.textContent=prize.toLocaleString('ru')+' 🪙';pval.style.color=c1;}
   _soloRedraw();
@@ -196,6 +203,7 @@ function soloSpin(){
 }
 
 function soloOpenPrizePicker(){
+  if(_soloSpinning) return; // locked while wheel is spinning
   const mo=document.getElementById('solo-prize-mo');if(!mo)return;
   document.querySelectorAll('.solo-pgrid-btn').forEach((b,i)=>{
     const [pc]=soloColor(i);
