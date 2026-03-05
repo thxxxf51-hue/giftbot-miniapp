@@ -825,42 +825,45 @@ bot.command('sprom', async (ctx) => {
 
   const reward = promo.reward;
 
-  // Draw promo image: sharp + SVG (librsvg-compatible, no rgba/paint-order)
+  // Draw promo image: sharp + SVG with embedded Poppins Bold font
   let imgBuffer;
   try {
-    const bgPath = path.join(__dirname, 'promo_bg.jpg');
-    const meta = await sharp(bgPath).metadata();
+    const bgPath   = path.join(__dirname, 'promo_bg.jpg');
+    const fontPath = path.join(__dirname, 'promo_font.ttf');
+    const meta     = await sharp(bgPath).metadata();
     const W = meta.width, H = meta.height;
 
-    const fieldCy = Math.round(H * 0.854);
-    const fontSize = Math.round(H * 0.056);
-    const ls = Math.round(fontSize * 0.26);
+    // Embed font as base64 so librsvg can render it correctly
+    const fontB64 = fs.readFileSync(fontPath).toString('base64');
 
-    // librsvg requires: hex colors + fill-opacity/stroke-opacity (no rgba())
-    // glow = wide strokes at decreasing opacity (cyan tint)
-    const t = (x, y, fs, sw, fill, fo, stroke, so, extra) =>
-      `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" ` +
-      `font-family="Impact,Arial Black,sans-serif" font-size="${fs}" font-weight="bold" ` +
+    const fieldCy  = Math.round(H * 0.854);
+    const fontSize = Math.round(H * 0.054);
+    const ls       = Math.round(fontSize * 0.22);
+
+    const t = (y, sw, fill, fo, stroke, so) =>
+      `<text x="50%" y="${y}" text-anchor="middle" dominant-baseline="middle" ` +
+      `font-family="Poppins" font-size="${fontSize}" font-weight="bold" ` +
       `letter-spacing="${ls}" fill="${fill}" fill-opacity="${fo}" ` +
-      `stroke="${stroke}" stroke-opacity="${so}" stroke-width="${sw}" ${extra}>${code}</text>`;
+      `stroke="${stroke}" stroke-opacity="${so}" stroke-width="${sw}">${code}</text>`;
 
     const svg = [
       `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`,
+      `<defs><style>`,
+      `@font-face { font-family: 'Poppins'; font-weight: bold; `,
+      `src: url('data:font/truetype;base64,${fontB64}'); }`,
+      `</style></defs>`,
 
-      // glow layer 1 — widest, very faint cyan
-      t('50%', fieldCy, fontSize, 22, '#64c8ff', 0,   '#64c8ff', 0.12, ''),
-      // glow layer 2
-      t('50%', fieldCy, fontSize, 12, '#96d8ff', 0,   '#96d8ff', 0.22, ''),
-      // glow layer 3
-      t('50%', fieldCy, fontSize,  5, '#c8eaff', 0,   '#c8eaff', 0.40, ''),
-      // glow layer 4 — tightest
-      t('50%', fieldCy, fontSize,  2, '#dff2ff', 0,   '#dff2ff', 0.60, ''),
+      // glow layers (widest → tightest)
+      t(fieldCy, 20, '#64c8ff', 0, '#64c8ff', 0.10),
+      t(fieldCy, 11, '#96d8ff', 0, '#96d8ff', 0.20),
+      t(fieldCy,  5, '#c8eaff', 0, '#c8eaff', 0.38),
+      t(fieldCy,  2, '#dff2ff', 0, '#dff2ff', 0.58),
 
-      // glass body — stroke first (below fill)
-      t('50%', fieldCy, fontSize,  2, '#aad4f0', 0.10, '#ffffff', 0.82, ''),
+      // glass body — transparent fill, crisp white stroke
+      t(fieldCy,  1.2, '#b8dcf5', 0.08, '#ffffff', 0.80),
 
-      // top highlight — offset up slightly, semi-transparent white
-      t('50%', fieldCy - Math.round(fontSize * 0.08), fontSize, 0, '#ffffff', 0.30, 'none', 0, ''),
+      // top highlight
+      t(fieldCy - Math.round(fontSize * 0.06), 0, '#ffffff', 0.28, 'none', 0),
 
       `</svg>`
     ].join('');
