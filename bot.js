@@ -2,7 +2,7 @@ const { Telegraf } = require('telegraf');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
+const Jimp = require('jimp');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
@@ -825,55 +825,44 @@ bot.command('sprom', async (ctx) => {
 
   const reward = promo.reward;
 
-  // Draw promo image: sharp + SVG with embedded Poppins Bold font
+  // Draw promo image: jimp with built-in bitmap font (no system fonts needed)
   let imgBuffer;
   try {
-    const bgPath   = path.join(__dirname, 'promo_bg.jpg');
-    const fontPath = path.join(__dirname, 'promo_font.ttf');
-    const meta     = await sharp(bgPath).metadata();
-    const W = meta.width, H = meta.height;
+    const bgPath = path.join(__dirname, 'promo_bg.jpg');
+    const img    = await Jimp.read(bgPath);
+    const W = img.getWidth(), H = img.getHeight();
 
-    // Embed font as base64 so librsvg can render it correctly
-    const fontB64 = fs.readFileSync(fontPath).toString('base64');
+    // Field center: y≈682 for 800px tall image (78.5%–92% of H)
+    const fieldCy = Math.round(H * 0.852);
 
-    const fieldCy  = Math.round(H * 0.854);
-    const fontSize = Math.round(H * 0.054);
-    const ls       = Math.round(fontSize * 0.22);
+    // Use FONT_SANS_64_WHITE — pure bitmap, always works
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
 
-    const t = (y, sw, fill, fo, stroke, so) =>
-      `<text x="50%" y="${y}" text-anchor="middle" dominant-baseline="middle" ` +
-      `font-family="Poppins" font-size="${fontSize}" font-weight="bold" ` +
-      `letter-spacing="${ls}" fill="${fill}" fill-opacity="${fo}" ` +
-      `stroke="${stroke}" stroke-opacity="${so}" stroke-width="${sw}">${code}</text>`;
+    // Measure to center
+    const textW = Jimp.measureText(font, code);
+    const textH = Jimp.measureTextHeight(font, code, W);
+    const x = Math.round((W - textW) / 2);
+    const y = Math.round(fieldCy - textH / 2);
 
-    const svg = [
-      `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`,
-      `<defs><style>`,
-      `@font-face { font-family: 'Poppins'; font-weight: bold; `,
-      `src: url('data:font/truetype;base64,${fontB64}'); }`,
-      `</style></defs>`,
+    // Glow effect: print same text slightly offset in cyan tint
+    const glowOffsets = [
+      {dx:-3,dy:-3},{dx:3,dy:-3},{dx:-3,dy:3},{dx:3,dy:3},
+      {dx:0,dy:-4},{dx:0,dy:4},{dx:-4,dy:0},{dx:4,dy:0},
+    ];
+    // Load cyan-tinted version for glow
+    const glowImg = await Jimp.read(bgPath);
+    glowImg.opacity(0); // clear to transparent
+    const fontGlow = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
+    for (const {dx, dy} of glowOffsets) {
+      img.print(fontGlow, x + dx, y + dy, code);
+    }
 
-      // glow layers (widest → tightest)
-      t(fieldCy, 20, '#64c8ff', 0, '#64c8ff', 0.10),
-      t(fieldCy, 11, '#96d8ff', 0, '#96d8ff', 0.20),
-      t(fieldCy,  5, '#c8eaff', 0, '#c8eaff', 0.38),
-      t(fieldCy,  2, '#dff2ff', 0, '#dff2ff', 0.58),
+    // Main text — centered, white
+    img.print(font, x, y, code);
 
-      // glass body — transparent fill, crisp white stroke
-      t(fieldCy,  1.2, '#b8dcf5', 0.08, '#ffffff', 0.80),
-
-      // top highlight
-      t(fieldCy - Math.round(fontSize * 0.06), 0, '#ffffff', 0.28, 'none', 0),
-
-      `</svg>`
-    ].join('');
-
-    imgBuffer = await sharp(bgPath)
-      .composite([{ input: Buffer.from(svg), blend: 'over' }])
-      .jpeg({ quality: 93 })
-      .toBuffer();
+    imgBuffer = await img.getBufferAsync(Jimp.MIME_JPEG);
   } catch (e) {
-    console.error('sharp/svg error:', e);
+    console.error('jimp error:', e);
     return ctx.reply('❌ Ошибка генерации картинки: ' + e.message);
   }
 
