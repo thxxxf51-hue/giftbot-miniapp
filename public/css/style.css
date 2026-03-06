@@ -480,3 +480,36 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 @keyframes glow-pulse{0%,100%{opacity:.7}50%{opacity:1}}
 @keyframes twinkle{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
 @keyframes ripple-card{0%{transform:scale(0);opacity:1}60%{transform:scale(1);opacity:.4}100%{transform:scale(1.05);opacity:0}}
+
+#crown-wins-btn:active{background:rgba(244,196,48,.2)!important;transform:scale(0.9)}
+
+/* ══ MINES FLIP CARDS ══ */
+.mines-flip-cell{width:28px;height:28px;border-radius:8px;perspective:80px;position:relative}
+.mines-flip-inner{width:100%;height:100%;transform-style:preserve-3d;border-radius:8px;transition:transform .6s cubic-bezier(.4,0,.2,1);position:relative}
+.mines-flip-inner.flipped{transform:rotateY(180deg)}
+.mines-flip-front,.mines-flip-back{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.mines-flip-front{background:linear-gradient(145deg,#221408,#180f07);border:1px solid rgba(255,255,255,.09)}
+.mines-flip-front::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.07) 0%,transparent 55%)}
+.mines-flip-back{transform:rotateY(180deg)}
+.mines-flip-back.gem{background:linear-gradient(145deg,#0f2518,#0b1c12);border:1px solid rgba(46,204,113,.5);box-shadow:inset 0 0 8px rgba(46,204,113,.15),0 0 10px rgba(46,204,113,.2)}
+.mines-flip-back.mine{background:linear-gradient(145deg,#1f0c0c,#160808);border:1px solid rgba(231,76,60,.5);box-shadow:inset 0 0 8px rgba(231,76,60,.15),0 0 10px rgba(231,76,60,.2)}
+#mines-crown-btn:active{background:rgba(244,196,48,.2)!important;transform:scale(0.9)}
+
+/* ══ MINES GAME ══ */
+.mines-cell{aspect-ratio:1;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(145deg,#1a1a26,#13131e);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;overflow:hidden;transition:transform .12s cubic-bezier(.34,1.56,.64,1),border-color .15s,box-shadow .15s;-webkit-user-select:none}
+.mines-cell::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,transparent 60%);pointer-events:none}
+.mines-cell:not(.mines-cell-gem):not(.mines-cell-mine):not(.mines-cell-mine-reveal):active{transform:scale(0.88)}
+.mines-cell-gem{background:linear-gradient(145deg,#0f2820,#0d1f18)!important;border-color:rgba(46,204,113,.4)!important;box-shadow:0 0 14px rgba(46,204,113,.2),inset 0 1px 0 rgba(255,255,255,.08);animation:mines-gem-pop .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes mines-gem-pop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.mines-gem-ico{font-size:18px;filter:drop-shadow(0 0 6px rgba(46,204,113,.8));animation:mines-gem-shine 2s ease-in-out infinite}
+@keyframes mines-gem-shine{0%,100%{filter:drop-shadow(0 0 5px rgba(46,204,113,.7))}50%{filter:drop-shadow(0 0 12px rgba(46,204,113,1))}}
+.mines-cell-mine{background:linear-gradient(145deg,#220d0d,#1a0a0a)!important;border-color:rgba(231,76,60,.5)!important;box-shadow:0 0 18px rgba(231,76,60,.35);animation:mines-shake .4s ease}
+@keyframes mines-shake{0%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}100%{transform:translateX(0)}}
+.mines-cell-mine-reveal{background:rgba(231,76,60,.08)!important;border-color:rgba(231,76,60,.2)!important;opacity:.5}
+@keyframes mines-bump{0%{transform:scale(1)}50%{transform:scale(1.18)}100%{transform:scale(1)}}
+.mines-pill{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.35);transition:all .15s}
+.mines-pill-active{background:rgba(231,76,60,.18)!important;border-color:rgba(231,76,60,.45)!important;color:#ff7b6e!important}
+.mines-bet-inp{flex:1;height:44px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#fff;font-size:15px;font-weight:700;font-family:inherit;padding:0 14px;outline:none;width:100%}
+.mines-bet-inp:focus{border-color:rgba(46,204,113,.4)}
+.mines-bq{padding:6px 10px;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.35);transition:background .15s;white-space:nowrap}
+.mines-bq:active{background:rgba(255,255,255,.12)}
