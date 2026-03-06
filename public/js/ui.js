@@ -124,7 +124,7 @@ function openTopWins(){
         </div>${separator}`;
     }).join('');
   }).catch(()=>{
-    list.innerHTML = `<div style="text-align:center;padding:24px 0;color:rgba(255,255,255,.3);font-size:13px">Ошибка загрузки</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:24px 0;color:rgba(255,255,255,.3);font-size:13px">В разработке</div>`;
   });
 }
 
