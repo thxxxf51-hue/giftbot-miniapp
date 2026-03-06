@@ -638,9 +638,11 @@ function onPvpPageEnter() {
   const menu = $('pvp-menu-block');
   const duel = $('pvp-duel-wrap');
   const solo = $('pvp-solo-wrap');
+  const mines = $('pvp-mines-wrap');
   if (menu) menu.style.display = 'block';
   if (duel) duel.style.display = 'none';
   if (solo) solo.style.display = 'none';
+  if (mines) mines.style.display = 'none';
   startPvpPolling(); _pvpRender(); _fetchHistory();
 }
 function onPvpPageLeave() {
@@ -658,15 +660,23 @@ function pvpMenuSelect(mode) {
   const menu = $('pvp-menu-block');
   const duel = $('pvp-duel-wrap');
   const solo = $('pvp-solo-wrap');
+  const mines = $('pvp-mines-wrap');
   // haptic
   try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch{}
   if (mode === 'solo') {
     if (menu) menu.style.display = 'none';
     if (duel) duel.style.display = 'none';
+    if (mines) mines.style.display = 'none';
     if (solo) { solo.style.display = 'block'; initSoloPage(); }
+  } else if (mode === 'mines') {
+    if (menu) menu.style.display = 'none';
+    if (duel) duel.style.display = 'none';
+    if (solo) solo.style.display = 'none';
+    if (mines) { mines.style.display = 'block'; if (typeof initMinesPage === 'function') initMinesPage(); }
   } else {
     if (menu) menu.style.display = 'none';
     if (solo) solo.style.display = 'none';
+    if (mines) mines.style.display = 'none';
     if (duel) duel.style.display = 'block';
   }
 }
@@ -675,8 +685,10 @@ function pvpBackToMenu() {
   const menu = $('pvp-menu-block');
   const duel = $('pvp-duel-wrap');
   const solo = $('pvp-solo-wrap');
+  const mines = $('pvp-mines-wrap');
   if (duel) duel.style.display = 'none';
   if (solo) solo.style.display = 'none';
+  if (mines) mines.style.display = 'none';
   if (menu) menu.style.display = 'block';
 }
 
@@ -833,10 +845,9 @@ function pvpBackToMenu() {
 
   /* ── Card ripple + haptic ── */
   function initCardPress(){
-    ['pvp-menu-duel','pvp-menu-solo'].forEach((id,idx)=>{
+    [['pvp-menu-duel','rgba(91,141,239,0.35)'],['pvp-menu-solo','rgba(46,204,113,0.35)'],['pvp-menu-mines','rgba(231,90,40,0.35)']].forEach(([id,accent])=>{
       const card=document.getElementById(id);
       if(!card)return;
-      const accent=idx===0?'rgba(91,141,239,0.35)':'rgba(46,204,113,0.35)';
       card.addEventListener('pointerdown',function(e){
         try{window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium');}catch{}
         card.style.transform='scale(0.96)';
@@ -879,9 +890,30 @@ function pvpBackToMenu() {
     drawMenuWheel();
     initLightning();
     initCardPress();
+    initMinesFlipCards();
     updateMenuOnline();
     if(window._pvpOnlineTimer) clearInterval(window._pvpOnlineTimer);
     window._pvpOnlineTimer = setInterval(updateMenuOnline, 5000);
+  }
+
+  /* ── Mines flip cards animation ── */
+  function initMinesFlipCards(){
+    const grid = document.getElementById('pvp-mines-flip-grid');
+    if(!grid || grid.dataset.init) return;
+    grid.dataset.init = '1';
+    const types = ['gem','hidden','gem','hidden','mine','hidden','gem','hidden','gem'];
+    types.forEach((t, i) => {
+      const cell  = document.createElement('div'); cell.className  = 'mines-flip-cell';
+      const inner = document.createElement('div'); inner.className = 'mines-flip-inner';
+      const front = document.createElement('div'); front.className = 'mines-flip-front';
+      const back  = document.createElement('div'); back.className  = 'mines-flip-back ' + t;
+      back.textContent = t==='gem' ? '💎' : t==='mine' ? '💣' : '';
+      inner.append(front, back); cell.appendChild(inner); grid.appendChild(cell);
+      const cycleMs = 2600 + i * 160;
+      const initDelay = 200 + i * 300;
+      function doFlip(){ inner.classList.add('flipped'); setTimeout(()=>inner.classList.remove('flipped'), cycleMs*0.5); setTimeout(doFlip, cycleMs); }
+      setTimeout(doFlip, initDelay);
+    });
   }
 
   // Hook into existing go() navigation
