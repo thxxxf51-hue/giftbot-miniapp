@@ -233,7 +233,7 @@ function _minesShowResult(win, amount, perfect) {
     : 'Взрыв!';
   document.getElementById('mines-result-sub').textContent = win
     ? `Множитель ${_minesMult.toFixed(2)}× · Ставка ${_minesBet.toLocaleString('ru')} 🪙`
-    : `Ставка ${_minesBet.toLocaleString('ru')} 🪙 потеряна`;
+    : `Ставка ${_minesBet.toLocaleString('ru')} 🪙 проиграна`;
   const co = document.getElementById('mines-cashout-btn');
   if (co) { co.disabled = true; co.style.display = 'none'; }
   res.style.display = 'block';
