@@ -19,6 +19,8 @@ function go(name){
   },60);
   PAGES.forEach(p=>document.getElementById('nb-'+p)?.classList.remove('active'));
   document.getElementById('nb-'+name)?.classList.add('active');
+  // slide nav pill
+  if(typeof _navPillUpdate==='function') _navPillUpdate(name);
   curPage=name;syncB();
 
   // Page enter hooks
@@ -139,43 +141,32 @@ function closeTopWins(){
 }
 
 /* ══ SLIDING NAV PILL ══ */
+function _navPillUpdate(page){
+  const nav  = document.getElementById('main-nav');
+  const pill = document.getElementById('nav-pill');
+  const btn  = document.getElementById('nb-' + page);
+  if(!nav || !pill || !btn) return;
+  const navRect = nav.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  pill.style.left  = (btnRect.left - navRect.left) + 'px';
+  pill.style.width = btnRect.width + 'px';
+}
+// Init pill on load
 (function(){
-  function positionPill(activeBtn){
-    const nav  = document.getElementById('main-nav');
-    const pill = document.getElementById('nav-pill');
-    if(!nav || !pill || !activeBtn) return;
-    const navRect = nav.getBoundingClientRect();
-    const btnRect = activeBtn.getBoundingClientRect();
-    pill.style.left  = (btnRect.left - navRect.left) + 'px';
-    pill.style.width = btnRect.width + 'px';
-  }
-
-  // Intercept the go() function to move pill on navigation
-  const _goOrig = window.go;
-  window.go = function(page){
-    if(_goOrig) _goOrig(page);
-    // update active class
-    document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
-    const btn = document.getElementById('nb-' + page);
-    if(btn){
-      btn.classList.add('active');
-      positionPill(btn);
-    }
-  };
-
-  // Init pill on load
   function initPill(){
     const active = document.querySelector('.nb.active');
-    if(active) positionPill(active);
+    if(active) _navPillUpdate('home');
   }
-  // wait for layout
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', ()=>setTimeout(initPill,60));
+    document.addEventListener('DOMContentLoaded', ()=>setTimeout(initPill,80));
   } else {
-    setTimeout(initPill, 60);
+    setTimeout(initPill, 80);
   }
   window.addEventListener('resize', ()=>{
     const active = document.querySelector('.nb.active');
-    if(active) positionPill(active);
+    if(active){
+      const page = active.id.replace('nb-','');
+      _navPillUpdate(page);
+    }
   });
 })();
