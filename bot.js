@@ -1784,6 +1784,31 @@ bot.on('callback_query', async (ctx) => {
 });
 
 
+// POST /api/support/user-end — пользователь завершил чат
+app.post('/api/support/user-end', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ ok: false });
+
+  const chat = DB.supportChats?.[String(userId)];
+  if (chat) {
+    const specId = chat.specId;
+    chat.status = 'closed';
+    // Убираем из activeSupport
+    for (const [k, v] of Object.entries(activeSupport)) {
+      if (String(v) === String(userId)) { delete activeSupport[k]; break; }
+    }
+    // Уведомляем специалиста
+    if (specId) {
+      try {
+        await bot.telegram.sendMessage(specId,
+          `❌ Пользователь завершил чат поддержки.`
+        );
+      } catch {}
+    }
+  }
+  res.json({ ok: true });
+});
+
 // POST /api/support/user-message — пользователь пишет специалисту
 app.post('/api/support/user-message', async (req, res) => {
   const { userId, firstName, text } = req.body;
