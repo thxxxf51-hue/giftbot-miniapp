@@ -67,14 +67,74 @@ function closeGenMo(){document.getElementById('genmo').classList.remove('show');
 function doGenMo(){if(_gmCb)_gmCb();}
 
 /* ══ TOP WINS MODAL ══ */
-const MEDALS = [
-  // 🥇 Gold crystal
-  `<svg width="32" height="38" viewBox="0 0 46 54" fill="none"><defs><linearGradient id="jg1" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#FFFDE0"/><stop offset="40%" stop-color="#FFD700"/><stop offset="100%" stop-color="#A06000"/></linearGradient><filter id="jf1"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#FFD700" flood-opacity="0.55"/></filter></defs><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="url(#jg1)" filter="url(#jf1)"/><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/><path d="M23 2 L40 14 L23 20 L6 14 Z" fill="rgba(255,255,255,0.15)"/><path d="M23 52 L40 36 L23 30 L6 36 Z" fill="rgba(0,0,0,0.1)"/><line x1="23" y1="2" x2="23" y2="52" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><text x="23" y="32" text-anchor="middle" font-size="16" font-weight="900" fill="rgba(90,38,0,0.88)" font-family="-apple-system,sans-serif">1</text></svg>`,
-  // 🥈 Silver crystal
-  `<svg width="32" height="38" viewBox="0 0 46 54" fill="none"><defs><linearGradient id="jg2" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#FAFAFA"/><stop offset="40%" stop-color="#C8C8D8"/><stop offset="100%" stop-color="#707080"/></linearGradient><filter id="jf2"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#aaa" flood-opacity="0.4"/></filter></defs><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="url(#jg2)" filter="url(#jf2)"/><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/><path d="M23 2 L40 14 L23 20 L6 14 Z" fill="rgba(255,255,255,0.18)"/><path d="M23 52 L40 36 L23 30 L6 36 Z" fill="rgba(0,0,0,0.08)"/><line x1="23" y1="2" x2="23" y2="52" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><text x="23" y="32" text-anchor="middle" font-size="16" font-weight="900" fill="rgba(25,25,50,0.82)" font-family="-apple-system,sans-serif">2</text></svg>`,
-  // 🥉 Bronze crystal
-  `<svg width="32" height="38" viewBox="0 0 46 54" fill="none"><defs><linearGradient id="jg3" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#F8C090"/><stop offset="40%" stop-color="#CD7F32"/><stop offset="100%" stop-color="#7A3510"/></linearGradient><filter id="jf3"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#cd7f32" flood-opacity="0.45"/></filter></defs><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="url(#jg3)" filter="url(#jf3)"/><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/><path d="M23 2 L40 14 L23 20 L6 14 Z" fill="rgba(255,255,255,0.13)"/><path d="M23 52 L40 36 L23 30 L6 36 Z" fill="rgba(0,0,0,0.1)"/><line x1="23" y1="2" x2="23" y2="52" stroke="rgba(255,255,255,0.07)" stroke-width="1"/><text x="23" y="32" text-anchor="middle" font-size="16" font-weight="900" fill="rgba(48,14,0,0.88)" font-family="-apple-system,sans-serif">3</text></svg>`,
+/* ── Medal canvas renderer ── */
+function _drawMedal(canvas, cfg, label) {
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+  const pad = W * 0.12;
+  const sx = (W - pad*2) / 46, sy = (H - pad*2) / 54;
+  const ox = pad, oy = pad;
+  const pts = [[23,2],[40,14],[40,36],[23,52],[6,36],[6,14]].map(([x,y])=>[x*sx+ox, y*sy+oy]);
+  const loop = [...pts, pts[0]];
+  // fill
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();
+  const fg = ctx.createLinearGradient(0,0,W,H);
+  fg.addColorStop(0, cfg.fill[0]); fg.addColorStop(1, cfg.fill[1]);
+  ctx.fillStyle=fg; ctx.fill();
+  // top facet
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); ctx.lineTo(pts[1][0],pts[1][1]); ctx.lineTo(pts[5][0],pts[5][1]); ctx.closePath();
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fill();
+  // compute perimeter
+  const segs=[]; let tot=0;
+  for(let i=0;i<pts.length;i++){const a=loop[i],b=loop[i+1];const l=Math.hypot(b[0]-a[0],b[1]-a[1]);segs.push(l);tot+=l;}
+  function sample(t){const s=cfg.stops;if(t<=s[0].t)return s[0].c;if(t>=s[s.length-1].t)return s[s.length-1].c;for(let i=0;i<s.length-1;i++){if(t>=s[i].t&&t<=s[i+1].t){const f=(t-s[i].t)/(s[i+1].t-s[i].t);return s[i].c.map((v,j)=>v+f*(s[i+1].c[j]-v));}}return s[0].c;}
+  function cr(c){return `rgba(${c[0]|0},${c[1]|0},${c[2]|0},${c[3].toFixed(2)})`;}
+  const sw = W*0.055;
+  let cum=0;
+  for(let i=0;i<pts.length;i++){
+    const a=loop[i],b=loop[i+1];
+    const t0=cum/tot, t1=(cum+segs[i])/tot; cum+=segs[i];
+    const c0=sample(t0), c1=sample(t1);
+    // glow
+    ctx.save(); ctx.shadowColor=cfg.glow; ctx.shadowBlur=sw*2.8;
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]);
+    const gg=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);
+    gg.addColorStop(0,cr([c0[0],c0[1],c0[2],c0[3]*0.5]));
+    gg.addColorStop(1,cr([c1[0],c1[1],c1[2],c1[3]*0.5]));
+    ctx.strokeStyle=gg; ctx.lineWidth=sw*2; ctx.lineCap='round'; ctx.stroke(); ctx.restore();
+    // sharp
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]);
+    const sg=ctx.createLinearGradient(a[0],a[1],b[0],b[1]);
+    sg.addColorStop(0,cr(c0)); sg.addColorStop(1,cr(c1));
+    ctx.strokeStyle=sg; ctx.lineWidth=sw; ctx.lineCap='round'; ctx.stroke();
+  }
+  // number
+  ctx.font=`900 ${W*0.28}px -apple-system,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle=cfg.text; ctx.fillText(label, W/2, H*0.535);
+}
+
+const _MEDAL_CFGS = [
+  { fill:['#1e1500','#0e0900'], glow:'#FFD700', text:'rgba(255,210,50,0.9)',
+    stops:[{t:0,c:[100,60,0,0.35]},{t:0.2,c:[220,150,0,1]},{t:0.4,c:[255,230,80,1]},{t:0.55,c:[255,255,200,1]},{t:0.7,c:[255,210,50,1]},{t:0.85,c:[180,100,0,0.65]},{t:1,c:[100,60,0,0.35]}] },
+  { fill:['#0e0e1a','#08080f'], glow:'#aabbff', text:'rgba(180,200,255,0.9)',
+    stops:[{t:0,c:[60,70,120,0.35]},{t:0.2,c:[120,140,210,1]},{t:0.4,c:[190,210,255,1]},{t:0.55,c:[240,248,255,1]},{t:0.7,c:[160,185,240,1]},{t:0.85,c:[90,100,170,0.65]},{t:1,c:[60,70,120,0.35]}] },
+  { fill:['#160900','#0d0500'], glow:'#CD7F32', text:'rgba(230,145,60,0.9)',
+    stops:[{t:0,c:[80,35,5,0.35]},{t:0.2,c:[180,90,20,1]},{t:0.4,c:[230,150,60,1]},{t:0.55,c:[255,215,140,1]},{t:0.7,c:[210,130,40,1]},{t:0.85,c:[140,65,15,0.65]},{t:1,c:[80,35,5,0.35]}] },
 ];
+
+// Returns an <canvas> element with medal drawn (22x26px display size)
+function _makeMedalCanvas(idx) {
+  const c = document.createElement('canvas');
+  c.width = 44; c.height = 52;
+  c.style.cssText = 'width:22px;height:26px;display:block;flex-shrink:0';
+  _drawMedal(c, _MEDAL_CFGS[idx] || _MEDAL_CFGS[2], idx+1);
+  return c;
+}
+
 const GAME_NAMES = { solo: 'Соло', duel: 'Дуэль', mines: 'Мины' };
 
 function openTopWins(){
@@ -108,32 +168,36 @@ function openTopWins(){
           </div>`;
         return;
       }
-      list.innerHTML = d.wins.map((w,i) => {
-        const medal = MEDALS[i] || '';
+      list.innerHTML = '';
+      d.wins.forEach((w, i) => {
         const gameName = GAME_NAMES[w.game] || w.game;
         const initial = (w.firstName||'?')[0].toUpperCase();
         const avatarContent = w.photoUrl
-          ? `<img src="${w.photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.outerHTML='<span style=font-size:16px;font-weight:800;color:#fff>${initial}</span>'">`
-          : `<span style="font-size:16px;font-weight:800;color:#fff">${initial}</span>`;
+          ? `<img src="${w.photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.outerHTML='<span style=font-size:14px;font-weight:800;color:#fff>${initial}</span>'">`
+          : `<span style="font-size:14px;font-weight:800;color:#fff">${initial}</span>`;
         const avatarBg = ['rgba(91,141,239,.3)','rgba(46,204,113,.25)','rgba(244,196,48,.2)'][i] || 'rgba(255,255,255,.1)';
         const amountColor = ['#f4c430','#c0c0c0','#cd7f32'][i] || '#fff';
         const sep = i < d.wins.length-1 ? `<div style="height:1px;background:rgba(255,255,255,.05)"></div>` : '';
-        return `
-          <div style="display:flex;align-items:center;gap:14px;padding:14px 0">
-          <div style="width:32px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${medal}</div>
-            <div style="width:46px;height:46px;border-radius:14px;background:${avatarBg};border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+        const row = document.createElement('div');
+        row.innerHTML = `
+          <div style="display:flex;align-items:center;gap:12px;padding:13px 0">
+            <div class="medal-slot" style="width:22px;height:26px;flex-shrink:0"></div>
+            <div style="width:44px;height:44px;border-radius:12px;background:${avatarBg};border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
               ${avatarContent}
             </div>
             <div style="flex:1;min-width:0">
-              <div style="font-size:15px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.firstName||'Игрок'}</div>
+              <div style="font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.firstName||'Игрок'}</div>
               <div style="font-size:11px;color:rgba(255,255,255,.3);font-weight:600;margin-top:2px">${gameName}</div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="${amountColor}"><ellipse cx="12" cy="18" rx="10" ry="4"/><ellipse cx="12" cy="14" rx="10" ry="4"/><ellipse cx="12" cy="10" rx="10" ry="4"/><ellipse cx="12" cy="6" rx="10" ry="4"/></svg>
-              <span style="font-size:15px;font-weight:800;color:${amountColor}">${Number(w.amount).toLocaleString('ru')}</span>
+            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="${amountColor}"><ellipse cx="12" cy="18" rx="10" ry="4"/><ellipse cx="12" cy="14" rx="10" ry="4"/><ellipse cx="12" cy="10" rx="10" ry="4"/><ellipse cx="12" cy="6" rx="10" ry="4"/></svg>
+              <span style="font-size:14px;font-weight:800;color:${amountColor}">${Number(w.amount).toLocaleString('ru')}</span>
             </div>
           </div>${sep}`;
-      }).join('');
+        const slot = row.querySelector('.medal-slot');
+        if (slot) slot.appendChild(_makeMedalCanvas(i));
+        list.appendChild(row);
+      });
     })
     .catch(() => {
       list.innerHTML = `
