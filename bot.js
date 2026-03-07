@@ -1679,28 +1679,28 @@ const SUPPORT_SYS = `Ты — дружелюбный помощник подде
 
 // GET /api/support/test
 app.get('/api/support/test', async (req, res) => {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return res.json({ ok: false, error: 'ANTHROPIC_API_KEY не установлен' });
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return res.json({ ok: false, error: 'GROQ_API_KEY не установлен' });
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
     });
     const data = await r.json();
-    const text = data?.content?.[0]?.text;
+    const text = data?.choices?.[0]?.message?.content;
     res.json({ ok: !!text, status: r.status, text: text || null, error: data?.error || null });
   } catch (e) {
     res.json({ ok: false, error: e.message });
   }
 });
 
-// POST /api/support/ai — Anthropic ИИ-агент с контекстом пользователя
+// POST /api/support/ai — Groq ИИ-агент (бесплатный) с контекстом пользователя
 app.post('/api/support/ai', async (req, res) => {
   const { messages, userId } = req.body;
-  if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false, debug: 'bad messages' });
+  if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false });
 
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.GROQ_API_KEY;
   if (!key) return res.status(500).json({ ok: false, error: 'no_key' });
 
   let userContext = '';
@@ -1709,21 +1709,25 @@ app.post('/api/support/ai', async (req, res) => {
     userContext = `\nДанные пользователя:\n- Имя: ${u.firstName || '?'}\n- Монеты: ${u.balance || 0}\n- Stars: ${u.starsBalance || 0}\n- VIP: ${u.vipExpiry && u.vipExpiry > Date.now() ? 'да' : 'нет'}\n- Рефералов: ${u.refs?.length || 0}\n`;
   }
 
-  const systemPrompt = `Ты — дружелюбный помощник поддержки GiftBot. Отвечай по-русски, кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО GiftBot:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа: "Если ответ не помог — напишите «вызвать специалиста»"`;
+  const systemPrompt = `Ты — дружелюбный помощник поддержки GiftBot. Отвечай по-русски, кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО GiftBot:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа пиши: "Если ответ не помог — напишите «вызвать специалиста»"`;
 
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, system: systemPrompt, messages })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 400,
+        messages: [{ role: 'system', content: systemPrompt }, ...messages]
+      })
     });
     const data = await r.json();
-    console.log('[support] Anthropic:', r.status, JSON.stringify(data).slice(0, 200));
-    const text = data?.content?.[0]?.text;
+    console.log('[support] Groq:', r.status, JSON.stringify(data).slice(0, 200));
+    const text = data?.choices?.[0]?.message?.content;
     if (text) return res.json({ ok: true, text });
     return res.status(500).json({ ok: false, debug: data?.error?.message || JSON.stringify(data).slice(0,200) });
   } catch (e) {
-    console.error('[support] error:', e.message);
+    console.error('[support] Groq error:', e.message);
     res.status(500).json({ ok: false, debug: e.message });
   }
 });
