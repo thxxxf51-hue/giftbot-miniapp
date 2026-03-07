@@ -1653,6 +1653,158 @@ app.get('/api/pvp/history', (req, res) => {
   res.json({ ok: true, history: DB.pvp.history });
 });
 
+/* ══════════════════════════════════════════
+   SUPPORT SYSTEM
+   ══════════════════════════════════════════ */
+
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const SPECIALIST_ID = ADMIN_ID; // специалист = админ, можно вынести в .env
+
+// activeSupport[specialistTgId] = userWebAppId (string)
+const activeSupport = {};
+
+const SUPPORT_SYS = `Ты — ИИ-помощник поддержки Telegram-бота GiftBot. Отвечай по-русски, кратко (2–4 предложения).
+
+О боте GiftBot:
+- Telegram-бот для игр на монеты (внутренняя валюта)
+- Игры: Соло (открытие подарков), Дуэль (PvP 1v1), Мины (поле 5×5 — открывай клетки, избегай мин, забирай множитель)
+- Монеты пополняются через Telegram Stars. Stars покупают прямо в Telegram
+- Рефералы: приглашай друзей по реферальной ссылке → бонусные монеты
+- Топ выигрышей: лучшие победы за последние 24ч, порог для попадания — 30 000 монет
+- Вывод Stars — через раздел Профиль
+- При технических проблемах (не зачислились монеты, баг и т.д.) предлагай вызвать специалиста
+
+В конце каждого своего ответа ВСЕГДА добавляй с новой строки:
+"Если ответ не помог — напишите «вызвать специалиста»"`;
+
+// POST /api/support/ai — вызов ИИ со стороны сервера
+app.post('/api/support/ai', async (req, res) => {
+  const { messages } = req.body;
+  if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false });
+  if (!ANTHROPIC_API_KEY) return res.status(500).json({ ok: false, error: 'no_key' });
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        system: SUPPORT_SYS,
+        messages
+      })
+    });
+    const data = await r.json();
+    const text = data?.content?.[0]?.text;
+    if (!text) return res.status(500).json({ ok: false });
+    res.json({ ok: true, text });
+  } catch (e) {
+    console.error('Support AI error:', e.message);
+    res.status(500).json({ ok: false });
+  }
+});
+
+// POST /api/support/specialist — уведомить специалиста
+app.post('/api/support/specialist', async (req, res) => {
+  const { userId, firstName } = req.body;
+  if (!userId) return res.status(400).json({ ok: false });
+
+  try {
+    await bot.telegram.sendMessage(SPECIALIST_ID,
+      `🆘 *Вас вызвали на помощь*\n\nПользователь: *${firstName || 'Неизвестный'}* (ID: ${userId})\n\nНажмите кнопку чтобы начать чат.`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [[
+            { text: '💬 Ответить пользователю', callback_data: `support_reply:${userId}` }
+          ]]
+        }
+      }
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Specialist notify error:', e.message);
+    res.status(500).json({ ok: false });
+  }
+});
+
+// POST /api/support/from_specialist — специалист отправил сообщение через WebApp (запасной вариант)
+// Основной путь: специалист пишет прямо в бот после нажатия кнопки
+
+// Callback: специалист нажал "Ответить пользователю"
+bot.on('callback_query', async (ctx) => {
+  const data = ctx.callbackQuery?.data || '';
+  if (!data.startsWith('support_reply:')) return;
+
+  const userId = data.split(':')[1];
+  const specId = ctx.from.id;
+
+  // Регистрируем активный чат
+  activeSupport[specId] = userId;
+
+  // Удаляем кнопку (сообщение с уведомлением)
+  try { await ctx.deleteMessage(); } catch {}
+
+  // Сообщаем специалисту что он в чате
+  await ctx.telegram.sendMessage(specId,
+    `✅ Вы в чате с пользователем *${userId}*\n\nВсе ваши сообщения сюда будут отправлены ему. Для завершения напишите /end\\_support`,
+    { parse_mode: 'Markdown' }
+  );
+
+  // Уведомляем пользователя через API (фронт опрашивает)
+  // Сохраняем в DB что специалист подключился
+  if (!DB.supportChats) DB.supportChats = {};
+  DB.supportChats[String(userId)] = { specId, startedAt: Date.now(), status: 'active' };
+
+  await ctx.answerCbQuery('Чат начат!');
+});
+
+// Сообщение от специалиста → пересылаем пользователю
+bot.on('text', async (ctx, next) => {
+  const specId = ctx.from.id;
+  if (!activeSupport[specId]) return next ? next() : undefined;
+
+  const userId = activeSupport[specId];
+  const text = ctx.message.text;
+
+  // Команда завершения
+  if (text === '/end_support' || text === '/end') {
+    delete activeSupport[specId];
+    if (DB.supportChats?.[userId]) DB.supportChats[userId].status = 'closed';
+    await ctx.reply('✅ Чат завершён.');
+    // Уведомляем фронт через DB
+    if (DB.supportChats?.[userId]) DB.supportChats[userId].specialistMsg = '__closed__';
+    return;
+  }
+
+  // Сохраняем сообщение специалиста для фронта
+  if (!DB.supportChats) DB.supportChats = {};
+  if (!DB.supportChats[userId]) DB.supportChats[userId] = {};
+  if (!DB.supportChats[userId].pendingMessages) DB.supportChats[userId].pendingMessages = [];
+  DB.supportChats[userId].pendingMessages.push({ text, ts: Date.now() });
+
+  await ctx.reply('✉️ Отправлено пользователю');
+});
+
+// GET /api/support/poll — фронт опрашивает есть ли новые сообщения от специалиста
+app.get('/api/support/poll', (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.json({ ok: true, messages: [], status: 'ai' });
+
+  const chat = DB.supportChats?.[userId];
+  if (!chat) return res.json({ ok: true, messages: [], status: 'ai' });
+
+  const msgs = chat.pendingMessages || [];
+  chat.pendingMessages = []; // очищаем после отдачи
+
+  const status = chat.status || 'waiting';
+  res.json({ ok: true, messages: msgs, status });
+});
+
 /* ══ SERVER ══ */
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
