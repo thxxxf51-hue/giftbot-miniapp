@@ -29,6 +29,15 @@ function closeSupport() {
 
 function endSupportChat() {
   if (!confirm('Завершить диалог с поддержкой?')) return;
+  // Уведомить специалиста если он был подключён
+  if (supportMode === 'specialist' || supportMode === 'waiting') {
+    const uid = typeof UID !== 'undefined' ? UID : '';
+    fetch('/api/support/user-end', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: uid })
+    }).catch(() => {});
+  }
   closeSupport();
   setTimeout(() => {
     document.getElementById('support-msgs').innerHTML = '';
