@@ -1685,7 +1685,7 @@ app.get('/api/support/test', async (req, res) => {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model: 'llama-3.1-70b-versatile', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
+      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
     });
     const data = await r.json();
     const text = data?.choices?.[0]?.message?.content;
@@ -1716,7 +1716,7 @@ app.post('/api/support/ai', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 400,
         messages: [{ role: 'system', content: systemPrompt }, ...messages]
       })
