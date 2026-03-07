@@ -67,7 +67,14 @@ function closeGenMo(){document.getElementById('genmo').classList.remove('show');
 function doGenMo(){if(_gmCb)_gmCb();}
 
 /* ══ TOP WINS MODAL ══ */
-const MEDALS = ['🥇','🥈','🥉'];
+const MEDALS = [
+  // 🥇 Gold crystal
+  `<svg width="32" height="38" viewBox="0 0 46 54" fill="none"><defs><linearGradient id="jg1" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#FFFDE0"/><stop offset="40%" stop-color="#FFD700"/><stop offset="100%" stop-color="#A06000"/></linearGradient><filter id="jf1"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#FFD700" flood-opacity="0.55"/></filter></defs><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="url(#jg1)" filter="url(#jf1)"/><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/><path d="M23 2 L40 14 L23 20 L6 14 Z" fill="rgba(255,255,255,0.15)"/><path d="M23 52 L40 36 L23 30 L6 36 Z" fill="rgba(0,0,0,0.1)"/><line x1="23" y1="2" x2="23" y2="52" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><text x="23" y="32" text-anchor="middle" font-size="16" font-weight="900" fill="rgba(90,38,0,0.88)" font-family="-apple-system,sans-serif">1</text></svg>`,
+  // 🥈 Silver crystal
+  `<svg width="32" height="38" viewBox="0 0 46 54" fill="none"><defs><linearGradient id="jg2" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#FAFAFA"/><stop offset="40%" stop-color="#C8C8D8"/><stop offset="100%" stop-color="#707080"/></linearGradient><filter id="jf2"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#aaa" flood-opacity="0.4"/></filter></defs><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="url(#jg2)" filter="url(#jf2)"/><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/><path d="M23 2 L40 14 L23 20 L6 14 Z" fill="rgba(255,255,255,0.18)"/><path d="M23 52 L40 36 L23 30 L6 36 Z" fill="rgba(0,0,0,0.08)"/><line x1="23" y1="2" x2="23" y2="52" stroke="rgba(255,255,255,0.08)" stroke-width="1"/><text x="23" y="32" text-anchor="middle" font-size="16" font-weight="900" fill="rgba(25,25,50,0.82)" font-family="-apple-system,sans-serif">2</text></svg>`,
+  // 🥉 Bronze crystal
+  `<svg width="32" height="38" viewBox="0 0 46 54" fill="none"><defs><linearGradient id="jg3" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0%" stop-color="#F8C090"/><stop offset="40%" stop-color="#CD7F32"/><stop offset="100%" stop-color="#7A3510"/></linearGradient><filter id="jf3"><feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#cd7f32" flood-opacity="0.45"/></filter></defs><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="url(#jg3)" filter="url(#jf3)"/><path d="M23 2 L40 14 L40 36 L23 52 L6 36 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.2"/><path d="M23 2 L40 14 L23 20 L6 14 Z" fill="rgba(255,255,255,0.13)"/><path d="M23 52 L40 36 L23 30 L6 36 Z" fill="rgba(0,0,0,0.1)"/><line x1="23" y1="2" x2="23" y2="52" stroke="rgba(255,255,255,0.07)" stroke-width="1"/><text x="23" y="32" text-anchor="middle" font-size="16" font-weight="900" fill="rgba(48,14,0,0.88)" font-family="-apple-system,sans-serif">3</text></svg>`,
+];
 const GAME_NAMES = { solo: 'Соло', duel: 'Дуэль', mines: 'Мины' };
 
 function openTopWins(){
@@ -113,7 +120,7 @@ function openTopWins(){
         const sep = i < d.wins.length-1 ? `<div style="height:1px;background:rgba(255,255,255,.05)"></div>` : '';
         return `
           <div style="display:flex;align-items:center;gap:14px;padding:14px 0">
-            <div style="font-size:20px;width:20px;text-align:center;flex-shrink:0">${medal}</div>
+          <div style="width:32px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${medal}</div>
             <div style="width:46px;height:46px;border-radius:14px;background:${avatarBg};border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
               ${avatarContent}
             </div>
