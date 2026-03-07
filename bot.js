@@ -1677,108 +1677,57 @@ const SUPPORT_SYS = `Ты — дружелюбный помощник подде
 В конце каждого своего ответа ВСЕГДА добавляй с новой строки:
 "Если ответ не помог — напишите «вызвать специалиста»"`;
 
-// GET /api/support/test — проверить что ключ работает
+// GET /api/support/test
 app.get('/api/support/test', async (req, res) => {
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) return res.json({ ok: false, error: 'OPENROUTER_API_KEY не установлен' });
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key) return res.json({ ok: false, error: 'ANTHROPIC_API_KEY не установлен' });
   try {
-    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`,
-        'HTTP-Referer': 'https://giftbot.app',
-        'X-Title': 'GiftBot Support'
-      },
-      body: JSON.stringify({
-        model: 'deepseek/deepseek-chat:free',
-        max_tokens: 50,
-        messages: [{ role: 'user', content: 'скажи привет' }]
-      })
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
     });
     const data = await r.json();
-    const text = data?.choices?.[0]?.message?.content;
+    const text = data?.content?.[0]?.text;
     res.json({ ok: !!text, status: r.status, text: text || null, error: data?.error || null });
   } catch (e) {
     res.json({ ok: false, error: e.message });
   }
 });
 
-// POST /api/support/ai — OpenRouter ИИ-агент с контекстом пользователя
+// POST /api/support/ai — Anthropic ИИ-агент с контекстом пользователя
 app.post('/api/support/ai', async (req, res) => {
   const { messages, userId } = req.body;
   if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false, debug: 'bad messages' });
 
-  const key = process.env.OPENROUTER_API_KEY;
+  const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return res.status(500).json({ ok: false, error: 'no_key' });
 
-  // Подтягиваем данные пользователя из БД
   let userContext = '';
   if (userId && DB.users[String(userId)]) {
     const u = DB.users[String(userId)];
-    userContext = `
-Данные этого пользователя:
-- Имя: ${u.firstName || 'неизвестно'}
-- Баланс монет: ${u.balance || 0}
-- Баланс Stars: ${u.starsBalance || 0}
-- VIP: ${u.vipExpiry && u.vipExpiry > Date.now() ? 'активен до ' + new Date(u.vipExpiry).toLocaleDateString('ru') : 'нет'}
-- Рефералов: ${u.refs?.length || 0}
-`;
+    userContext = `\nДанные пользователя:\n- Имя: ${u.firstName || '?'}\n- Монеты: ${u.balance || 0}\n- Stars: ${u.starsBalance || 0}\n- VIP: ${u.vipExpiry && u.vipExpiry > Date.now() ? 'да' : 'нет'}\n- Рефералов: ${u.refs?.length || 0}\n`;
   }
 
-  const systemPrompt = `Ты — дружелюбный помощник поддержки Telegram-бота GiftBot. Отвечай по-русски, кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы — по боту и общие.
+  const systemPrompt = `Ты — дружелюбный помощник поддержки GiftBot. Отвечай по-русски, кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО GiftBot:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа: "Если ответ не помог — напишите «вызвать специалиста»"`;
 
-О GiftBot:
-- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5 поле)
-- Монеты пополняются через Telegram Stars
-- Рефералы: приглашай друзей → бонусы
-- Топ выигрышей за 24ч (порог 30 000 монет)
-- Вывод Stars через Профиль
-${userContext}
-В конце КАЖДОГО ответа пиши с новой строки: "Если ответ не помог — напишите «вызвать специалиста»"`;
-
-  // Пробуем модели по очереди
-  const MODELS = [
-    'deepseek/deepseek-chat:free',
-    'google/gemini-2.0-flash-exp:free',
-    'mistralai/mistral-small-3.1-24b-instruct:free',
-  ];
-
-  for (const model of MODELS) {
-    try {
-      console.log(`[support] trying model: ${model}`);
-      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${key}`,
-          'HTTP-Referer': process.env.APP_URL || 'https://giftbot.app',
-          'X-Title': 'GiftBot Support'
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 400,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-          ]
-        })
-      });
-      const data = await r.json();
-      console.log(`[support] ${model} → ${r.status}:`, JSON.stringify(data).slice(0, 200));
-      const text = data?.choices?.[0]?.message?.content;
-      if (text) return res.json({ ok: true, text });
-      // если ошибка rate limit — пробуем следующую
-      if (data?.error?.code === 429 || data?.error?.code === 503) continue;
-      // другая ошибка — логируем и пробуем следующую
-      console.error(`[support] model ${model} failed:`, data?.error);
-    } catch (e) {
-      console.error(`[support] model ${model} threw:`, e.message);
-    }
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, system: systemPrompt, messages })
+    });
+    const data = await r.json();
+    console.log('[support] Anthropic:', r.status, JSON.stringify(data).slice(0, 200));
+    const text = data?.content?.[0]?.text;
+    if (text) return res.json({ ok: true, text });
+    return res.status(500).json({ ok: false, debug: data?.error?.message || JSON.stringify(data).slice(0,200) });
+  } catch (e) {
+    console.error('[support] error:', e.message);
+    res.status(500).json({ ok: false, debug: e.message });
   }
-
-  res.status(500).json({ ok: false, debug: 'all models failed' });
 });
+
 
 // POST /api/support/specialist — уведомить специалиста
 app.post('/api/support/specialist', async (req, res) => {
