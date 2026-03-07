@@ -9,18 +9,25 @@
 html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;height:100%;overflow:hidden;overscroll-behavior:none}
 .app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 .pages{flex:1;overflow:hidden;position:relative}
-.page{display:none;position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px calc(70px + env(safe-area-inset-bottom));overscroll-behavior-y:contain}
+.page{display:none;position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px calc(88px + env(safe-area-inset-bottom));overscroll-behavior-y:contain}
 .page::-webkit-scrollbar{display:none}
 .page.active{display:block;animation:pIn .26s ease forwards}
 .page.exit{display:block;animation:pOut .18s ease forwards;pointer-events:none}
 @keyframes pIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pOut{from{opacity:1}to{opacity:0}}
 
-.nav{flex-shrink:0;display:flex;align-items:center;background:var(--nav);border-top:1px solid rgba(255,255,255,.05);padding:0 4px;padding-bottom:env(safe-area-inset-bottom);height:calc(52px + env(safe-area-inset-bottom))}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;color:var(--muted);font-size:9px;font-weight:500;border:none;background:none;font-family:inherit;padding:5px 2px;position:relative;transition:color .2s}
-.nb svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.nb.active{color:var(--green)}
-.nb.active::before{content:'';position:absolute;inset:2px 4px;border-radius:8px;background:var(--gdim)}
+/* ── NEW BOTTOM NAV ── */
+.nav-wrap{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:0 14px;padding-bottom:max(10px,env(safe-area-inset-bottom));z-index:100;pointer-events:none}
+.nav{background:#141418;border-radius:22px;border:1px solid rgba(255,255,255,.07);padding:4px;display:flex;align-items:center;position:relative;box-shadow:0 -2px 40px rgba(0,0,0,.5);pointer-events:all;margin-bottom:6px}
+.nav-pill{position:absolute;top:4px;height:calc(100% - 8px);border-radius:18px;background:rgba(46,204,113,.13);border:1px solid rgba(46,204,113,.22);transition:left .32s cubic-bezier(.4,0,.2,1),width .32s cubic-bezier(.4,0,.2,1);pointer-events:none;z-index:0}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:7px 4px;border-radius:18px;border:none;background:transparent;cursor:pointer;position:relative;z-index:1;transition:transform .15s cubic-bezier(.34,1.56,.64,1);-webkit-user-select:none;user-select:none;font-family:inherit}
+.nb:active{transform:scale(0.9)}
+.nb-icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.nb.active .nb-icon{transform:scale(1.1)}
+.nb-icon svg{width:20px;height:20px;stroke:rgba(255,255,255,.3);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .25s ease}
+.nb.active .nb-icon svg{stroke:#2ecc71}
+.nb-label{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);transition:color .25s ease;letter-spacing:.1px;white-space:nowrap}
+.nb.active .nb-label{color:#2ecc71}
 .nb>*{position:relative;z-index:1}
 
 .gc{background:var(--glass);backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid var(--gb);border-radius:16px;position:relative;overflow:hidden}
@@ -397,14 +404,6 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 
 /* Nav PvP icon active tint */
 #nb-pvp.active .nb-pvp-ico { opacity:1; filter:invert(60%) sepia(80%) saturate(400%) hue-rotate(100deg); }
-
-/* ══ Nav icon press animation ══ */
-.nb svg, .nb span {
-  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.nb:active svg, .nb:active span {
-  transform: scale(0.75);
-}
 
 /* ══ Inventory action buttons ══ */
 .inv-act-btns-wrap {
