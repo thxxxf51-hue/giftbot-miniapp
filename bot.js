@@ -331,6 +331,49 @@ app.post('/api/user/sync', (req, res) => {
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
 
+// Получение и кеширование аватарки пользователя через Bot API
+app.get('/api/user/photo/:userId', async (req, res) => {
+  const userId = req.params.userId;
+  if (!userId) return res.json({ ok: false });
+
+  const u = getUser(userId);
+  // Если уже есть в кеше и свежая (< 24ч) — отдаём сразу
+  if (u.photoUrl && u.photoFetchedAt && (Date.now() - u.photoFetchedAt < 24 * 3600 * 1000)) {
+    return res.json({ ok: true, photoUrl: u.photoUrl });
+  }
+
+  try {
+    // Шаг 1: получаем список фото профиля
+    const photosRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${userId}&limit=1`);
+    const photosData = await photosRes.json();
+
+    if (!photosData.ok || !photosData.result?.total_count) {
+      return res.json({ ok: true, photoUrl: null });
+    }
+
+    // Берём самый большой вариант первой фотки
+    const photos = photosData.result.photos[0];
+    const fileId = photos[photos.length - 1].file_id;
+
+    // Шаг 2: получаем путь файла
+    const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+    const fileData = await fileRes.json();
+
+    if (!fileData.ok) return res.json({ ok: true, photoUrl: null });
+
+    const photoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+
+    // Кешируем в базе
+    u.photoUrl = photoUrl;
+    u.photoFetchedAt = Date.now();
+    saveDB();
+
+    res.json({ ok: true, photoUrl });
+  } catch (e) {
+    res.json({ ok: true, photoUrl: u.photoUrl || null });
+  }
+});
+
 // Проверка бана (вызывается из приложения при каждом открытии)
 app.get('/api/user/ban-status', (req, res) => {
   const { userId, username } = req.query;
@@ -600,12 +643,31 @@ app.get('/api/pvp-online', (req, res) => {
 /* ══ BIG WINS API ══ */
 
 // Record a big win (called from frontend)
-app.post('/api/wins/record', (req, res) => {
+app.post('/api/wins/record', async (req, res) => {
   const { userId, amount, game } = req.body;
   if (!userId || !amount || amount < 30000) return res.json({ ok: false });
   const u = getUser(String(userId));
-  // Keep only last 500 entries, prune entries older than 48h
   const now = Date.now();
+
+  // Если нет фото или оно устарело — тихо подгружаем через Bot API
+  if (!u.photoUrl || !u.photoFetchedAt || (now - u.photoFetchedAt > 24 * 3600 * 1000)) {
+    try {
+      const photosRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUserProfilePhotos?user_id=${userId}&limit=1`);
+      const photosData = await photosRes.json();
+      if (photosData.ok && photosData.result?.total_count > 0) {
+        const photos = photosData.result.photos[0];
+        const fileId = photos[photos.length - 1].file_id;
+        const fileRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${fileId}`);
+        const fileData = await fileRes.json();
+        if (fileData.ok) {
+          u.photoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${fileData.result.file_path}`;
+          u.photoFetchedAt = now;
+        }
+      }
+    } catch(e) {}
+  }
+
+  // Keep only last 500 entries, prune entries older than 48h
   DB.bigWins = DB.bigWins.filter(w => now - w.ts < 48 * 3600 * 1000).slice(-499);
   DB.bigWins.push({
     uid: String(userId),
@@ -631,12 +693,15 @@ app.get('/api/wins/top', (req, res) => {
   const top = Object.values(byUser)
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 3)
-    .map(w => ({
-      firstName: w.firstName,
-      photoUrl: w.photoUrl,
-      amount: w.amount,
-      game: w.game
-    }));
+    .map(w => {
+      const u = DB.users?.[w.uid];
+      return {
+        firstName: w.firstName,
+        photoUrl: u?.photoUrl || w.photoUrl || null,
+        amount: w.amount,
+        game: w.game
+      };
+    });
   res.json({ ok: true, wins: top });
 });
 
