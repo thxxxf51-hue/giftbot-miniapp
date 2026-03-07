@@ -18,7 +18,6 @@ function openSupport() {
         _supportAddMsg('bot', 'Привет! 👋 Я ИИ-помощник GiftBot.\nЗадай любой вопрос — расскажу про игры, баланс, рефералы и всё остальное.');
       }, 900);
     }, 300);
-    // Начать polling
     supportStartPoll();
   }
   setTimeout(() => document.getElementById('support-inp')?.focus(), 400);
@@ -31,7 +30,6 @@ function closeSupport() {
 function endSupportChat() {
   if (!confirm('Завершить диалог с поддержкой?')) return;
   closeSupport();
-  // Сброс
   setTimeout(() => {
     document.getElementById('support-msgs').innerHTML = '';
     document.getElementById('support-qr').style.display = 'flex';
@@ -51,17 +49,23 @@ async function supportSend() {
   if (!text || supportBusy) return;
   inp.value = ''; inp.style.height = '42px';
   document.getElementById('support-qr').style.display = 'none';
-  supportBusy = true;
-  document.getElementById('support-sbtn').disabled = true;
+
   _supportAddMsg('user', text);
 
-  // Если специалист уже подключён — не отвечаем ИИ
+  // Если специалист подключён — пересылаем ему
   if (supportMode === 'specialist') {
-    // Пока просто показываем — специалист видит через бота (нет двустороннего API)
-    supportBusy = false;
-    document.getElementById('support-sbtn').disabled = false;
+    const uid = typeof UID !== 'undefined' ? UID : '';
+    const fn = typeof TGU !== 'undefined' ? (TGU?.first_name || 'Пользователь') : 'Пользователь';
+    fetch('/api/support/user-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: uid, firstName: fn, text })
+    }).catch(() => {});
     return;
   }
+
+  // Ожидание специалиста — не отвечаем
+  if (supportMode === 'waiting') return;
 
   // Вызов специалиста
   if (/специалист/i.test(text)) {
@@ -71,20 +75,19 @@ async function supportSend() {
     _supportAddMsg('bot', 'Отправляю уведомление специалисту 🔔\nОжидайте — обычно отвечают в течение 1–5 минут.');
     _supportSetStatus('waiting');
     supportMode = 'waiting';
-    // Уведомить сервер
     const uid = typeof UID !== 'undefined' ? UID : '';
-    const firstName = typeof TGU !== 'undefined' && TGU?.first_name || 'Пользователь';
+    const fn = typeof TGU !== 'undefined' ? (TGU?.first_name || 'Пользователь') : 'Пользователь';
     fetch('/api/support/specialist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: uid, firstName })
+      body: JSON.stringify({ userId: uid, firstName: fn })
     }).catch(() => {});
-    supportBusy = false;
-    document.getElementById('support-sbtn').disabled = false;
     return;
   }
 
   // ИИ ответ
+  supportBusy = true;
+  document.getElementById('support-sbtn').disabled = true;
   supportHistory.push({ role: 'user', content: text });
   _supportTyping(true);
 
@@ -95,11 +98,12 @@ async function supportSend() {
       body: JSON.stringify({ messages: supportHistory })
     });
     const data = await r.json();
-    if (!data.ok || !data.text) throw new Error('no reply');
+    if (!data.ok || !data.text) throw new Error(data.debug || 'no reply');
     supportHistory.push({ role: 'assistant', content: data.text });
     _supportTyping(false);
     _supportAddMsg('bot', data.text);
-  } catch {
+  } catch (e) {
+    console.error('Support AI error:', e);
     _supportTyping(false);
     _supportAddMsg('bot', 'Не удалось получить ответ. Попробуйте ещё раз или напишите «вызвать специалиста».');
   }
@@ -113,7 +117,7 @@ function supportSendQuick(text) {
   supportSend();
 }
 
-// ── Polling: ждём сообщений от специалиста ──────────────────
+// ── Polling ──────────────────────────────────────────────────
 function supportStartPoll() {
   if (supportPollTimer) return;
   supportPollTimer = setInterval(async () => {
@@ -125,7 +129,6 @@ function supportStartPoll() {
       const data = await r.json();
       if (!data.ok) return;
 
-      // Новые сообщения от специалиста
       if (data.messages && data.messages.length > 0) {
         if (supportMode !== 'specialist') {
           supportMode = 'specialist';
@@ -135,7 +138,6 @@ function supportStartPoll() {
         data.messages.forEach(m => _supportAddMsg('specialist', m.text));
       }
 
-      // Статус
       if (data.status === 'active' && supportMode === 'waiting') {
         supportMode = 'specialist';
         _supportSetStatus('specialist');
@@ -151,32 +153,29 @@ function supportStartPoll() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────
-
 function _supportAddMsg(who, text) {
   const msgs = document.getElementById('support-msgs');
-  const isBot = who === 'bot' || who === 'specialist';
   const isUser = who === 'user';
   const isSystem = who === 'system';
   const time = new Date().toLocaleTimeString('ru', { hour: '2-digit', minute: '2-digit' });
 
   if (isSystem) {
     const d = document.createElement('div');
-    d.style.cssText = 'align-self:center;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.18);border-radius:12px;padding:6px 12px;font-size:12px;color:rgba(255,255,255,.5);text-align:center;animation:msgIn .22s ease';
+    d.style.cssText = 'align-self:center;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.18);border-radius:12px;padding:6px 12px;font-size:12px;color:rgba(255,255,255,.5);text-align:center';
     d.textContent = text;
     msgs.appendChild(d);
     msgs.scrollTop = msgs.scrollHeight;
     return;
   }
 
-  // Format: bold «вызвать специалиста»
   const formatted = text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/«вызвать специалиста»/g, '<b style="color:rgba(46,204,113,.9)">«вызвать специалиста»</b>');
 
   const d = document.createElement('div');
-  d.style.cssText = `display:flex;flex-direction:column;max-width:82%;align-self:${isUser ? 'flex-end' : 'flex-start'};animation:msgIn .22s ease`;
+  d.style.cssText = `display:flex;flex-direction:column;max-width:82%;align-self:${isUser ? 'flex-end' : 'flex-start'}`;
   d.innerHTML = `
-    <div style="padding:11px 14px;border-radius:${isUser ? '18px 18px 5px 18px' : '18px 18px 18px 5px'};font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap;background:${isUser ? '#2ecc71' : '#1c1c23'};${isBot && !isUser ? 'border:1px solid rgba(255,255,255,.06)' : ''}">${formatted}</div>
+    <div style="padding:11px 14px;border-radius:${isUser ? '18px 18px 5px 18px' : '18px 18px 18px 5px'};font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap;background:${isUser ? '#2ecc71' : '#1c1c23'};${!isUser ? 'border:1px solid rgba(255,255,255,.06)' : ''}">${formatted}</div>
     <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:3px;padding:0 4px;text-align:${isUser ? 'right' : 'left'}">${who === 'specialist' ? '👤 Специалист · ' : ''}${time}</div>
   `;
   msgs.appendChild(d);
@@ -189,7 +188,7 @@ function _supportTyping(show) {
   const msgs = document.getElementById('support-msgs');
   const t = document.createElement('div');
   t.id = 'support-typing';
-  t.style.cssText = 'background:#1c1c23;border-radius:18px 18px 18px 5px;padding:12px 16px;display:flex;gap:5px;align-items:center;border:1px solid rgba(255,255,255,.06);align-self:flex-start;animation:msgIn .2s ease';
+  t.style.cssText = 'background:#1c1c23;border-radius:18px 18px 18px 5px;padding:12px 16px;display:flex;gap:5px;align-items:center;border:1px solid rgba(255,255,255,.06);align-self:flex-start';
   t.innerHTML = '<span class="std"></span><span class="std" style="animation-delay:.2s"></span><span class="std" style="animation-delay:.4s"></span>';
   msgs.appendChild(t);
   msgs.scrollTop = msgs.scrollHeight;
@@ -210,10 +209,8 @@ function _supportSetStatus(mode) {
 
 function _delay(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-// CSS анимации
 const _sStyle = document.createElement('style');
 _sStyle.textContent = `
-@keyframes msgIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 .std{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);display:inline-block;animation:stdB 1.2s infinite}
 @keyframes stdB{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 `;
