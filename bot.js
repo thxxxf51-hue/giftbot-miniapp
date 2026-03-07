@@ -1677,34 +1677,69 @@ const SUPPORT_SYS = `Ты — дружелюбный помощник подде
 В конце каждого своего ответа ВСЕГДА добавляй с новой строки:
 "Если ответ не помог — напишите «вызвать специалиста»"`;
 
-// POST /api/support/ai — вызов ИИ со стороны сервера
+// POST /api/support/ai — OpenRouter ИИ-агент с контекстом пользователя
 app.post('/api/support/ai', async (req, res) => {
-  const { messages } = req.body;
+  const { messages, userId } = req.body;
   if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false });
-  if (!ANTHROPIC_API_KEY) return res.status(500).json({ ok: false, error: 'no_key' });
+  if (!process.env.OPENROUTER_API_KEY) return res.status(500).json({ ok: false, error: 'no_key' });
+
+  // Подтягиваем данные пользователя из БД
+  let userContext = '';
+  if (userId && DB.users[String(userId)]) {
+    const u = DB.users[String(userId)];
+    userContext = `
+Данные этого пользователя из базы:
+- Имя: ${u.firstName || 'неизвестно'}
+- Баланс монет: ${u.balance || 0}
+- Баланс Stars: ${u.starsBalance || 0}
+- VIP: ${u.vipExpiry && u.vipExpiry > Date.now() ? 'активен до ' + new Date(u.vipExpiry).toLocaleDateString('ru') : 'нет'}
+- Рефералов: ${u.refs?.length || 0}
+- Дата регистрации: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('ru') : 'неизвестно'}
+`;
+  }
+
+  const systemPrompt = `Ты — дружелюбный помощник поддержки Telegram-бота GiftBot.
+Отвечай по-русски, кратко и понятно (2–4 предложения).
+Отвечай на ЛЮБЫЕ вопросы пользователя — как по боту, так и общие.
+
+О боте GiftBot:
+- Telegram-бот для игр на монеты (внутренняя валюта)
+- Игры: Соло (открытие подарков), Дуэль (PvP 1v1), Мины (поле 5×5 — открывай клетки, избегай мин, забирай множитель)
+- Монеты пополняются через Telegram Stars
+- Рефералы: приглашай друзей по ссылке → бонусные монеты
+- Топ выигрышей: лучшие победы за 24ч, порог 30 000 монет
+- Вывод Stars — через раздел Профиль
+- VIP статус даёт особые привилегии
+- При технических проблемах предлагай написать «вызвать специалиста»
+${userContext}
+В конце каждого ответа ВСЕГДА добавляй с новой строки:
+"Если ответ не помог — напишите «вызвать специалиста»"`;
 
   try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        'HTTP-Referer': process.env.APP_URL || 'https://giftbot.app',
+        'X-Title': 'GiftBot Support'
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'google/gemini-2.0-flash-exp:free',
         max_tokens: 400,
-        system: SUPPORT_SYS,
-        messages
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ]
       })
     });
     const data = await r.json();
-    console.log('Anthropic response status:', r.status, JSON.stringify(data).slice(0, 200));
-    const text = data?.content?.[0]?.text;
+    console.log('OpenRouter response:', r.status, JSON.stringify(data).slice(0, 300));
+    const text = data?.choices?.[0]?.message?.content;
     if (!text) return res.status(500).json({ ok: false, debug: data?.error?.message || 'no text' });
     res.json({ ok: true, text });
   } catch (e) {
-    console.error('Support AI error:', e.message);
+    console.error('OpenRouter error:', e.message);
     res.status(500).json({ ok: false, debug: e.message });
   }
 });
