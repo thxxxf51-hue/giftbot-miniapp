@@ -1691,7 +1691,7 @@ app.get('/api/support/test', async (req, res) => {
         'X-Title': 'GiftBot Support'
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        model: 'deepseek/deepseek-chat:free',
         max_tokens: 50,
         messages: [{ role: 'user', content: 'скажи привет' }]
       })
@@ -1739,9 +1739,9 @@ ${userContext}
 
   // Пробуем модели по очереди
   const MODELS = [
-    'meta-llama/llama-3.1-8b-instruct:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
-    'mistralai/mistral-7b-instruct:free',
+    'deepseek/deepseek-chat:free',
+    'google/gemini-2.0-flash-exp:free',
+    'mistralai/mistral-small-3.1-24b-instruct:free',
   ];
 
   for (const model of MODELS) {
