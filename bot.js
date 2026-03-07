@@ -1685,7 +1685,7 @@ app.get('/api/support/test', async (req, res) => {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
+      body: JSON.stringify({ model: 'mixtral-8x7b-32768', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
     });
     const data = await r.json();
     const text = data?.choices?.[0]?.message?.content;
@@ -1709,14 +1709,14 @@ app.post('/api/support/ai', async (req, res) => {
     userContext = `\nДанные пользователя:\n- Имя: ${u.firstName || '?'}\n- Монеты: ${u.balance || 0}\n- Stars: ${u.starsBalance || 0}\n- VIP: ${u.vipExpiry && u.vipExpiry > Date.now() ? 'да' : 'нет'}\n- Рефералов: ${u.refs?.length || 0}\n`;
   }
 
-  const systemPrompt = `Ты — дружелюбный помощник поддержки GiftBot. Отвечай по-русски, кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО GiftBot:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа обязательно пиши ТОЧНО эту фразу (без изменений и опечаток): "Если ответ не помог — напишите «вызвать специалиста»"`;
+  const systemPrompt = `Ты — дружелюбный помощник поддержки GiftBot. Отвечай ТОЛЬКО на русском языке, никогда не используй другие языки. Пиши кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО GiftBot:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа обязательно пиши ТОЧНО эту фразу (без изменений и опечаток): "Если ответ не помог — напишите «вызвать специалиста»"`;
 
   try {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'mixtral-8x7b-32768',
         max_tokens: 400,
         messages: [{ role: 'system', content: systemPrompt }, ...messages]
       })
