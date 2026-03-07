@@ -1677,71 +1677,107 @@ const SUPPORT_SYS = `Ты — дружелюбный помощник подде
 В конце каждого своего ответа ВСЕГДА добавляй с новой строки:
 "Если ответ не помог — напишите «вызвать специалиста»"`;
 
+// GET /api/support/test — проверить что ключ работает
+app.get('/api/support/test', async (req, res) => {
+  const key = process.env.OPENROUTER_API_KEY;
+  if (!key) return res.json({ ok: false, error: 'OPENROUTER_API_KEY не установлен' });
+  try {
+    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${key}`,
+        'HTTP-Referer': 'https://giftbot.app',
+        'X-Title': 'GiftBot Support'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.1-8b-instruct:free',
+        max_tokens: 50,
+        messages: [{ role: 'user', content: 'скажи привет' }]
+      })
+    });
+    const data = await r.json();
+    const text = data?.choices?.[0]?.message?.content;
+    res.json({ ok: !!text, status: r.status, text: text || null, error: data?.error || null });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
+  }
+});
+
 // POST /api/support/ai — OpenRouter ИИ-агент с контекстом пользователя
 app.post('/api/support/ai', async (req, res) => {
   const { messages, userId } = req.body;
-  if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false });
-  if (!process.env.OPENROUTER_API_KEY) return res.status(500).json({ ok: false, error: 'no_key' });
+  if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false, debug: 'bad messages' });
+
+  const key = process.env.OPENROUTER_API_KEY;
+  if (!key) return res.status(500).json({ ok: false, error: 'no_key' });
 
   // Подтягиваем данные пользователя из БД
   let userContext = '';
   if (userId && DB.users[String(userId)]) {
     const u = DB.users[String(userId)];
     userContext = `
-Данные этого пользователя из базы:
+Данные этого пользователя:
 - Имя: ${u.firstName || 'неизвестно'}
 - Баланс монет: ${u.balance || 0}
 - Баланс Stars: ${u.starsBalance || 0}
 - VIP: ${u.vipExpiry && u.vipExpiry > Date.now() ? 'активен до ' + new Date(u.vipExpiry).toLocaleDateString('ru') : 'нет'}
 - Рефералов: ${u.refs?.length || 0}
-- Дата регистрации: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('ru') : 'неизвестно'}
 `;
   }
 
-  const systemPrompt = `Ты — дружелюбный помощник поддержки Telegram-бота GiftBot.
-Отвечай по-русски, кратко и понятно (2–4 предложения).
-Отвечай на ЛЮБЫЕ вопросы пользователя — как по боту, так и общие.
+  const systemPrompt = `Ты — дружелюбный помощник поддержки Telegram-бота GiftBot. Отвечай по-русски, кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы — по боту и общие.
 
-О боте GiftBot:
-- Telegram-бот для игр на монеты (внутренняя валюта)
-- Игры: Соло (открытие подарков), Дуэль (PvP 1v1), Мины (поле 5×5 — открывай клетки, избегай мин, забирай множитель)
+О GiftBot:
+- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5 поле)
 - Монеты пополняются через Telegram Stars
-- Рефералы: приглашай друзей по ссылке → бонусные монеты
-- Топ выигрышей: лучшие победы за 24ч, порог 30 000 монет
-- Вывод Stars — через раздел Профиль
-- VIP статус даёт особые привилегии
-- При технических проблемах предлагай написать «вызвать специалиста»
+- Рефералы: приглашай друзей → бонусы
+- Топ выигрышей за 24ч (порог 30 000 монет)
+- Вывод Stars через Профиль
 ${userContext}
-В конце каждого ответа ВСЕГДА добавляй с новой строки:
-"Если ответ не помог — напишите «вызвать специалиста»"`;
+В конце КАЖДОГО ответа пиши с новой строки: "Если ответ не помог — напишите «вызвать специалиста»"`;
 
-  try {
-    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'HTTP-Referer': process.env.APP_URL || 'https://giftbot.app',
-        'X-Title': 'GiftBot Support'
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
-        max_tokens: 400,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ]
-      })
-    });
-    const data = await r.json();
-    console.log('OpenRouter response:', r.status, JSON.stringify(data).slice(0, 300));
-    const text = data?.choices?.[0]?.message?.content;
-    if (!text) return res.status(500).json({ ok: false, debug: data?.error?.message || 'no text' });
-    res.json({ ok: true, text });
-  } catch (e) {
-    console.error('OpenRouter error:', e.message);
-    res.status(500).json({ ok: false, debug: e.message });
+  // Пробуем модели по очереди
+  const MODELS = [
+    'meta-llama/llama-3.1-8b-instruct:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'mistralai/mistral-7b-instruct:free',
+  ];
+
+  for (const model of MODELS) {
+    try {
+      console.log(`[support] trying model: ${model}`);
+      const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+          'HTTP-Referer': process.env.APP_URL || 'https://giftbot.app',
+          'X-Title': 'GiftBot Support'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 400,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages
+          ]
+        })
+      });
+      const data = await r.json();
+      console.log(`[support] ${model} → ${r.status}:`, JSON.stringify(data).slice(0, 200));
+      const text = data?.choices?.[0]?.message?.content;
+      if (text) return res.json({ ok: true, text });
+      // если ошибка rate limit — пробуем следующую
+      if (data?.error?.code === 429 || data?.error?.code === 503) continue;
+      // другая ошибка — логируем и пробуем следующую
+      console.error(`[support] model ${model} failed:`, data?.error);
+    } catch (e) {
+      console.error(`[support] model ${model} threw:`, e.message);
+    }
   }
+
+  res.status(500).json({ ok: false, debug: 'all models failed' });
 });
 
 // POST /api/support/specialist — уведомить специалиста
