@@ -1663,7 +1663,7 @@ const SPECIALIST_ID = ADMIN_ID; // специалист = админ, можно
 // activeSupport[specialistTgId] = userWebAppId (string)
 const activeSupport = {};
 
-const SUPPORT_SYS = `Ты — ИИ-помощник поддержки Telegram-бота GiftBot. Отвечай по-русски, кратко (2–4 предложения).
+const SUPPORT_SYS = `Ты — дружелюбный помощник поддержки Telegram-бота GiftBot. Отвечай на ЛЮБЫЕ вопросы по-русски, кратко (2–4 предложения).
 
 О боте GiftBot:
 - Telegram-бот для игр на монеты (внутренняя валюта)
@@ -1699,12 +1699,13 @@ app.post('/api/support/ai', async (req, res) => {
       })
     });
     const data = await r.json();
+    console.log('Anthropic response status:', r.status, JSON.stringify(data).slice(0, 200));
     const text = data?.content?.[0]?.text;
-    if (!text) return res.status(500).json({ ok: false });
+    if (!text) return res.status(500).json({ ok: false, debug: data?.error?.message || 'no text' });
     res.json({ ok: true, text });
   } catch (e) {
     console.error('Support AI error:', e.message);
-    res.status(500).json({ ok: false });
+    res.status(500).json({ ok: false, debug: e.message });
   }
 });
 
@@ -1738,29 +1739,24 @@ app.post('/api/support/specialist', async (req, res) => {
 // Callback: специалист нажал "Ответить пользователю"
 bot.on('callback_query', async (ctx) => {
   const data = ctx.callbackQuery?.data || '';
+  // Отвечаем сразу чтобы не было timeout
+  try { await ctx.answerCbQuery(); } catch {}
+
   if (!data.startsWith('support_reply:')) return;
 
   const userId = data.split(':')[1];
   const specId = ctx.from.id;
 
-  // Регистрируем активный чат
   activeSupport[specId] = userId;
 
-  // Удаляем кнопку (сообщение с уведомлением)
   try { await ctx.deleteMessage(); } catch {}
 
-  // Сообщаем специалисту что он в чате
-  await ctx.telegram.sendMessage(specId,
-    `✅ Вы в чате с пользователем *${userId}*\n\nВсе ваши сообщения сюда будут отправлены ему. Для завершения напишите /end\\_support`,
-    { parse_mode: 'Markdown' }
-  );
-
-  // Уведомляем пользователя через API (фронт опрашивает)
-  // Сохраняем в DB что специалист подключился
   if (!DB.supportChats) DB.supportChats = {};
-  DB.supportChats[String(userId)] = { specId, startedAt: Date.now(), status: 'active' };
+  DB.supportChats[String(userId)] = { specId, startedAt: Date.now(), status: 'active', pendingMessages: [] };
 
-  await ctx.answerCbQuery('Чат начат!');
+  await ctx.telegram.sendMessage(specId,
+    `✅ Вы в чате с пользователем (ID: ${userId})\n\nВсе ваши сообщения будут отправлены ему в чат поддержки.\nДля завершения напишите /end_support`,
+  );
 });
 
 // Сообщение от специалиста → пересылаем пользователю
