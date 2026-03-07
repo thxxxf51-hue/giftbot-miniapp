@@ -1759,6 +1759,29 @@ bot.on('callback_query', async (ctx) => {
   );
 });
 
+
+// POST /api/support/user-message — пользователь пишет специалисту
+app.post('/api/support/user-message', async (req, res) => {
+  const { userId, firstName, text } = req.body;
+  if (!userId || !text) return res.status(400).json({ ok: false });
+
+  const chat = DB.supportChats?.[String(userId)];
+  if (!chat || chat.status !== 'active') return res.json({ ok: false, reason: 'no_active_chat' });
+
+  const specId = chat.specId;
+  if (!specId) return res.json({ ok: false, reason: 'no_specialist' });
+
+  try {
+    await bot.telegram.sendMessage(specId,
+      `💬 ${firstName || 'Пользователь'}: ${text}`
+    );
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Forward to specialist error:', e.message);
+    res.status(500).json({ ok: false });
+  }
+});
+
 // Сообщение от специалиста → пересылаем пользователю
 bot.on('text', async (ctx, next) => {
   const specId = ctx.from.id;
