@@ -170,7 +170,8 @@ function _supportAddMsg(who, text) {
 
   const formatted = text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/«вызвать специалиста»/g, '<b style="color:rgba(46,204,113,.9)">«вызвать специалиста»</b>');
+    .replace(/«выз[а-яёa-z]* специалиста[»"']?/gi, '«<b style="color:rgba(46,204,113,.9)">вызвать специалиста</b>»')
+    .replace(/напишите «вызвать специалиста»/gi, 'напишите <b style="color:rgba(46,204,113,.9)">«вызвать специалиста»</b>');
 
   const d = document.createElement('div');
   d.style.cssText = `display:flex;flex-direction:column;max-width:82%;align-self:${isUser ? 'flex-end' : 'flex-start'}`;
