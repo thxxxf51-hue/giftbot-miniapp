@@ -49,6 +49,7 @@ const DB = {
   invoiceCounter:_saved?.invoiceCounter|| 0,
   bans:          _saved?.bans          || {},
   bansByUid:     _saved?.bansByUid     || {},
+  bigWins:       _saved?.bigWins       || [], // {uid, firstName, photoUrl, amount, game, ts}
 };
 
 // Автосохранение каждые 30 секунд
@@ -278,11 +279,12 @@ async function finishDraw(id) {
 /* ══ REST API ══ */
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName, balance, starsBalance, vipExpiry } = req.body;
+  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
   if (firstName) u.firstName = firstName;
+  if (photoUrl) u.photoUrl = photoUrl;
   u.lastSeen = Date.now();
 
   // Если забанен по username — применяем бан к uid
@@ -593,6 +595,49 @@ app.get('/api/pvp-online', (req, res) => {
     }
   }
   res.json({ duel, solo, total: duel + solo });
+});
+
+/* ══ BIG WINS API ══ */
+
+// Record a big win (called from frontend)
+app.post('/api/wins/record', (req, res) => {
+  const { userId, amount, game } = req.body;
+  if (!userId || !amount || amount < 30000) return res.json({ ok: false });
+  const u = getUser(String(userId));
+  // Keep only last 500 entries, prune entries older than 48h
+  const now = Date.now();
+  DB.bigWins = DB.bigWins.filter(w => now - w.ts < 48 * 3600 * 1000).slice(-499);
+  DB.bigWins.push({
+    uid: String(userId),
+    firstName: u.firstName || 'Игрок',
+    photoUrl: u.photoUrl || null,
+    amount: Number(amount),
+    game: game || 'solo',
+    ts: now
+  });
+  saveDB();
+  res.json({ ok: true });
+});
+
+// Get top 3 wins in last 24h
+app.get('/api/wins/top', (req, res) => {
+  const since = Date.now() - 24 * 3600 * 1000;
+  const recent = DB.bigWins.filter(w => w.ts >= since);
+  // best single win per user
+  const byUser = {};
+  for (const w of recent) {
+    if (!byUser[w.uid] || w.amount > byUser[w.uid].amount) byUser[w.uid] = w;
+  }
+  const top = Object.values(byUser)
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 3)
+    .map(w => ({
+      firstName: w.firstName,
+      photoUrl: w.photoUrl,
+      amount: w.amount,
+      game: w.game
+    }));
+  res.json({ ok: true, wins: top });
 });
 
 /* ══ BOT COMMANDS ══ */
