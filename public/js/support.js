@@ -72,8 +72,8 @@ async function supportSend() {
     _supportSetStatus('waiting');
     supportMode = 'waiting';
     // Уведомить сервер
-    const uid = window.UID || window.TG_UID || '';
-    const firstName = window.TGU?.first_name || 'Пользователь';
+    const uid = typeof UID !== 'undefined' ? UID : '';
+    const firstName = typeof TGU !== 'undefined' && TGU?.first_name || 'Пользователь';
     fetch('/api/support/specialist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -118,7 +118,7 @@ function supportStartPoll() {
   if (supportPollTimer) return;
   supportPollTimer = setInterval(async () => {
     if (!supportOpened) return;
-    const uid = window.UID || window.TG_UID || '';
+    const uid = typeof UID !== 'undefined' ? UID : '';
     if (!uid) return;
     try {
       const r = await fetch(`/api/support/poll?userId=${uid}`);
