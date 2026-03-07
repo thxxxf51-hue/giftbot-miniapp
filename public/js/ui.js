@@ -124,7 +124,7 @@ function openTopWins(){
         </div>${separator}`;
     }).join('');
   }).catch(()=>{
-    list.innerHTML = `<div style="text-align:center;padding:24px 0;color:rgba(255,255,255,.3);font-size:13px">В разработке</div>`;
+    list.innerHTML = `<div style="text-align:center;padding:24px 0;color:rgba(255,255,255,.3);font-size:13px">Ошибка загрузки</div>`;
   });
 }
 
@@ -137,3 +137,45 @@ function closeTopWins(){
   mo.style.backdropFilter = 'blur(0px)';
   setTimeout(()=>{ mo.style.pointerEvents = 'none'; }, 280);
 }
+
+/* ══ SLIDING NAV PILL ══ */
+(function(){
+  function positionPill(activeBtn){
+    const nav  = document.getElementById('main-nav');
+    const pill = document.getElementById('nav-pill');
+    if(!nav || !pill || !activeBtn) return;
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    pill.style.left  = (btnRect.left - navRect.left) + 'px';
+    pill.style.width = btnRect.width + 'px';
+  }
+
+  // Intercept the go() function to move pill on navigation
+  const _goOrig = window.go;
+  window.go = function(page){
+    if(_goOrig) _goOrig(page);
+    // update active class
+    document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('nb-' + page);
+    if(btn){
+      btn.classList.add('active');
+      positionPill(btn);
+    }
+  };
+
+  // Init pill on load
+  function initPill(){
+    const active = document.querySelector('.nb.active');
+    if(active) positionPill(active);
+  }
+  // wait for layout
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=>setTimeout(initPill,60));
+  } else {
+    setTimeout(initPill, 60);
+  }
+  window.addEventListener('resize', ()=>{
+    const active = document.querySelector('.nb.active');
+    if(active) positionPill(active);
+  });
+})();
