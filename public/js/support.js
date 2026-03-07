@@ -95,7 +95,7 @@ async function supportSend() {
     const r = await fetch('/api/support/ai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: supportHistory })
+      body: JSON.stringify({ messages: supportHistory, userId: typeof UID !== 'undefined' ? UID : '' })
     });
     const data = await r.json();
     if (!data.ok || !data.text) throw new Error(data.debug || 'no reply');
