@@ -50,6 +50,7 @@ const DB = {
   bans:          _saved?.bans          || {},
   bansByUid:     _saved?.bansByUid     || {},
   bigWins:       _saved?.bigWins       || [], // {uid, firstName, photoUrl, amount, game, ts}
+  notifyOpen:    _saved?.notifyOpen    ?? true, // уведомления о входе в приложение
 };
 
 // Автосохранение каждые 30 секунд
@@ -327,6 +328,27 @@ app.post('/api/user/sync', (req, res) => {
     u.vipExpiry = (vipNum && vipNum > Date.now()) ? vipNum : null;
   }
 
+  // ── Уведомление админа о входе ──────────────────────────────
+  if (DB.notifyOpen) {
+    const now = Date.now();
+    const isNew = !u.createdAt || (now - u.createdAt < 5000);
+    const vip = u.vipExpiry && u.vipExpiry > now ? ' ⭐ VIP' : '';
+    const name = u.firstName || 'Неизвестный';
+    const un = u.username ? `@${u.username}` : `ID: ${userId}`;
+    const emoji = isNew ? '🆕' : '👤';
+    const label = isNew ? 'Новый пользователь' : 'Вошёл в приложение';
+    setImmediate(async () => {
+      try {
+        await bot.telegram.sendMessage(ADMIN_ID,
+          `${emoji} *${label}*
+${name} ${un}${vip}
+💰 ${u.balance || 0} монет · ⭐ ${u.starsBalance || 0} Stars`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch {}
+    });
+  }
+
   saveDB();
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
 });
@@ -509,6 +531,16 @@ app.post('/api/stars/check', (req, res) => {
 });
 
 /* ══ Обработка успешной оплаты Stars ══ */
+bot.command('notify', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  DB.notifyOpen = !DB.notifyOpen;
+  saveDB();
+  await ctx.reply(DB.notifyOpen
+    ? '🔔 Уведомления о входе в приложение ВКЛЮЧЕНЫ'
+    : '🔕 Уведомления о входе в приложение ОТКЛЮЧЕНЫ'
+  );
+});
+
 bot.on('pre_checkout_query', async (ctx) => {
   // Всегда отвечаем OK — Telegram требует ответ в течение 10 секунд
   try { await ctx.answerPreCheckoutQuery(true); } catch (e) { console.error('pre_checkout error:', e); }
