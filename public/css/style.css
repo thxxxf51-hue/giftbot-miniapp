@@ -541,3 +541,5 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tc-dots{display:flex;justify-content:center;gap:5px;margin-top:10px;margin-bottom:4px}
 .tc-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .3s}
 .tc-dot.active{background:#2ecc71;width:14px;border-radius:3px}
+
+#page-friends{touch-action:pan-y}
