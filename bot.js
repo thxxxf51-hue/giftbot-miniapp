@@ -298,17 +298,43 @@ app.post('/api/ref/register', async (req, res) => {
   const name = username ? '@'+username : (firstName || 'Пользователь');
   const today = new Date().toLocaleDateString('ru');
   if (!ru.refs) ru.refs = [];
-  ru.refs.push({ name, date: today });
-  ru.balance = (ru.balance || 0) + 1000;
+  // Получаем фото нового пользователя
+  let newUserPhoto = null;
+  try {
+    const photos = await bot.telegram.getUserProfilePhotos(userId, { limit: 1 });
+    if (photos.total_count > 0) {
+      const fileId = photos.photos[0][0].file_id;
+      const file = await bot.telegram.getFile(fileId);
+      newUserPhoto = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+    }
+  } catch {}
+
+  ru.refs.push({ uid: String(userId), name, date: today, photoUrl: newUserPhoto });
   ru.refEarned = (ru.refEarned || 0) + 1000;
+  // Начисляем через pendingReward — сервер добавит при следующем sync
+  ru.pendingReward = (ru.pendingReward || 0) + 1000;
+
+  let bonusMsg = null;
 
   // Бонус за 3 реферала
   if (ru.refs.length >= 3 && !ru.task3Done) {
-    ru.balance += 2000;
+    ru.pendingReward += 2000;
     ru.task3Done = true;
-    try { await bot.telegram.sendMessage(refUID, `🎉 Бонус! 3 реферала — +2000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
+    bonusMsg = `🎉 Бонус! 3 реферала — +2000 монет! Открой приложение чтобы увидеть обновлённый баланс.`;
+  }
+
+  // Бонус за 5 новых рефералов после task3
+  const refsAfterTask3 = Math.max(0, ru.refs.length - 3);
+  if (refsAfterTask3 >= 5 && !ru.task5Done) {
+    ru.pendingReward += 5000;
+    ru.task5Done = true;
+    bonusMsg = `🎉 Мега-бонус! 5 новых рефералов — +5000 монет! Открой приложение чтобы увидеть обновлённый баланс.`;
+  }
+
+  if (bonusMsg) {
+    try { await bot.telegram.sendMessage(refUID, bonusMsg); } catch {}
   } else {
-    try { await bot.telegram.sendMessage(refUID, `🎉 По твоей ссылке зашёл ${name}!\n💰 +1000 монет\n💼 Баланс: ${ru.balance}`); } catch {}
+    try { await bot.telegram.sendMessage(refUID, `🎉 По твоей ссылке зашёл ${name}!\n💰 +1000 монет — открой приложение чтобы получить!`); } catch {}
   }
 
   saveDB();
@@ -355,6 +381,11 @@ app.post('/api/user/sync', (req, res) => {
     // Client is source of truth normally
     u.balance = Number(balance);
   }
+  // Применяем накопленные серверные награды (рефералы, бонусы)
+  if (u.pendingReward && u.pendingReward > 0) {
+    u.balance = (u.balance || 0) + u.pendingReward;
+    u.pendingReward = 0;
+  }
   if (starsBalance !== undefined && Number(starsBalance) >= 0) {
     u.starsBalance = Number(starsBalance);
   }
@@ -386,7 +417,7 @@ ${name} ${un}${vip}
   }
 
   saveDB();
-  res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry });
+  res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry, task3Done: u.task3Done||false, task5Done: u.task5Done||false });
 });
 
 // Получение и кеширование аватарки пользователя через Bot API
@@ -794,6 +825,11 @@ bot.start(async (ctx) => {
         try { await ctx.telegram.sendMessage(refUID, `🎉 Бонус! 3 реферала — +2000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
       } else {
         try { await ctx.telegram.sendMessage(refUID, `🎉 По твоей ссылке зашёл ${name}!\n💰 +1000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
+      }
+      const refsAfterTask3start = Math.max(0, ru.refs.length - 3);
+      if (refsAfterTask3start >= 5 && !ru.task5Done) {
+        ru.balance += 5000; ru.task5Done = true;
+        try { await ctx.telegram.sendMessage(refUID, `🎉 Мега-бонус! 5 новых рефералов — +5000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
       }
     }
   }
@@ -1943,6 +1979,27 @@ app.get('/api/support/poll', (req, res) => {
 
 /* ══ SERVER ══ */
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// ── Миграция: добавляем uid в записи рефов у которых его нет ──
+// (для старых рефералов записанных до обновления)
+(function migrateRefUids() {
+  let changed = false;
+  for (const [ownerId, u] of Object.entries(DB.users)) {
+    if (!u.refs || !u.refs.length) continue;
+    for (const ref of u.refs) {
+      if (!ref.uid) {
+        // Ищем userId по имени/username среди всех пользователей
+        const match = Object.entries(DB.users).find(([uid, du]) => {
+          if (uid === ownerId) return false;
+          const duName = du.username ? '@'+du.username : du.firstName;
+          return duName === ref.name;
+        });
+        if (match) { ref.uid = match[0]; changed = true; }
+      }
+    }
+  }
+  if (changed) saveDB();
+})();
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, async () => {
