@@ -41,6 +41,19 @@ function initRefTaskSwiper() {
   });
 }
 
+function _swiperGoTo(idx) {
+  const wrap = document.getElementById('ref-task-wrap');
+  if (!wrap || refTaskLocked) return;
+  const cards = wrap.querySelectorAll('.tc-card');
+  idx = Math.max(0, Math.min(cards.length - 1, idx));
+  if (idx === refTaskCur) return;
+  refTaskLocked = true;
+  refTaskCur = idx;
+  cards.forEach((c, i) => { c.dataset.state = i === idx ? 'active' : i < idx ? 'prev' : 'next'; });
+  document.querySelectorAll('.tc-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+  setTimeout(() => refTaskLocked = false, 450);
+}
+
 // ── Stats & progress ─────────────────────────────────────────
 function rRefStats() {
   document.getElementById('ref-c1').textContent = S.refs.length;
@@ -64,9 +77,11 @@ function rRefStats() {
     if (rdone0) rdone0.style.display = 'flex';
     if (pb)    { pb.style.width = '100%'; pb.classList.add('full'); }
     if (pt)    pt.style.display = 'none';
+    // Авто-свайп на карточку 2 если сейчас на карточке 0
+    if (refTaskCur === 0) setTimeout(() => _swiperGoTo(1), 600);
   }
 
-  // Task 1: invite 5 more (after task3)
+  // Task 1: invite 5 more (считаем от всех рефералов после первых 3)
   const refsAfter3 = Math.max(0, S.refs.length - 3);
   const cnt5 = Math.min(refsAfter3, 5);
   const pb2 = document.getElementById('ref-pb2');
@@ -84,6 +99,8 @@ function rRefStats() {
     if (rdone1) rdone1.style.display = 'flex';
     if (pb2)   { pb2.style.width = '100%'; pb2.classList.add('full'); }
     if (pt2)   pt2.style.display = 'none';
+    // Авто-свайп на карточку 3 если сейчас на карточке 1
+    if (refTaskCur === 1) setTimeout(() => _swiperGoTo(2), 600);
   }
 }
 
