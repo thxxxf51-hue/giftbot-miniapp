@@ -56,9 +56,12 @@ function _swiperGoTo(idx) {
 
 // ── Stats & progress ─────────────────────────────────────────
 function rRefStats() {
-  document.getElementById('ref-c1').textContent = S.refs.length;
-  document.getElementById('ref-e').innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${S.refEarned.toLocaleString('ru')}`;
-  document.getElementById('p-refs').textContent = S.refs.length;
+  // Если задание выполнено но рефы потерялись (редеплой) — показываем минимум 3
+  const minRefs = (S.task3refsDone || S.task3Done) ? Math.max(S.refs.length, 3) : S.refs.length;
+  const minEarned = (S.task3refsDone || S.task3Done) ? Math.max(S.refEarned, 5000) : S.refEarned;
+  document.getElementById('ref-c1').textContent = minRefs;
+  document.getElementById('ref-e').innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${minEarned.toLocaleString('ru')}`;
+  document.getElementById('p-refs').textContent = minRefs;
 
   // Task 0: invite 3
   const cnt3 = Math.min(S.refs.length, 3);
