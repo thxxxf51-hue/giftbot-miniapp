@@ -48,7 +48,7 @@ function renderDraws(draws){
     ${ticketBadge}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
       <div style="font-size:15px;font-weight:800;color:var(--green)">${draw.prize}${draw.isMoney?` <svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`:''}</div>
-      <div style="font-size:10px;color:var(--muted2);background:rgba(255,255,255,.05);padding:3px 8px;border-radius:8px">⏱ ${tl}</div>
+      <div id="draw-timer-${draw.id}" style="font-size:10px;color:var(--muted2);background:rgba(255,255,255,.05);padding:3px 8px;border-radius:8px">⏱ ${tl}</div>
     </div>
     <div style="font-size:11px;color:var(--muted2);margin-bottom:10px;display:flex;gap:10px">
       <span>👥 Участников: ${draw.participantsCount}</span>
@@ -56,6 +56,16 @@ function renderDraws(draws){
     </div>
     <button onclick="joinDraw(${draw.id},this,${draw.requireTicket?'true':'false'})" ${joinBtnStyle}>${joinBtnText}</button>`;
     cont.appendChild(el);
+    // Запускаем живой таймер для этого розыгрыша
+    const timerEl=document.getElementById('draw-timer-'+draw.id);
+    if(timerEl){
+      const iv=setInterval(()=>{
+        const rem=draw.endsAt-Date.now();
+        if(rem<=0){clearInterval(iv);timerEl.textContent='⏱ Завершён';loadDraws();return;}
+        timerEl.textContent='⏱ '+_fmtCountdown(rem);
+      },1000);
+      _drawTimers.push(iv);
+    }
   });
   renderHomeDraws(active);
 }
