@@ -90,6 +90,7 @@ async function init(){
   rCases();
   rRefStats();
   rRefList();
+  initRefTaskSwiper();
   document.getElementById('pi-h').addEventListener('keydown',e=>{if(e.key==='Enter')usePromo('pi-h');});
   document.getElementById('pi-p').addEventListener('keydown',e=>{if(e.key==='Enter')usePromo('pi-p');});
 
@@ -112,6 +113,8 @@ async function init(){
       // Применяем рефералов с сервера (источник истины)
       if(sd.refs!==undefined){ S.refs=sd.refs; document.getElementById('p-refs').textContent=S.refs.length; rRefList(); rRefStats(); }
       if(sd.refEarned!==undefined) S.refEarned=sd.refEarned;
+      if(sd.task3Done) S.task3refsDone=true;
+      if(sd.task5Done) S.task5refsDone=true;
       save();
       syncB();
     }
