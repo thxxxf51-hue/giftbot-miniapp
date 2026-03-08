@@ -124,7 +124,7 @@ async function init(){
   }catch{}
 
   loadDraws();
-  setInterval(loadDraws,30000);
+  setInterval(loadDraws,5000);
 
   // Launch entry effect if active
   launchEntryEffect();
