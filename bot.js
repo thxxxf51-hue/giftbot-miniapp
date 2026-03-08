@@ -818,18 +818,34 @@ bot.start(async (ctx) => {
       const ru = getUser(refUID);
       u.refBy = refUID;
       const name = ctx.from.username ? '@'+ctx.from.username : ctx.from.first_name;
-      ru.refs.push({ name, date: mskFmt(null) });
-      ru.balance += 1000; ru.refEarned += 1000;
+      // Получаем фото нового пользователя
+      let newUserPhoto = null;
+      try {
+        const photos = await bot.telegram.getUserProfilePhotos(ctx.from.id, { limit: 1 });
+        if (photos.total_count > 0) {
+          const fileId = photos.photos[0][0].file_id;
+          const file = await bot.telegram.getFile(fileId);
+          newUserPhoto = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+        }
+      } catch {}
+      ru.refs.push({ uid: String(ctx.from.id), name, date: mskFmt(null), photoUrl: newUserPhoto });
+      ru.refEarned = (ru.refEarned || 0) + 1000;
+      // Используем pendingReward — применится при следующем sync, не перезаписывается клиентом
+      ru.pendingReward = (ru.pendingReward || 0) + 1000;
+      let bonusMsg = null;
       if (ru.refs.length >= 3 && !ru.task3Done) {
-        ru.balance += 2000; ru.task3Done = true;
-        try { await ctx.telegram.sendMessage(refUID, `🎉 Бонус! 3 реферала — +2000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
-      } else {
-        try { await ctx.telegram.sendMessage(refUID, `🎉 По твоей ссылке зашёл ${name}!\n💰 +1000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
+        ru.pendingReward += 2000; ru.task3Done = true;
+        bonusMsg = `🎉 Бонус! 3 реферала — +2000 монет! Открой приложение чтобы получить.`;
       }
       const refsAfterTask3start = Math.max(0, ru.refs.length - 3);
       if (refsAfterTask3start >= 5 && !ru.task5Done) {
-        ru.balance += 5000; ru.task5Done = true;
-        try { await ctx.telegram.sendMessage(refUID, `🎉 Мега-бонус! 5 новых рефералов — +5000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
+        ru.pendingReward += 5000; ru.task5Done = true;
+        bonusMsg = `🎉 Мега-бонус! 5 новых рефералов — +5000 монет! Открой приложение чтобы получить.`;
+      }
+      if (bonusMsg) {
+        try { await ctx.telegram.sendMessage(refUID, bonusMsg); } catch {}
+      } else {
+        try { await ctx.telegram.sendMessage(refUID, `🎉 По твоей ссылке зашёл ${name}!\n💰 +1000 монет — открой приложение чтобы получить!`); } catch {}
       }
     }
   }
