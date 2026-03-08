@@ -279,6 +279,42 @@ async function finishDraw(id) {
 
 /* ══ REST API ══ */
 
+// POST /api/ref/register — регистрация реферала через WebApp
+app.post('/api/ref/register', async (req, res) => {
+  const { userId, refUID, username, firstName } = req.body;
+  if (!userId || !refUID) return res.status(400).json({ ok: false });
+  if (String(userId) === String(refUID)) return res.json({ ok: false, reason: 'self' });
+
+  const u = getUser(userId);
+  const ru = getUser(refUID);
+
+  // Уже зарегистрирован реферал
+  if (u.refBy) return res.json({ ok: false, reason: 'already' });
+
+  u.refBy = String(refUID);
+  if (username) u.username = username.toLowerCase();
+  if (firstName) u.firstName = firstName;
+
+  const name = username ? '@'+username : (firstName || 'Пользователь');
+  const today = new Date().toLocaleDateString('ru');
+  if (!ru.refs) ru.refs = [];
+  ru.refs.push({ name, date: today });
+  ru.balance = (ru.balance || 0) + 1000;
+  ru.refEarned = (ru.refEarned || 0) + 1000;
+
+  // Бонус за 3 реферала
+  if (ru.refs.length >= 3 && !ru.task3Done) {
+    ru.balance += 2000;
+    ru.task3Done = true;
+    try { await bot.telegram.sendMessage(refUID, `🎉 Бонус! 3 реферала — +2000 монет!\n💼 Баланс: ${ru.balance}`); } catch {}
+  } else {
+    try { await bot.telegram.sendMessage(refUID, `🎉 По твоей ссылке зашёл ${name}!\n💰 +1000 монет\n💼 Баланс: ${ru.balance}`); } catch {}
+  }
+
+  saveDB();
+  res.json({ ok: true });
+});
+
 app.post('/api/user/sync', (req, res) => {
   const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl } = req.body;
   if (!userId) return res.json({ ok: false });
