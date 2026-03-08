@@ -265,9 +265,8 @@ async function finishDraw(id) {
   for (const winner of winners) {
     if (moneyPrize) {
       const u = getUser(winner.uid);
-      // pendingReward применится при следующем sync — не перезаписывается клиентом
-      u.pendingReward = (u.pendingReward || 0) + amountEach;
-      u.serverBalance = (u.balance || 0) + amountEach; // авторитативный баланс
+      // serverBalance — авторитативный баланс, применится при sync и не перезаписывается клиентом
+      u.serverBalance = (u.serverBalance !== undefined ? u.serverBalance : (u.balance || 0)) + amountEach;
       try {
         await bot.telegram.sendMessage(Number(winner.uid),
           `🎉 Ты победил в розыгрыше!\n🏆 Приз: ${amountEach} монет\n\n💰 Открой приложение — монеты уже на балансе!`
