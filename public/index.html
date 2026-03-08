@@ -370,53 +370,54 @@
     <div class="rstat gc"><div class="rslbl">Заработано</div><div class="rsval g" id="ref-e"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>0</div></div>
   </div>
   <!-- Task swiper -->
-  <div class="ref-task-wrap" id="ref-task-wrap">
-    <div class="ref-task-swiper" id="ref-task-swiper">
+  <div class="tc-wrap" id="ref-task-wrap">
+    <div class="tc-swiper" id="ref-task-swiper">
 
       <!-- Card 0: invite 3 -->
-      <div class="ref-tc" id="rtc-0">
-        <div class="rtop">
-          <div class="rtag2" id="rtag-0">Задание</div>
-          <div class="rprize"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="rprize-0">2 000</span></div>
+      <div class="tc-card" id="rtc-0" data-state="active">
+        <div class="tc-top">
+          <div class="tc-tag" id="rtag-0">Задание</div>
+          <div class="tc-prize"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="rprize-0">2 000</span></div>
         </div>
-        <div class="rtitle2">Пригласи 3 друзей</div>
-        <div class="rdesc2">+1000 за каждого + бонус 2000 за выполнение!</div>
-        <div class="rpb"><div class="rpbf" id="ref-pb"></div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px">
-          <div id="rdone-0" style="display:none;font-size:11px;font-weight:700;color:#2ecc71;display:none;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>+2000 монет получено</div>
-          <div style="font-size:10px;color:var(--muted)" id="ref-pt">0 / 3</div>
+        <div class="tc-title">Пригласи 3 друзей</div>
+        <div class="tc-desc">+1000 за каждого + бонус 2000 за выполнение!</div>
+        <div class="tc-pb"><div class="tc-pbf" id="ref-pb"></div></div>
+        <div class="tc-bottom">
+          <div id="rdone-0" class="tc-done-badge" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>+2000 монет получено</div>
+          <div class="tc-count" id="ref-pt">0 / 3</div>
         </div>
-        <div class="rtc-arr" id="rtc-arr-0"><svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div class="tc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
 
       <!-- Card 1: invite 5 more -->
-      <div class="ref-tc" id="rtc-1">
-        <div class="rtop">
-          <div class="rtag2" id="rtag-1">Задание</div>
-          <div class="rprize"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="rprize-1">5 000</span></div>
+      <div class="tc-card" id="rtc-1" data-state="next">
+        <div class="tc-top">
+          <div class="tc-tag" id="rtag-1">Задание</div>
+          <div class="tc-prize"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="rprize-1">5 000</span></div>
         </div>
-        <div class="rtitle2">Пригласи ещё 5 друзей</div>
-        <div class="rdesc2">+1000 за каждого + бонус 5000 за выполнение!</div>
-        <div class="rpb"><div class="rpbf" id="ref-pb2"></div></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px">
-          <div id="rdone-1" style="display:none;font-size:11px;font-weight:700;color:#2ecc71;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>+5000 монет получено</div>
-          <div style="font-size:10px;color:var(--muted)" id="ref-pt2">0 / 5</div>
+        <div class="tc-title">Пригласи ещё 5 друзей</div>
+        <div class="tc-desc">+1000 за каждого + бонус 5000 за выполнение!</div>
+        <div class="tc-pb"><div class="tc-pbf" id="ref-pb2"></div></div>
+        <div class="tc-bottom">
+          <div id="rdone-1" class="tc-done-badge" style="display:none"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>+5000 монет получено</div>
+          <div class="tc-count" id="ref-pt2">0 / 5</div>
         </div>
-        <div class="rtc-arr" id="rtc-arr-1"><svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div class="tc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
 
       <!-- Card 2: coming soon -->
-      <div class="ref-tc ref-tc-soon" id="rtc-2">
+      <div class="tc-card tc-soon" id="rtc-2" data-state="next">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
         <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.3);margin-top:8px">Новое задание</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.15);margin-top:3px">в разработке</div>
       </div>
+
     </div>
   </div>
-  <div class="ref-task-dots">
-    <div class="rtdot active" id="rtdot-0"></div>
-    <div class="rtdot" id="rtdot-1"></div>
-    <div class="rtdot" id="rtdot-2"></div>
+  <div class="tc-dots">
+    <div class="tc-dot active" id="rtdot-0"></div>
+    <div class="tc-dot" id="rtdot-1"></div>
+    <div class="tc-dot" id="rtdot-2"></div>
   </div>
   <div class="sec">Ваши рефералы</div>
   <div id="ref-list"></div>
