@@ -117,10 +117,9 @@ function resetUserStats(uid) {
   DB.users[uid] = {
     balance: 0,
     starsBalance: stars,
-    refs: [],
-    refBy: null,
-    refEarned: 0,
-    pendingReward: 0,
+    refs: u.refs || [],
+    refBy: u.refBy || null,
+    refEarned: u.refEarned || 0,
     usedPromos: [],
     vipExpiry: null,
     username: u.username || '',
@@ -133,10 +132,7 @@ function resetUserStats(uid) {
     bonusMulti: 0,
     vipDiscount: false,
     doneTasks: [],
-    task3Done: false,
-    task5Done: false,
     task3refsDone: false,
-    task5refsDone: false,
     resetAt: Date.now(), // флаг: приложение должно сбросить localStorage
   };
   return true;
@@ -346,7 +342,7 @@ app.post('/api/ref/register', async (req, res) => {
 });
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl } = req.body;
+  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl, localRefs, localRefEarned, localTask3Done, localTask5Done } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
@@ -419,6 +415,26 @@ ${name} ${un}${vip}
       } catch {}
     });
   }
+
+  // Если сервер потерял рефов (редеплой/dstats-восстановление), восстанавливаем из клиента
+  if ((!u.refs || u.refs.length === 0) && localRefs && localRefs.length > 0) {
+    u.refs = localRefs;
+    // Восстанавливаем заработок: 1000 за каждого + бонусы за задания
+    const refCount = localRefs.length;
+    u.refEarned = refCount * 1000;
+    // Автоматически проставляем флаги и добавляем бонусы к refEarned
+    if (refCount >= 3 && !u.task3Done) {
+      u.task3Done = true;
+      u.refEarned += 2000;
+    }
+    if (refCount >= 8 && !u.task5Done) { // 3 + 5
+      u.task5Done = true;
+      u.refEarned += 5000;
+    }
+  }
+  // Даже если рефы есть — синхронизируем флаги заданий из клиента если сервер их потерял
+  if (localTask3Done && !u.task3Done) u.task3Done = true;
+  if (localTask5Done && !u.task5Done) u.task5Done = true;
 
   saveDB();
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry, task3Done: u.task3Done||false, task5Done: u.task5Done||false });
