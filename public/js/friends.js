@@ -57,8 +57,17 @@ function _swiperGoTo(idx) {
 // ── Stats & progress ─────────────────────────────────────────
 function rRefStats() {
   // Если задание выполнено но рефы потерялись (редеплой) — показываем минимум 3
-  const minRefs = (S.task3refsDone || S.task3Done) ? Math.max(S.refs.length, 3) : S.refs.length;
-  const minEarned = (S.task3refsDone || S.task3Done) ? Math.max(S.refEarned, 5000) : S.refEarned;
+  const task3done = S.task3refsDone || S.task3Done || S.refs.length >= 3;
+  const task5done = S.task5refsDone || S.task5Done || S.refs.length >= 8;
+  const minRefs = task3done ? Math.max(S.refs.length, 3) : S.refs.length;
+  // Считаем заработок из рефов если S.refEarned не сохранился
+  let calcEarned = S.refEarned || 0;
+  if (!calcEarned && S.refs.length > 0) {
+    calcEarned = S.refs.length * 1000;
+    if (task3done) calcEarned += 2000;
+    if (task5done) calcEarned += 5000;
+  }
+  const minEarned = task3done ? Math.max(calcEarned, S.refs.length * 1000 + 2000) : calcEarned;
   document.getElementById('ref-c1').textContent = minRefs;
   document.getElementById('ref-e').innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${minEarned.toLocaleString('ru')}`;
   document.getElementById('p-refs').textContent = minRefs;
@@ -70,7 +79,7 @@ function rRefStats() {
   const pt = document.getElementById('ref-pt');
   if (pt) pt.textContent = cnt3 + ' / 3';
 
-  const done0 = S.task3refsDone || S.task3Done;
+  const done0 = S.task3refsDone || S.task3Done || S.refs.length >= 3;
   const card0 = document.getElementById('rtc-0');
   const tag0  = document.getElementById('rtag-0');
   const rdone0 = document.getElementById('rdone-0');
@@ -92,7 +101,7 @@ function rRefStats() {
   const pt2 = document.getElementById('ref-pt2');
   if (pt2) pt2.textContent = cnt5 + ' / 5';
 
-  const done1 = S.task5refsDone || S.task5Done;
+  const done1 = S.task5refsDone || S.task5Done || S.refs.length >= 8;
   const card1  = document.getElementById('rtc-1');
   const tag1   = document.getElementById('rtag-1');
   const rdone1 = document.getElementById('rdone-1');
