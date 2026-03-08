@@ -1,18 +1,13 @@
 /* ══ FRIENDS ══ */
 
 // ── Task swiper ─────────────────────────────────────────────
-const REF_TASKS = [
-  { id: 0, need: 3, bonus: 2000, doneFlag: 'task3Done' },
-  { id: 1, need: 5, bonus: 5000, doneFlag: 'task5Done', offset: 3 }, // нужно 5 НОВЫХ после task3
-];
-
 let refTaskCur = 0;
 let refTaskLocked = false;
 
 function initRefTaskSwiper() {
   const wrap = document.getElementById('ref-task-wrap');
   if (!wrap) return;
-  const cards = wrap.querySelectorAll('.ref-tc');
+  const cards = wrap.querySelectorAll('.tc-card');
   let startX = 0, startY = 0, dragging = false;
 
   function goTo(idx) {
@@ -24,12 +19,9 @@ function initRefTaskSwiper() {
     cards.forEach((c, i) => {
       c.dataset.state = i === idx ? 'active' : i < idx ? 'prev' : 'next';
     });
-    document.querySelectorAll('.rtdot').forEach((d, i) => d.classList.toggle('active', i === idx));
+    document.querySelectorAll('.tc-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
     setTimeout(() => refTaskLocked = false, 450);
   }
-
-  // Init states
-  cards.forEach((c, i) => { c.dataset.state = i === 0 ? 'active' : 'next'; });
 
   wrap.addEventListener('touchstart', e => {
     startX = e.touches[0].clientX; startY = e.touches[0].clientY; dragging = true;
@@ -64,16 +56,14 @@ function rRefStats() {
 
   const done0 = S.task3refsDone || S.task3Done;
   const card0 = document.getElementById('rtc-0');
-  const tag0 = document.getElementById('rtag-0');
+  const tag0  = document.getElementById('rtag-0');
   const rdone0 = document.getElementById('rdone-0');
   if (card0 && done0) {
-    card0.classList.add('done-card');
-    if (tag0) tag0.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>Выполнено';
-    if (tag0) tag0.style.cssText = 'background:rgba(46,204,113,.12);color:#2ecc71;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600';
+    card0.classList.add('tc-done');
+    if (tag0)  { tag0.className = 'tc-tag done'; tag0.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>Выполнено'; }
     if (rdone0) rdone0.style.display = 'flex';
-    if (pb) { pb.style.width = '100%'; pb.style.background = 'linear-gradient(90deg,#2ecc71,#00e5ff)'; }
-    if (pt) pt.style.display = 'none';
-    // Скрываем стрелку если следующая карточка не нужна (но она есть - оставим)
+    if (pb)    { pb.style.width = '100%'; pb.classList.add('full'); }
+    if (pt)    pt.style.display = 'none';
   }
 
   // Task 1: invite 5 more (after task3)
@@ -85,43 +75,33 @@ function rRefStats() {
   if (pt2) pt2.textContent = cnt5 + ' / 5';
 
   const done1 = S.task5refsDone || S.task5Done;
-  const card1 = document.getElementById('rtc-1');
-  const tag1 = document.getElementById('rtag-1');
+  const card1  = document.getElementById('rtc-1');
+  const tag1   = document.getElementById('rtag-1');
   const rdone1 = document.getElementById('rdone-1');
   if (card1 && done1) {
-    card1.classList.add('done-card');
-    if (tag1) tag1.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>Выполнено';
-    if (tag1) tag1.style.cssText = 'background:rgba(46,204,113,.12);color:#2ecc71;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:600';
+    card1.classList.add('tc-done');
+    if (tag1)  { tag1.className = 'tc-tag done'; tag1.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="20 6 9 17 4 12"/></svg>Выполнено'; }
     if (rdone1) rdone1.style.display = 'flex';
-    if (pb2) { pb2.style.width = '100%'; pb2.style.background = 'linear-gradient(90deg,#2ecc71,#00e5ff)'; }
-    if (pt2) pt2.style.display = 'none';
+    if (pb2)   { pb2.style.width = '100%'; pb2.classList.add('full'); }
+    if (pt2)   pt2.style.display = 'none';
   }
-
-  // Скрываем стрелку на последней карточке
-  const arr1 = document.getElementById('rtc-arr-1');
-  if (arr1) arr1.style.display = 'none'; // карточка 3 — "в разработке", стрелка не нужна
 }
 
-// ── Ref list with avatars ────────────────────────────────────
-const _avatarCache = {}; // uid → photoUrl
-
+// ── Ref list with avatars ─────────────────────────────────────
+const _avatarCache = {};
 const _AV_COLORS = ['#7aa4f4','#2ecc71','#f4a430','#e74c3c','#9b59b6','#1abc9c','#e67e22'];
 
 function _avatarEl(r, idx) {
   const initial = (r.name||'?').replace('@','').slice(0,1).toUpperCase();
   const bg = _AV_COLORS[idx % _AV_COLORS.length];
-  const id = 'rav-' + idx;
-  // Placeholder сразу (инициал), потом заменим на фото если есть
-  return `<div id="${id}" style="width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">${initial}</div>`;
+  return `<div id="rav-${idx}" style="width:38px;height:38px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">${initial}</div>`;
 }
 
 function _loadAvatars() {
   S.refs.forEach((r, i) => {
     if (!r.uid) return;
-    const uid = r.uid;
     const el = document.getElementById('rav-' + i);
     if (!el) return;
-
     const applyPhoto = (url) => {
       if (!url || !el) return;
       el.innerHTML = '';
@@ -132,27 +112,11 @@ function _loadAvatars() {
       img.onerror = () => { el.innerHTML = (r.name||'?').replace('@','').slice(0,1).toUpperCase(); el.style.background = _AV_COLORS[i % _AV_COLORS.length]; };
       el.appendChild(img);
     };
-
-    // Используем кеш если есть
-    if (_avatarCache[uid]) { applyPhoto(_avatarCache[uid]); return; }
-
-    // Если в ref уже есть photoUrl — пробуем его
-    if (r.photoUrl) {
-      _avatarCache[uid] = r.photoUrl;
-      applyPhoto(r.photoUrl);
-      return;
-    }
-
-    // Иначе запрашиваем с сервера
-    fetch('/api/user/photo/' + uid)
-      .then(res => res.json())
-      .then(d => {
-        if (d.ok && d.photoUrl) {
-          _avatarCache[uid] = d.photoUrl;
-          applyPhoto(d.photoUrl);
-        }
-      })
-      .catch(() => {});
+    if (_avatarCache[r.uid]) { applyPhoto(_avatarCache[r.uid]); return; }
+    if (r.photoUrl) { _avatarCache[r.uid] = r.photoUrl; applyPhoto(r.photoUrl); return; }
+    fetch('/api/user/photo/' + r.uid).then(res => res.json()).then(d => {
+      if (d.ok && d.photoUrl) { _avatarCache[r.uid] = d.photoUrl; applyPhoto(d.photoUrl); }
+    }).catch(() => {});
   });
 }
 
@@ -171,8 +135,6 @@ function rRefList() {
       </div>
       <div style="color:var(--green);font-size:12px;font-weight:700">+1000 🪙</div>
     </div>`).join('');
-
-  // Подгружаем реальные аватарки асинхронно
   setTimeout(_loadAvatars, 50);
 }
 
