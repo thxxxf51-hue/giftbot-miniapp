@@ -96,7 +96,7 @@ async function init(){
 
   try{
     const sr=await fetch('/api/user/sync',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance,vipExpiry:S.vipExpiry||null,photoUrl:TGU.photo_url||null})});
+      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance,vipExpiry:S.vipExpiry||null,photoUrl:TGU.photo_url||null,localRefs:S.refs,localRefEarned:S.refEarned,localTask3Done:S.task3refsDone||false,localTask5Done:S.task5refsDone||false})});
     const sd=await sr.json();
     if(sd.ok){
       // Бан
@@ -110,8 +110,12 @@ async function init(){
 
       S.balance=sd.balance;
       if(sd.starsBalance!==undefined)S.starsBalance=sd.starsBalance;
-      // Применяем рефералов с сервера (источник истины)
-      if(sd.refs!==undefined){ S.refs=sd.refs; document.getElementById('p-refs').textContent=S.refs.length; rRefList(); rRefStats(); }
+      // Применяем рефералов с сервера — не затираем локальные если сервер вернул пустые
+      if(sd.refs!==undefined){
+        if(sd.refs.length > 0 || S.refs.length === 0) S.refs=sd.refs;
+        // Если сервер вернул пустые но task3Done=true — восстанавливаем refEarned из локальных
+        document.getElementById('p-refs').textContent=S.refs.length; rRefList(); rRefStats();
+      }
       if(sd.refEarned!==undefined) S.refEarned=sd.refEarned;
       if(sd.task3Done) S.task3refsDone=true;
       if(sd.task5Done) S.task5refsDone=true;
