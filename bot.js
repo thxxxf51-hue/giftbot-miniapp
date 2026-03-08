@@ -117,9 +117,10 @@ function resetUserStats(uid) {
   DB.users[uid] = {
     balance: 0,
     starsBalance: stars,
-    refs: u.refs || [],
-    refBy: u.refBy || null,
-    refEarned: u.refEarned || 0,
+    refs: [],
+    refBy: null,
+    refEarned: 0,
+    pendingReward: 0,
     usedPromos: [],
     vipExpiry: null,
     username: u.username || '',
@@ -132,8 +133,11 @@ function resetUserStats(uid) {
     bonusMulti: 0,
     vipDiscount: false,
     doneTasks: [],
+    task3Done: false,
+    task5Done: false,
     task3refsDone: false,
-    resetAt: Date.now(), // флаг: приложение должно сбросить localStorage
+    task5refsDone: false,
+    resetAt: Date.now(),
   };
   return true;
 }
