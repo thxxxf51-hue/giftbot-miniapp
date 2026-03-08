@@ -62,16 +62,11 @@ const S={
     const rUID=sp.replace('ref_','');
     if(rUID===UID||S.refBy)return;
     S.refBy=rUID;
-    const rk='gb4_'+rUID;
-    const rd=JSON.parse(localStorage.getItem(rk)||'{}');
-    if(!rd.refs)rd.refs=[];
-    rd.refs.push({name:TGU.username?'@'+TGU.username:TGU.first_name,date:today});
-    rd.balance=(rd.balance||1000)+1000;
-    rd.refEarned=(rd.refEarned||0)+1000;
-    if(rd.refs.length>=3&&!rd.task3refsDone){rd.balance+=2000;rd.task3refsDone=true;}
-    rd.v=5;
-    localStorage.setItem(rk,JSON.stringify(rd));
     save();
+    // Регистрируем реферала на сервере (не через localStorage!)
+    fetch('/api/ref/register',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:UID,refUID,username:TGU.username||'',firstName:TGU.first_name||''})
+    }).catch(()=>{});
   }catch{}
 })();
 

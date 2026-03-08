@@ -63,12 +63,16 @@ function hardReset() {
 async function init(){
   const name=TGU.first_name||'User';
   const uname=TGU.username?'@'+TGU.username:'Без username';
-  function setAv(id){
+  function setAv(id, url){
     const el=document.getElementById(id);if(!el)return;
-    if(TGU.photo_url){el.innerHTML=`<img src="${TGU.photo_url}" onerror="this.parentElement.textContent='${name[0].toUpperCase()}'">`;}
+    if(url){el.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.parentElement.textContent='${name[0].toUpperCase()}'">`;}
     else{el.textContent=name[0].toUpperCase();}
   }
-  setAv('av-h');setAv('av-p');
+  setAv('av-h', TGU.photo_url||null);setAv('av-p', TGU.photo_url||null);
+  // Получаем реальное фото с сервера (Telegram не даёт photo_url в WebApp)
+  fetch(`/api/user/photo/${UID}`).then(r=>r.json()).then(d=>{
+    if(d.ok && d.photoUrl){ setAv('av-h', d.photoUrl); setAv('av-p', d.photoUrl); }
+  }).catch(()=>{});
   document.getElementById('h-name').textContent=name;
   document.getElementById('p-name').textContent=name;
   document.getElementById('p-un').textContent=uname;
@@ -91,7 +95,7 @@ async function init(){
 
   try{
     const sr=await fetch('/api/user/sync',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance,vipExpiry:S.vipExpiry||null})});
+      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance,vipExpiry:S.vipExpiry||null,photoUrl:TGU.photo_url||null})});
     const sd=await sr.json();
     if(sd.ok){
       // Бан
@@ -105,6 +109,10 @@ async function init(){
 
       S.balance=sd.balance;
       if(sd.starsBalance!==undefined)S.starsBalance=sd.starsBalance;
+      // Применяем рефералов с сервера (источник истины)
+      if(sd.refs!==undefined){ S.refs=sd.refs; document.getElementById('p-refs').textContent=S.refs.length; rRefList(); rRefStats(); }
+      if(sd.refEarned!==undefined) S.refEarned=sd.refEarned;
+      save();
       syncB();
     }
   }catch{}
