@@ -117,9 +117,10 @@ function resetUserStats(uid) {
   DB.users[uid] = {
     balance: 0,
     starsBalance: stars,
-    refs: u.refs || [],
-    refBy: u.refBy || null,
-    refEarned: u.refEarned || 0,
+    refs: [],
+    refBy: null,
+    refEarned: 0,
+    pendingReward: 0,
     usedPromos: [],
     vipExpiry: null,
     username: u.username || '',
@@ -132,7 +133,10 @@ function resetUserStats(uid) {
     bonusMulti: 0,
     vipDiscount: false,
     doneTasks: [],
+    task3Done: false,
+    task5Done: false,
     task3refsDone: false,
+    task5refsDone: false,
     resetAt: Date.now(), // флаг: приложение должно сбросить localStorage
   };
   return true;
@@ -342,7 +346,7 @@ app.post('/api/ref/register', async (req, res) => {
 });
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl, localRefs, localRefEarned, localTask3Done, localTask5Done } = req.body;
+  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
@@ -414,14 +418,6 @@ ${name} ${un}${vip}
         );
       } catch {}
     });
-  }
-
-  // Если сервер потерял рефералов (после редеплоя), восстанавливаем из клиентских данных
-  if ((!u.refs || u.refs.length === 0) && localRefs && localRefs.length > 0) {
-    u.refs = localRefs;
-    if (localRefEarned) u.refEarned = localRefEarned;
-    if (localTask3Done) u.task3Done = true;
-    if (localTask5Done) u.task5Done = true;
   }
 
   saveDB();
