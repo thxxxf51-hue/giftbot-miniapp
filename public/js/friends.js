@@ -69,7 +69,7 @@ function rRefStats() {
   }
   const minEarned = task3done ? Math.max(calcEarned, S.refs.length * 1000 + 2000) : calcEarned;
   document.getElementById('ref-c1').textContent = minRefs;
-  document.getElementById('ref-e').innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${minEarned.toLocaleString('ru')}`;
+  document.getElementById('ref-e').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>${minEarned.toLocaleString('ru')}`;
   document.getElementById('p-refs').textContent = minRefs;
 
   // Task 0: invite 3
