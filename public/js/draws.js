@@ -47,7 +47,7 @@ function renderDraws(draws){
     el.innerHTML=`${draw.imageUrl?`<img src="${draw.imageUrl}" style="width:100%;height:110px;object-fit:cover;border-radius:10px;margin-bottom:10px">`:`<div style="height:70px;border-radius:10px;background:linear-gradient(135deg,#1a2e1a,#0d1f14);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:10px">🎁</div>`}
     ${ticketBadge}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <div style="font-size:15px;font-weight:800;color:var(--green)">${draw.prize}${draw.isMoney?' 🪙':''}</div>
+      <div style="font-size:15px;font-weight:800;color:var(--green)">${draw.prize}${draw.isMoney?` <svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`:''}</div>
       <div style="font-size:10px;color:var(--muted2);background:rgba(255,255,255,.05);padding:3px 8px;border-radius:8px">⏱ ${tl}</div>
     </div>
     <div style="font-size:11px;color:var(--muted2);margin-bottom:10px;display:flex;gap:10px">
@@ -87,7 +87,7 @@ function renderFinishedDraws(draws){
       <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:2px">
         <span style="font-size:14px">👑</span>
         <span style="font-size:13px;font-weight:700;color:var(--green);flex:1">${topWinner?topWinner.name+'<span style="color:var(--muted2);font-weight:400">'+extraWinners+'</span>':'Победителей нет'}</span>
-        ${draw.isMoney&&topWinner?`<span style="font-size:11px;font-weight:700;color:var(--green);background:var(--gdim);border:1px solid var(--gbor);border-radius:8px;padding:3px 8px">+${Math.floor(parseInt(draw.prize)/(draw.winnersCount||1))} 🪙</span>`:''}
+        ${draw.isMoney&&topWinner?`<span style="font-size:11px;font-weight:700;color:var(--green);background:var(--gdim);border:1px solid var(--gbor);border-radius:8px;padding:3px 8px">+${Math.floor(parseInt(draw.prize)/(draw.winnersCount||1))}<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></span>`:''}
       </div>
       <button class="dp-show-btn" onclick="openDpMo(${JSON.stringify(draw).replace(/"/g,'&quot;')})">👥 Показать участников · ${(draw.participants||[]).length}</button>
     `;
@@ -101,7 +101,7 @@ function renderHomeDraws(draws){
   el.innerHTML=draws.slice(0,2).map(d=>`<div onclick="go('raffles')" style="background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px">
     <div style="font-size:22px">${d.imageUrl?`<img src="${d.imageUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover">`:'🎁'}</div>
     <div style="flex:1">
-      <div style="font-size:13px;font-weight:700;color:var(--green)">${d.prize}${d.isMoney?' 🪙':''}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--green)">${d.prize}${d.isMoney?` <svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`:''}</div>
       <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
         <span style="font-size:10px;color:var(--muted2)">${d.participantsCount} участников</span>
         ${d.requireTicket?`<span class="ticket-badge-sm">🎟 билет</span>`:''}
@@ -129,7 +129,7 @@ async function joinDraw(id,btn,requireTicket){
     const d=await r.json();
     if(d.ok){
       if(requireTicket)removeInv('ticket',1);
-      btn.textContent='✅ Вы участвуете';
+      btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg> Вы участвуете';
       btn.style.background='var(--gdim)';btn.style.color='var(--green)';
       btn.style.border='1px solid var(--gbor)';
       toast('🎯 Вы в розыгрыше!','g');
@@ -198,7 +198,7 @@ function _renderDpBody(tab){
       <div class="dp-winner-row">
         <div class="dp-winner-num">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👑'}</div>
         <div class="dp-winner-name">${w.name}</div>
-        ${_dpDraw.isMoney?`<div class="dp-winner-prize">+${prizeEach} 🪙</div>`:''}
+        ${_dpDraw.isMoney?`<div class="dp-winner-prize">+${prizeEach}<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></div>`:''}
       </div>`).join('');
   } else {
     const parts=_dpDraw.participants||[];
