@@ -19,10 +19,18 @@ let _bTimer = null;
 /* ── запрос через сервер-прокси (Railway) ── */
 async function _apiFetch(endpoint) {
   // map API endpoint to our server proxy route
+  // Pass endpoint params to server so it can forward correctly
   let route;
-  if (endpoint.includes('live=all')) route = '/api/sports/live';
-  else if (endpoint.includes('status=NS')) route = '/api/sports/today';
-  else route = '/api/sports/live';
+  if (endpoint.includes('live=all')) {
+    route = '/api/sports/live';
+  } else if (endpoint.includes('status=NS')) {
+    // Extract date from endpoint and pass to server
+    const dateMatch = endpoint.match(/date=([\d-]+)/);
+    const date = dateMatch ? dateMatch[1] : '';
+    route = '/api/sports/today?date='+date;
+  } else {
+    route = '/api/sports/live';
+  }
   const res = await fetch(route);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const d = await res.json();
@@ -134,10 +142,8 @@ async function betsLoadLive(){
     if(!html){
       // No live matches — auto switch to Today tab
       el.innerHTML=`<div class="bets-empty">⚽<br><span style="font-size:14px;font-weight:700">Нет live матчей</span><br><span style="font-size:11px;opacity:.6">Переключаем на предстоящие...</span></div>`;
-      setTimeout(()=>{
-        const todayBtn = document.querySelector('.bets-tab:nth-child(2)');
-        if(todayBtn) betsSwitchTab('today', todayBtn);
-      }, 800);
+      const todayBtn=document.querySelector('.bets-tab:nth-child(2)');
+      if(todayBtn) setTimeout(()=>betsSwitchTab('today',todayBtn),600);
       return;
     }
     el.innerHTML=html;
@@ -152,14 +158,24 @@ async function betsLoadToday(){
   const el=document.getElementById('bets-today-cont'); if(!el) return;
   el.innerHTML=`<div class="bets-loading">⚽ Загружаем матчи...</div>`;
   try{
+    // Fetch today + tomorrow to always show something
     const today=new Date().toISOString().slice(0,10);
-    const d=await _apiFetch(`/fixtures?date=${today}&status=NS&timezone=Europe/Moscow`);
-    const fixtures=(d.response||[]).slice(0,60);
+    const tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);
+    // Get today NS + tomorrow NS
+    const [d1,d2]=await Promise.all([
+      _apiFetch('/fixtures?date='+today+'&status=NS&timezone=Europe/Moscow'),
+      _apiFetch('/fixtures?date='+tomorrow+'&status=NS&timezone=Europe/Moscow')
+    ]);
+    const fixtures=[...(d1.response||[]),...(d2.response||[])].slice(0,80);
     const html=_groupAndRender(fixtures);
-    if(!html){ el.innerHTML=`<div class="bets-empty">📅<br><span style="font-size:14px;font-weight:700">Нет предстоящих матчей</span></div>`; return; }
+    if(!html){
+      el.innerHTML=`<div class="bets-empty">📅<br><span style="font-size:14px;font-weight:700">Нет предстоящих матчей</span><br><span style="font-size:11px;opacity:.6">Попробуй позже</span></div>`;
+      return;
+    }
     el.innerHTML=html;
   } catch(e){
-    el.innerHTML=`<div class="bets-empty">📡<br>Ошибка загрузки</div>`;
+    console.error('bets today:',e);
+    el.innerHTML=`<div class="bets-empty">📡<br>Ошибка загрузки<br><span style="font-size:11px;opacity:.5">${e.message||''}</span></div>`;
   }
 }
 
