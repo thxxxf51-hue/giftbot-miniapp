@@ -754,16 +754,40 @@ async function sportsFetch(path) {
   return new Promise((resolve, reject) => {
     const url = new URL(SPORTS_BASE + path);
     const opts = {
-      hostname: url.hostname, path: url.pathname + url.search,
-      headers: { 'x-apisports-key': SPORTS_API_KEY }
+      hostname: url.hostname,
+      path: url.pathname + url.search,
+      method: 'GET',
+      headers: {
+        'x-apisports-key': SPORTS_API_KEY,
+        'x-rapidapi-key': SPORTS_API_KEY,
+        'x-rapidapi-host': 'v3.football.api-sports.io'
+      }
     };
-    https.get(opts, res => {
+    const req = https.request(opts, res => {
       let data = '';
+      // follow redirect
+      if (res.statusCode === 301 || res.statusCode === 302) {
+        const loc = res.headers.location;
+        console.log('sportsFetch redirect to:', loc);
+        return resolve({ response: [] });
+      }
       res.on('data', c => data += c);
       res.on('end', () => {
-        try { resolve(JSON.parse(data)); } catch(e) { reject(e); }
+        try {
+          const parsed = JSON.parse(data);
+          console.log('sportsFetch', path, '→ status', res.statusCode, 'results:', parsed.results || 0);
+          resolve(parsed);
+        } catch(e) {
+          console.error('sportsFetch parse error:', e.message, 'data:', data.slice(0,200));
+          reject(e);
+        }
       });
-    }).on('error', reject);
+    });
+    req.on('error', e => {
+      console.error('sportsFetch error:', e.message);
+      reject(e);
+    });
+    req.end();
   });
 }
 
