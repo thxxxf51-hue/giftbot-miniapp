@@ -658,11 +658,19 @@ function pvpSwitchMode(btn, mode) {
 
 function pvpMenuSelect(mode) {
   if (mode === 'bets') {
-    document.getElementById('pvp-menu-block').style.display = 'none';
-    document.getElementById('pvp-bets-wrap').style.display = '';
-    // update balance pill
+    const menu = $('pvp-menu-block');
+    const duel = $('pvp-duel-wrap');
+    const solo = $('pvp-solo-wrap');
+    const mines = $('pvp-mines-wrap');
+    if (menu)  menu.style.display  = 'none';
+    if (duel)  duel.style.display  = 'none';
+    if (solo)  solo.style.display  = 'none';
+    if (mines) mines.style.display = 'none';
+    const bw = document.getElementById('pvp-bets-wrap');
+    if (bw) bw.style.display = 'block';
     const pill = document.getElementById('bets-bal-pill');
     if (pill && window.S) pill.textContent = (window.S.balance||0).toLocaleString('ru');
+    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch(e){}
     onBetsPageEnter();
     return;
   }
@@ -691,17 +699,16 @@ function pvpMenuSelect(mode) {
 }
 
 function pvpBackToMenu() {
-  // hide bets page if open
   const bw = document.getElementById('pvp-bets-wrap');
   if (bw) { bw.style.display = 'none'; onBetsPageLeave(); }
-  const menu = $('pvp-menu-block');
-  const duel = $('pvp-duel-wrap');
-  const solo = $('pvp-solo-wrap');
+  const menu  = $('pvp-menu-block');
+  const duel  = $('pvp-duel-wrap');
+  const solo  = $('pvp-solo-wrap');
   const mines = $('pvp-mines-wrap');
-  if (duel) duel.style.display = 'none';
-  if (solo) solo.style.display = 'none';
+  if (duel)  duel.style.display  = 'none';
+  if (solo)  solo.style.display  = 'none';
   if (mines) mines.style.display = 'none';
-  if (menu) menu.style.display = 'block';
+  if (menu)  menu.style.display  = 'block';
 }
 
 
