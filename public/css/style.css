@@ -769,3 +769,143 @@ body.theme-light #pvp-mines-wrap button[onclick="pvpBackToMenu()"] {
   color: rgba(0,0,0,0.6);
 }
 body.theme-light .pvp-card-title { color: var(--text); }
+
+/* ══════════════════════════════════════
+   BETS — Ставки на спорт
+══════════════════════════════════════ */
+
+/* PvP card bets animations */
+@keyframes fc1{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-8px) rotate(15deg)}}
+@keyframes fc2{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px) rotate(-8deg)}}
+@keyframes fc3{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px) rotate(18deg)}}
+@keyframes betSlipIn{from{transform:scale(.88) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+@keyframes pdotB{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* tabs */
+.bets-tab{flex:1;padding:7px 4px;border-radius:8px;border:none;background:transparent;color:rgba(255,255,255,.35);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:4px}
+.bets-tab.active{background:rgba(255,255,255,.08);color:var(--text)}
+
+/* match cards */
+.bmc{background:var(--glass);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:12px 13px;margin-bottom:8px;cursor:pointer;transition:transform .1s,border-color .15s;position:relative;overflow:hidden}
+.bmc::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 55%);pointer-events:none}
+.bmc:active{transform:scale(.98)}
+
+/* odds buttons on card */
+.bodd{flex:1;padding:6px 4px;border-radius:9px;border:1.5px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:all .15s;font-family:inherit}
+.bodd:active{transform:scale(.94)}
+.bodd-sel{border-color:rgba(244,196,48,.5)!important;background:rgba(244,196,48,.1)!important}
+.bodd-sel span:last-child{color:#f4c430!important}
+.bodd-sel span:first-child{color:rgba(244,196,48,.6)!important}
+
+/* bet slip modal show */
+#bets-slip-mo.show{display:flex!important}
+
+/* slip outcome buttons */
+.bsodd{flex:1;padding:6px 3px;border-radius:9px;border:1.5px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:all .15s;font-family:inherit}
+.bsodd:active{transform:scale(.94)}
+.bsodd-lbl{font-size:9px;color:rgba(255,255,255,.35);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.bsodd-val{font-size:12px;font-weight:800;color:#fff}
+.bsodd-sel{border-color:rgba(244,196,48,.5)!important;background:rgba(244,196,48,.1)!important}
+.bsodd-sel .bsodd-val{color:#f4c430}
+.bsodd-sel .bsodd-lbl{color:rgba(244,196,48,.6)}
+
+/* currency toggle */
+.bsct{display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:7px;border:none;background:transparent;color:rgba(255,255,255,.35);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.bsct.active{background:rgba(244,196,48,.14);color:#f4c430}
+
+/* quick amounts */
+.bsq{flex:1;padding:6px 2px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.4);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.bsq:active{background:rgba(255,255,255,.12)}
+
+/* light theme overrides for bets */
+body.theme-light .bmc{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.07)}
+body.theme-light .bodd{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.1)}
+body.theme-light .bets-tab{color:rgba(0,0,0,.35)}
+body.theme-light .bets-tab.active{background:rgba(0,0,0,.07);color:#1a1a2e}
+
+/* ═══════════════════════════════════════
+   BETS — Ставки на спорт
+═══════════════════════════════════════ */
+
+/* coin animations */
+@keyframes bfc1{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-8px) rotate(15deg)}}
+@keyframes bfc2{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(-10deg)}}
+@keyframes bfc3{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes bSlipIn{from{transform:scale(.88) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+@keyframes bpulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* bet slip modal */
+#bets-slip-mo.show{display:flex !important}
+
+/* tabs */
+.bets-tab{flex:1;padding:7px 4px;border-radius:8px;border:none;background:transparent;color:var(--muted2);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.bets-tab.active{background:var(--glass);color:var(--text)}
+
+/* live dot */
+.bets-dot-live{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff5050;box-shadow:0 0 5px #ff5050;animation:bpulse 1.4s infinite;flex-shrink:0}
+
+/* live badge */
+.bets-live-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);border-radius:5px;padding:2px 6px;font-size:9px;font-weight:800;color:#ff5050;letter-spacing:.3px}
+
+/* league header */
+.bleague-hdr{display:flex;align-items:center;gap:7px;padding:8px 0 5px;margin-top:4px}
+.bleague-name{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.4px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* match card */
+.bmc{background:var(--glass);border:1px solid var(--gb);border-radius:15px;padding:12px 13px;margin-bottom:7px;cursor:pointer;transition:transform .12s,border-color .15s;position:relative;overflow:hidden}
+.bmc::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 55%);pointer-events:none}
+.bmc:active{transform:scale(.98)}
+
+/* team logo */
+.bteam-logo{width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.bteam-logo svg{width:14px;height:14px}
+
+/* odds row */
+.bodds-row{display:flex;gap:5px;margin-top:9px}
+.bodd{flex:1;padding:6px 4px;border-radius:9px;border:1.5px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:all .15s;font-family:inherit}
+.bodd:active{transform:scale(.93)}
+.bodd-lbl{font-size:9px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.bodd-val{font-size:13px;font-weight:800;color:#fff}
+.bodd-sel{border-color:rgba(244,196,48,.5);background:rgba(244,196,48,.1)}
+.bodd-sel .bodd-val{color:#f4c430}
+.bodd-sel .bodd-lbl{color:rgba(244,196,48,.55)}
+
+/* loading / empty */
+.bets-loading{text-align:center;padding:36px 0;color:rgba(255,255,255,.25);font-size:13px;font-weight:500}
+.bets-empty{text-align:center;padding:44px 0;color:rgba(255,255,255,.25);font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+/* history */
+.bhist-sec{font-size:10px;font-weight:700;color:rgba(255,255,255,.35);margin:12px 0 6px;letter-spacing:.4px;text-transform:uppercase}
+.bhist-item{background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+.bhist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.bhist-info{flex:1;min-width:0}
+.bhist-match{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bhist-pick{font-size:10px;color:var(--muted2);margin-top:1px}
+.bhist-right{text-align:right;flex-shrink:0}
+.bhist-stake{font-size:10px;color:var(--muted2);display:flex;align-items:center;gap:2px;justify-content:flex-end}
+.bhist-res{font-size:13px;font-weight:800}
+
+/* in-slip odds */
+.bsodd{flex:1;padding:6px 3px;border-radius:9px;border:1.5px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04);display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;transition:all .15s;font-family:inherit}
+.bsodd:active{transform:scale(.93)}
+.bsodd-l{font-size:9px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.bsodd-v{font-size:13px;font-weight:800;color:#fff}
+.bsodd-sel{border-color:rgba(244,196,48,.5);background:rgba(244,196,48,.1)}
+.bsodd-sel .bsodd-v{color:#f4c430}
+.bsodd-sel .bsodd-l{color:rgba(244,196,48,.55)}
+
+/* currency toggle */
+.bsct{display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:7px;border:none;background:transparent;color:rgba(255,255,255,.35);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.bsct.active{background:rgba(244,196,48,.14);color:#f4c430}
+
+/* quick bet buttons */
+.bq{flex:1;padding:6px 3px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.4);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:background .15s}
+.bq:active{background:rgba(255,255,255,.12)}
+
+/* amount input focus */
+#bs-amount:focus{border-color:rgba(244,196,48,.5) !important}
+
+/* light theme */
+body.theme-light .bmc{background:rgba(255,255,255,.88);border-color:rgba(0,0,0,.07)}
+body.theme-light .bets-loading,body.theme-light .bets-empty{color:rgba(0,0,0,.3)}
+body.theme-light .bhist-item{background:rgba(255,255,255,.88)}
