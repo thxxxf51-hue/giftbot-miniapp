@@ -68,12 +68,12 @@ function _card(fix, hi){
   <div style="display:flex;flex-direction:column;gap:5px">
     <div style="display:flex;align-items:center;gap:8px">
       <div class="bteam-logo">${_ico(hs.c,hs.s)}</div>
-      <div style="font-size:13px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${H}</div>${sH}
+      <div class="bteam-name" style="font-size:13px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${H}</div>${sH}
     </div>
     <div style="height:1px;background:rgba(255,255,255,.04)"></div>
     <div style="display:flex;align-items:center;gap:8px">
       <div class="bteam-logo">${_ico(as.c,as.s)}</div>
-      <div style="font-size:13px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${A}</div>${sA}
+      <div class="bteam-name" style="font-size:13px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${A}</div>${sA}
     </div>
   </div>
   <div class="bodds-row">
@@ -205,7 +205,7 @@ function betsPickOdd(btn){
   btn.closest('.bmc').querySelectorAll('.bodd').forEach(b=>b.classList.remove('bodd-sel'));
   btn.classList.add('bodd-sel');
   const card=btn.closest('.bmc');
-  const names=card.querySelectorAll('[style*="font-size:13px;font-weight:700;flex:1"]');
+  const names=card.querySelectorAll('.bteam-name');
   const H=names[0]?.textContent||'', A=names[1]?.textContent||'';
   const odds=card.querySelectorAll('.bodd');
   const o1=parseFloat(odds[0]?.dataset.odds||2);
