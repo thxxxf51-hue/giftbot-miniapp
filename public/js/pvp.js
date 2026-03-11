@@ -657,6 +657,15 @@ function pvpSwitchMode(btn, mode) {
 }
 
 function pvpMenuSelect(mode) {
+  if (mode === 'bets') {
+    document.getElementById('pvp-menu-block').style.display = 'none';
+    document.getElementById('pvp-bets-wrap').style.display = '';
+    // update balance pill
+    const pill = document.getElementById('bets-bal-pill');
+    if (pill && window.S) pill.textContent = (window.S.balance||0).toLocaleString('ru');
+    onBetsPageEnter();
+    return;
+  }
   const menu = $('pvp-menu-block');
   const duel = $('pvp-duel-wrap');
   const solo = $('pvp-solo-wrap');
@@ -682,6 +691,9 @@ function pvpMenuSelect(mode) {
 }
 
 function pvpBackToMenu() {
+  // hide bets page if open
+  const bw = document.getElementById('pvp-bets-wrap');
+  if (bw) { bw.style.display = 'none'; onBetsPageLeave(); }
   const menu = $('pvp-menu-block');
   const duel = $('pvp-duel-wrap');
   const solo = $('pvp-solo-wrap');
