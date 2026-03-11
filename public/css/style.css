@@ -543,3 +543,181 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tc-dot.active{background:#2ecc71;width:14px;border-radius:3px}
 
 #page-friends{touch-action:pan-y}
+
+/* ══════════════════════════════════════════
+   LIGHT THEME
+══════════════════════════════════════════ */
+body.theme-light {
+  --bg: #eef1f5;
+  --glass: rgba(255,255,255,0.88);
+  --gb: rgba(0,0,0,0.07);
+  --text: #1a1a2e;
+  --muted: #9099aa;
+  --muted2: #7a8396;
+  --nav: #dde3ec;
+  --gdim: rgba(34,180,100,0.10);
+  --gbor: rgba(34,180,100,0.22);
+  --rdim: rgba(220,60,60,0.09);
+}
+body.theme-light html,
+body.theme-light body { background: var(--bg); color: var(--text); }
+body.theme-light .gc { background: rgba(255,255,255,0.82); border-color: rgba(0,0,0,0.07); }
+body.theme-light .gc::after { background: linear-gradient(135deg,rgba(255,255,255,.5) 0%,transparent 60%); }
+body.theme-light .nav { background: #fff; border-color: rgba(0,0,0,0.07); box-shadow: 0 -2px 20px rgba(0,0,0,0.08); }
+body.theme-light .nb-icon svg { stroke: rgba(0,0,0,0.28); }
+body.theme-light .nb.active .nb-icon svg { stroke: #2ecc71; }
+body.theme-light .nb-label { color: rgba(0,0,0,0.3); }
+body.theme-light .nb.active .nb-label { color: #2ecc71; }
+body.theme-light .mc { background: rgba(255,255,255,0.82); border-color: rgba(0,0,0,0.07); }
+body.theme-light .mc-t { color: #1a1a2e; }
+body.theme-light .mc-s { color: #7a8396; }
+body.theme-light .pin { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.10); color: #1a1a2e; }
+body.theme-light .pin::placeholder { color: #9099aa; }
+body.theme-light .pin:focus { border-color: var(--green); color: #1a1a2e; }
+body.theme-light .stab { color: #9099aa; }
+body.theme-light .stab.active { background: rgba(255,255,255,0.9); color: #1a1a2e; }
+body.theme-light .stabs { background: rgba(0,0,0,0.07); }
+body.theme-light .modal-box,body.theme-light .pvbox,body.theme-light .cpbox,
+body.theme-light .lgbox,body.theme-light .stars-box,body.theme-light .dp-box {
+  background: #f5f7fa;
+}
+body.theme-light .welcome { color: #7a8396; }
+body.theme-light .ptitle { color: #1a1a2e; }
+body.theme-light .sec { color: #1a1a2e; }
+body.theme-light .pro-l { color: #7a8396; }
+body.theme-light .pro-v { color: #1a1a2e; }
+body.theme-light .tx-badge { background: rgba(0,0,0,0.06); color: #7a8396; }
+body.theme-light .tx-det { color: #555; }
+body.theme-light .tx-head span { color: #9099aa; }
+body.theme-light .tx-table { background: rgba(255,255,255,0.7); border-color: rgba(0,0,0,0.07); }
+body.theme-light .tx-row { border-bottom-color: rgba(0,0,0,0.05); }
+body.theme-light .tx-empty { color: #9099aa; }
+body.theme-light .reflbl { color: var(--green); }
+body.theme-light .reflinkrow { background: rgba(255,255,255,0.7); }
+body.theme-light .rstat { background: rgba(255,255,255,0.7); }
+body.theme-light .rslbl { color: #9099aa; }
+body.theme-light .rssub { color: #9099aa; }
+body.theme-light .tc-card { background: #f0f4f8; border-color: rgba(0,0,0,0.08); }
+body.theme-light .tc-desc { color: rgba(0,0,0,0.4); }
+body.theme-light .tc-count { color: rgba(0,0,0,0.3); }
+body.theme-light .mines-cell { background: linear-gradient(145deg,#dde3ec,#d0d8e4); border-color: rgba(0,0,0,0.08); }
+body.theme-light .mines-cell::before { background: linear-gradient(135deg,rgba(255,255,255,.6) 0%,transparent 60%); }
+body.theme-light .mines-flip-front { background: linear-gradient(145deg,#e2e8f0,#d5dde8); border-color: rgba(0,0,0,0.1); }
+body.theme-light .av { border-color: rgba(46,204,113,.4); }
+
+/* ══════════════════════════════════════════
+   AVATAR POPUP
+══════════════════════════════════════════ */
+.av-wrap { cursor: pointer; }
+.av-popup-open .av {
+  border-color: rgba(46,204,113,.7) !important;
+  box-shadow: 0 0 0 3px rgba(46,204,113,.14);
+}
+
+/* Overlay (closes popup on outside tap) */
+#av-popup-ov {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 490;
+}
+#av-popup-ov.ppu-ov-visible { display: block; }
+
+/* Popup container */
+#av-popup {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 162px;
+  background: #f2f5f9;
+  border-radius: 14px;
+  padding: 7px;
+  box-shadow: 0 6px 22px rgba(0,0,0,.28), 0 2px 6px rgba(0,0,0,.14);
+  z-index: 500;
+  opacity: 0;
+  transform: translateY(-5px) scale(.97);
+  transform-origin: top left;
+  pointer-events: none;
+  transition: opacity .2s cubic-bezier(.4,0,.2,1), transform .2s cubic-bezier(.4,0,.2,1);
+}
+#av-popup.ppu-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+/* Arrow pointing to avatar */
+#av-popup::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 13px;
+  width: 10px;
+  height: 10px;
+  background: #f2f5f9;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  box-shadow: -1px -1px 4px rgba(0,0,0,.06);
+}
+
+/* Section label inside popup */
+.ppu-lbl {
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+  color: #8a9ab5;
+  padding: 0 3px 3px;
+}
+
+/* Button pair row */
+.ppu-row { display: flex; gap: 4px; margin-bottom: 5px; }
+.ppu-row:last-child { margin-bottom: 0; }
+
+/* Individual button */
+.ppu-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(0,0,0,.07);
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2a3a55;
+  transition: all .14s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ppu-btn:active { transform: scale(.93); }
+.ppu-btn svg {
+  width: 12px; height: 12px;
+  stroke: currentColor; fill: none;
+  stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.ppu-btn.ppu-active {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+/* Dark theme: invert popup colors */
+body:not(.theme-light) #av-popup {
+  background: #1e2530;
+  box-shadow: 0 8px 28px rgba(0,0,0,.55), 0 2px 8px rgba(0,0,0,.35);
+}
+body:not(.theme-light) #av-popup::before { background: #1e2530; }
+body:not(.theme-light) .ppu-lbl { color: #5a6a80; }
+body:not(.theme-light) .ppu-btn {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.09);
+  color: rgba(255,255,255,.8);
+}
+body:not(.theme-light) .ppu-btn.ppu-active {
+  background: rgba(46,100,204,.22);
+  border-color: rgba(93,148,239,.4);
+  color: #7ab3f4;
+}
