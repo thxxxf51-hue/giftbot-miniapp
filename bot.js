@@ -1,4 +1,5 @@
 const { Telegraf } = require('telegraf');
+const https = require('https');
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -750,7 +751,6 @@ const SPORTS_BASE    = 'https://v3.football.api-sports.io';
 const _sportsCache = { live: null, liveTs: 0, today: null, todayTs: 0 };
 
 async function sportsFetch(path) {
-  const https = require('https');
   return new Promise((resolve, reject) => {
     const url = new URL(SPORTS_BASE + path);
     const opts = {
