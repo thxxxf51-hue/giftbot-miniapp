@@ -738,6 +738,147 @@ app.post('/api/draws/join', (req, res) => {
   res.json({ ok: true, count: draw.participants.length });
 });
 
+
+/* ══════════════════════════════════════════════
+   SPORTS BETTING — API-Football Integration
+══════════════════════════════════════════════ */
+
+const SPORTS_API_KEY = '4e80f3ce6a9525c8e3e738a498b63101';
+const SPORTS_BASE    = 'https://v3.football.api-sports.io';
+
+// Simple in-memory cache
+const _sportsCache = { live: null, liveTs: 0, today: null, todayTs: 0 };
+
+async function sportsFetch(path) {
+  const https = require('https');
+  return new Promise((resolve, reject) => {
+    const url = new URL(SPORTS_BASE + path);
+    const opts = {
+      hostname: url.hostname, path: url.pathname + url.search,
+      headers: { 'x-apisports-key': SPORTS_API_KEY }
+    };
+    https.get(opts, res => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); } catch(e) { reject(e); }
+      });
+    }).on('error', reject);
+  });
+}
+
+// GET /api/sports/live — live matches (cached 30s)
+app.get('/api/sports/live', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (_sportsCache.live && now - _sportsCache.liveTs < 30000) {
+      return res.json({ fixtures: _sportsCache.live });
+    }
+    const d = await sportsFetch('/fixtures?live=all&timezone=Europe/Moscow');
+    const fixtures = d.response || [];
+    _sportsCache.live = fixtures;
+    _sportsCache.liveTs = now;
+    res.json({ fixtures });
+  } catch(e) {
+    console.error('sports live error:', e.message);
+    res.json({ fixtures: _sportsCache.live || [] });
+  }
+});
+
+// GET /api/sports/today — today's upcoming matches (cached 5min)
+app.get('/api/sports/today', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (_sportsCache.today && now - _sportsCache.todayTs < 300000) {
+      return res.json({ fixtures: _sportsCache.today });
+    }
+    const today = new Date().toISOString().slice(0,10);
+    const d = await sportsFetch(`/fixtures?date=${today}&status=NS&timezone=Europe/Moscow`);
+    const fixtures = (d.response || []).slice(0, 60);
+    _sportsCache.today = fixtures;
+    _sportsCache.todayTs = now;
+    res.json({ fixtures });
+  } catch(e) {
+    console.error('sports today error:', e.message);
+    res.json({ fixtures: _sportsCache.today || [] });
+  }
+});
+
+// POST /api/bets/place — place a bet
+app.post('/api/bets/place', (req, res) => {
+  const { uid, matchName, pick, odds, amount, currency } = req.body;
+  if (!uid || !matchName || !pick || !odds || !amount) return res.json({ ok:false, error:'Неверные данные' });
+  const u = DB.users[uid];
+  if (!u) return res.json({ ok:false, error:'Пользователь не найден' });
+
+  const min = currency === 'stars' ? 50 : 1000;
+  if (amount < min) return res.json({ ok:false, error:`Мин. ставка: ${min}` });
+
+  if (currency === 'stars') {
+    if ((u.stars||0) < amount) return res.json({ ok:false, error:'Недостаточно звёзд' });
+    u.stars = (u.stars||0) - amount;
+  } else {
+    if ((u.balance||0) < amount) return res.json({ ok:false, error:'Недостаточно монет' });
+    u.balance = (u.balance||0) - amount;
+  }
+
+  if (!u.sportsBets) u.sportsBets = [];
+  const bet = { id: Date.now(), matchName, pick, odds, amount, currency: currency||'coins', status:'pending', ts: Date.now() };
+  u.sportsBets.unshift(bet);
+  if (u.sportsBets.length > 200) u.sportsBets = u.sportsBets.slice(0,200);
+
+  addTx(uid, 'bet', -amount, `Ставка: ${matchName} — ${pick}`);
+  saveDB();
+  res.json({ ok:true, bet });
+});
+
+// GET /api/bets/history — bet history for user
+app.get('/api/bets/history', (req, res) => {
+  const uid = req.query.uid;
+  const u = DB.users[uid];
+  if (!u) return res.json({ bets: [] });
+  res.json({ bets: (u.sportsBets || []).slice(0, 50) });
+});
+
+// Background job: settle finished matches every 5 min
+setInterval(async () => {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    const d = await sportsFetch(`/fixtures?date=${today}&status=FT&timezone=Europe/Moscow`);
+    const finished = d.response || [];
+    if (!finished.length) return;
+    const results = {};
+    finished.forEach(f => {
+      const h = f.goals?.home, a = f.goals?.away;
+      const winner = h > a ? 'h' : a > h ? 'a' : 'x';
+      results[f.fixture.id] = { winner, home: f.teams.home.name, away: f.teams.away.name, gh: h, ga: a };
+    });
+    let settled = 0;
+    Object.values(DB.users).forEach(u => {
+      if (!u.sportsBets) return;
+      u.sportsBets.filter(b => b.status === 'pending').forEach(b => {
+        const match = Object.values(results).find(r =>
+          b.matchName && b.matchName.includes(r.home) && b.matchName.includes(r.away)
+        );
+        if (!match) return;
+        const isWin = (b.pick.startsWith('П1') && match.winner==='h') ||
+                      (b.pick === 'Ничья' && match.winner==='x') ||
+                      (b.pick.startsWith('П2') && match.winner==='a');
+        b.status = isWin ? 'win' : 'lose';
+        if (isWin) {
+          const win = Math.round(b.amount * b.odds);
+          b.winAmount = win;
+          if (b.currency === 'stars') u.stars = (u.stars||0) + win;
+          else u.balance = (u.balance||0) + win;
+          addTx(u.uid||'', 'bet_win', win, `Выигрыш: ${b.matchName}`);
+        }
+        settled++;
+      });
+    });
+    if (settled > 0) { saveDB(); console.log(`Settled ${settled} sport bets`); }
+  } catch(e) { console.error('bet settle error:', e.message); }
+}, 5 * 60 * 1000);
+
 app.get('/api/health', (req, res) => res.json({ ok: true, users: Object.keys(DB.users).length }));
 
 /* PvP online counters */
