@@ -803,19 +803,31 @@ app.get('/api/sports/live', async function(req, res) {
 
 app.get('/api/sports/today', async function(req, res) {
   try {
+    const requestedDate = req.query.date;
+    const today = requestedDate || new Date().toISOString().slice(0, 10);
+    const cacheKey = 'today_' + today;
     const now = Date.now();
-    if (_sportsCache.today && now - _sportsCache.todayTs < 300000) {
-      return res.json({ fixtures: _sportsCache.today });
+    if (_sportsCache[cacheKey] && now - (_sportsCache[cacheKey+'_ts']||0) < 300000) {
+      return res.json({ fixtures: _sportsCache[cacheKey] });
     }
-    const today = new Date().toISOString().slice(0, 10);
     const d = await sportsFetch('/fixtures?date=' + today + '&status=NS&timezone=Europe/Moscow');
     const fixtures = (d.response || []).slice(0, 60);
-    _sportsCache.today = fixtures;
-    _sportsCache.todayTs = now;
+    _sportsCache[cacheKey] = fixtures;
+    _sportsCache[cacheKey+'_ts'] = now;
     res.json({ fixtures: fixtures });
   } catch(e) {
     console.error('sports/today error:', e.message);
-    res.json({ fixtures: _sportsCache.today || [] });
+    res.json({ fixtures: [] });
+  }
+});
+
+// DEBUG: check API connection
+app.get('/api/sports/debug', async function(req, res) {
+  try {
+    const d = await sportsFetch('/status');
+    res.json({ ok: true, status: d });
+  } catch(e) {
+    res.json({ ok: false, error: e.message });
   }
 });
 
