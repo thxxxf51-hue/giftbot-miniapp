@@ -662,10 +662,12 @@ function pvpMenuSelect(mode) {
     const duel = $('pvp-duel-wrap');
     const solo = $('pvp-solo-wrap');
     const mines = $('pvp-mines-wrap');
+    const card = document.getElementById('pvp-menu-bets');
     if (menu)  menu.style.display  = 'none';
     if (duel)  duel.style.display  = 'none';
     if (solo)  solo.style.display  = 'none';
     if (mines) mines.style.display = 'none';
+    if (card)  card.style.display  = 'none';
     const bw = document.getElementById('pvp-bets-wrap');
     if (bw) bw.style.display = 'block';
     const pill = document.getElementById('bets-bal-pill');
@@ -705,9 +707,11 @@ function pvpBackToMenu() {
   const duel  = $('pvp-duel-wrap');
   const solo  = $('pvp-solo-wrap');
   const mines = $('pvp-mines-wrap');
+  const card  = document.getElementById('pvp-menu-bets');
   if (duel)  duel.style.display  = 'none';
   if (solo)  solo.style.display  = 'none';
   if (mines) mines.style.display = 'none';
+  if (card)  card.style.display  = '';
   if (menu)  menu.style.display  = 'block';
 }
 
