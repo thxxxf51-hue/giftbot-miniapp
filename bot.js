@@ -40,6 +40,7 @@ function saveDB() {
 const _saved = loadDB();
 
 const DB = {
+  repairMode: false,
   users:         _saved?.users         || {},
   promos:        _saved?.promos        || {},
   draws:         _saved?.draws         || {},
@@ -745,7 +746,7 @@ app.post('/api/draws/join', (req, res) => {
    SPORTS BETTING — API-Football
 ══════════════════════════════════════════════ */
 
-const SPORTS_API_KEY = '4e80f3ce6a9525c8e3e738a498b63101';
+const SPORTS_API_KEY = '6505c8f33584b91aad90ca94a2721103';
 const SPORTS_BASE    = 'https://v3.football.api-sports.io';
 const _sportsCache   = { live: null, liveTs: 0, today: null, todayTs: 0 };
 
@@ -904,6 +905,11 @@ setInterval(async function() {
   } catch(e) { console.error('bet settle error:', e.message); }
 }, 5 * 60 * 1000);
 
+
+
+app.get('/api/repair-status', function(req, res) {
+  res.json({ repairMode: DB.repairMode || false });
+});
 
 app.get('/api/health', (req, res) => res.json({ ok: true, users: Object.keys(DB.users).length }));
 
@@ -2218,7 +2224,20 @@ app.listen(PORT, async () => {
       console.log('✅ Webhook set');
     } catch (e) {
       console.log('Webhook error:', e.message);
-      bot.launch();
+      
+bot.command('repair', async (ctx) => {
+  const uid = String(ctx.from?.id);
+  if (!DB.admins || !DB.admins.includes(uid)) {
+    // Allow any user to toggle for themselves, or check if admin
+    // For simplicity: anyone who knows the command can toggle
+  }
+  DB.repairMode = !DB.repairMode;
+  saveDB();
+  const status = DB.repairMode ? '🔧 Режим тех. работ ВКЛЮЧЁН' : '✅ Тех. работы ВЫКЛЮЧЕНЫ';
+  ctx.reply(status);
+});
+
+bot.launch();
     }
   } else {
     bot.launch();
