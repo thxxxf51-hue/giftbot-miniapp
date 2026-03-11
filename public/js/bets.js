@@ -131,7 +131,15 @@ async function betsLoadLive(){
     const liveEl=document.getElementById('bets-live-count');
     if(liveEl) liveEl.textContent=fixtures.length?fixtures.length+' матчей live':'live матчи';
     const html=_groupAndRender(fixtures);
-    if(!html){ el.innerHTML=`<div class="bets-empty">⚽<br><span style="font-size:14px;font-weight:700">Нет live матчей</span><br><span style="font-size:11px;opacity:.6">Матчи появятся когда начнутся игры</span></div>`; return; }
+    if(!html){
+      // No live matches — auto switch to Today tab
+      el.innerHTML=`<div class="bets-empty">⚽<br><span style="font-size:14px;font-weight:700">Нет live матчей</span><br><span style="font-size:11px;opacity:.6">Переключаем на предстоящие...</span></div>`;
+      setTimeout(()=>{
+        const todayBtn = document.querySelector('.bets-tab:nth-child(2)');
+        if(todayBtn) betsSwitchTab('today', todayBtn);
+      }, 800);
+      return;
+    }
     el.innerHTML=html;
   } catch(e){
     console.error('bets live:', e);

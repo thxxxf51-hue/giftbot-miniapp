@@ -907,8 +907,26 @@ function pvpBackToMenu() {
     }).catch(()=>{});
   }
 
+  /* reset bets page to menu state */
+  function _resetBetsState(){
+    const bw   = document.getElementById('pvp-bets-wrap');
+    const menu = document.getElementById('pvp-menu-block');
+    const card = document.getElementById('pvp-menu-bets');
+    const duel = document.getElementById('pvp-duel-wrap');
+    const solo = document.getElementById('pvp-solo-wrap');
+    const mines= document.getElementById('pvp-mines-wrap');
+    if (bw)    bw.style.display    = 'none';
+    if (card)  card.style.display  = '';
+    if (menu)  menu.style.display  = 'block';
+    if (duel)  duel.style.display  = 'none';
+    if (solo)  solo.style.display  = 'none';
+    if (mines) mines.style.display = 'none';
+    if (typeof onBetsPageLeave === 'function') onBetsPageLeave();
+  }
+
   /* init when page becomes visible */
   function onPvpPageVisible(){
+    _resetBetsState();
     drawMenuSwords();
     drawMenuWheel();
     initLightning();
@@ -942,6 +960,16 @@ function pvpBackToMenu() {
   // Hook into existing go() navigation
   const _origGo = window.go;
   window.go = function(page){
+    // When leaving PvP — reset bets state fully
+    const currentPage = document.querySelector('.page.active, .page[style*="block"]');
+    const onPvp = document.getElementById('page-pvp') &&
+      (document.getElementById('page-pvp').style.display !== 'none' &&
+       document.getElementById('page-pvp').classList.contains('active') ||
+       window._currentPage === 'pvp');
+    if (onPvp && page !== 'pvp') {
+      _resetBetsState();
+    }
+    window._currentPage = page;
     if(_origGo) _origGo(page);
     if(page==='pvp') setTimeout(onPvpPageVisible, 80);
   };
