@@ -1771,6 +1771,15 @@ bot.command('bans', (ctx) => {
   ctx.reply('🚫 Забаненные:\n\n' + rows.join('\n'));
 });
 
+bot.command('repair', async (ctx) => {
+  DB.repairMode = !DB.repairMode;
+  saveDB();
+  const status = DB.repairMode
+    ? '🔧 Режим тех. работ ВКЛЮЧЁН. Приложение недоступно для пользователей.'
+    : '✅ Тех. работы ВЫКЛЮЧЕНЫ. Приложение снова доступно.';
+  ctx.reply(status);
+});
+
 
 
 /* ══ STARS EXCHANGE ══ */
@@ -2224,18 +2233,10 @@ app.listen(PORT, async () => {
       console.log('✅ Webhook set');
     } catch (e) {
       console.log('Webhook error:', e.message);
-      
-bot.command('repair', async (ctx) => {
-  const uid = String(ctx.from?.id);
-  if (!DB.admins || !DB.admins.includes(uid)) {
-    // Allow any user to toggle for themselves, or check if admin
-    // For simplicity: anyone who knows the command can toggle
-  }
-  DB.repairMode = !DB.repairMode;
-  saveDB();
-  const status = DB.repairMode ? '🔧 Режим тех. работ ВКЛЮЧЁН' : '✅ Тех. работы ВЫКЛЮЧЕНЫ';
-  ctx.reply(status);
-});
+
+;
+
+
 
 bot.launch();
     }
