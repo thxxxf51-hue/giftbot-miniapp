@@ -240,12 +240,39 @@
 <div class="page active" id="page-home">
   <div class="hhdr">
     <div class="huser">
-      <div class="av-wrap" id="av-wrap-h">
+      <div class="av-wrap" id="av-wrap-h" onclick="toggleAvPopup()" style="position:relative">
         <div class="av" id="av-h">?</div>
         <div class="av-crown" id="crown-h"><svg viewBox="0 0 24 24" fill="#f4c430" stroke="#d4a017" stroke-width="1"><path d="M2 19h20l-3-10-4 5-3-8-3 8-4-5z"/><rect x="2" y="19" width="20" height="2" rx="1" fill="#f4c430"/></svg></div>
+        <!-- POPUP -->
+        <div id="av-popup">
+          <div class="ppu-lbl">THEME</div>
+          <div class="ppu-row">
+            <div class="ppu-btn ppu-active" id="popup-btn-dark" onclick="event.stopPropagation();applyTheme('dark')">
+              <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <span data-i18n="popup-dark">Тёмная</span>
+            </div>
+            <div class="ppu-btn" id="popup-btn-light" onclick="event.stopPropagation();applyTheme('light')">
+              <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/></svg>
+              <span data-i18n="popup-light">Светлая</span>
+            </div>
+          </div>
+          <div class="ppu-lbl">LANGUAGE</div>
+          <div class="ppu-row">
+            <div class="ppu-btn ppu-active" id="popup-btn-ru" onclick="event.stopPropagation();applyLang('ru')">
+              <svg viewBox="0 0 24 24"><path d="M4 5l4-1 8 2 4-1v15l-4 1-8-2-4 1z"/><line x1="8" y1="4" x2="8" y2="20"/><line x1="16" y1="6" x2="16" y2="21"/></svg>
+              RU
+            </div>
+            <div class="ppu-btn" id="popup-btn-en" onclick="event.stopPropagation();applyLang('en')">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              EN
+            </div>
+          </div>
+        </div>
       </div>
+      <!-- popup overlay -->
+      <div id="av-popup-ov" onclick="closeAvPopup()"></div>
       <div>
-        <div class="welcome">Добро пожаловать,</div>
+        <div class="welcome" data-i18n="welcome">Добро пожаловать,</div>
         <div class="uname nc-default" id="h-name-wrap"><span id="h-name">User</span></div>
       </div>
     </div>
@@ -259,32 +286,32 @@
   <div class="mgrid">
     <div class="mc" onclick="go('tasks')">
       <div class="mc-ico"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
-      <div class="mc-t">Задания</div><div class="mc-s">Выполняй и зарабатывай</div>
+      <div class="mc-t" data-i18n="mc-tasks">Задания</div><div class="mc-s" data-i18n="mc-tasks-s">Выполняй и зарабатывай</div>
     </div>
     <div class="mc" onclick="go('shop')">
       <div class="mc-ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg></div>
-      <div class="mc-t">Магазин</div><div class="mc-s">Трать монеты</div>
+      <div class="mc-t" data-i18n="mc-shop">Магазин</div><div class="mc-s" data-i18n="mc-shop-s">Трать монеты</div>
     </div>
     <div class="mc" onclick="go('raffles')">
       <div class="mc-ico"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></div>
-      <div class="mc-t">Розыгрыши</div><div class="mc-s">Испытай удачу</div>
+      <div class="mc-t" data-i18n="mc-raffles">Розыгрыши</div><div class="mc-s" data-i18n="mc-raffles-s">Испытай удачу</div>
     </div>
     <div class="mc" onclick="go('friends')">
       <div class="mc-ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
-      <div class="mc-t">Рефералы</div><div class="mc-s">Приглашай друзей</div>
+      <div class="mc-t" data-i18n="mc-friends">Рефералы</div><div class="mc-s" data-i18n="mc-friends-s">Приглашай друзей</div>
     </div>
     <div class="mc" onclick="go('inventory')" style="grid-column:span 2">
       <div class="mc-ico"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-      <div class="mc-t">Инвентарь</div><div class="mc-s">Твои предметы и бонусы</div>
+      <div class="mc-t" data-i18n="mc-inventory">Инвентарь</div><div class="mc-s" data-i18n="mc-inventory-s">Твои предметы и бонусы</div>
     </div>
   </div>
   <div class="gc pcrd">
-    <div class="plbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Промокод</div>
-    <div class="prow2"><input class="pin" id="pi-h" placeholder="Введите промокод" autocapitalize="characters"><button class="pbtn" onclick="usePromo('pi-h')">Применить</button></div>
+    <div class="plbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span data-i18n="promo-lbl">Промокод</span></div>
+    <div class="prow2"><input class="pin" id="pi-h" placeholder="Введите промокод" data-i18n-ph="promo-ph" autocapitalize="characters"><button class="pbtn" data-i18n="promo-btn" onclick="usePromo('pi-h')">Применить</button></div>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <div class="sec" style="margin-bottom:0">Розыгрыши</div>
-    <button style="background:var(--gdim);color:var(--green);border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" onclick="go('raffles')">Все</button>
+    <div class="sec" style="margin-bottom:0" data-i18n="home-raffles-sec">Розыгрыши</div>
+    <button style="background:var(--gdim);color:var(--green);border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" data-i18n="promo-all" onclick="go('raffles')">Все</button>
   </div>
   <div id="h-raf-block">
     <div style="display:flex;flex-direction:column;align-items:center;padding:20px;opacity:.3;gap:8px"><div style="font-size:28px">🎁</div><div style="font-size:12px;color:var(--muted)">Пока розыгрышей нет</div></div>
@@ -293,16 +320,16 @@
 
 <!-- TASKS -->
 <div class="page" id="page-tasks">
-  <div class="phdr"><div class="ptitle">Задания</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-tasks">0</span></div></div>
+  <div class="phdr"><div class="ptitle" data-i18n="title-tasks">Задания</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-tasks">0</span></div></div>
   <div id="tasks-list"></div>
 </div>
 
 <!-- SHOP -->
 <div class="page" id="page-shop">
-  <div class="phdr"><div class="ptitle">Магазин</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-shop">0</span></div></div>
+  <div class="phdr"><div class="ptitle" data-i18n="title-shop">Магазин</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-shop">0</span></div></div>
   <div class="stabs">
-    <button class="stab active" onclick="shopTab('items',this)">🛒 Магазин</button>
-    <button class="stab" onclick="shopTab('cases',this)">📦 Кейсы</button>
+    <button class="stab active" onclick="shopTab('items',this)" data-i18n="shop-tab-items">🛒 Магазин</button>
+    <button class="stab" onclick="shopTab('cases',this)" data-i18n="shop-tab-cases">📦 Кейсы</button>
   </div>
   <div class="sgrid" id="shop-items"></div>
   <div class="cgrid" id="shop-cases" style="display:none"></div>
@@ -310,16 +337,16 @@
 
 <!-- INVENTORY -->
 <div class="page" id="page-inventory">
-  <div class="phdr"><div class="ptitle">Инвентарь</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-inv">0</span></div></div>
+  <div class="phdr"><div class="ptitle" data-i18n="title-inventory">Инвентарь</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-inv">0</span></div></div>
   <div class="inv-grid" id="inv-list"></div>
 </div>
 
 <!-- RAFFLES -->
 <div class="page" id="page-raffles">
-  <div class="phdr"><div class="ptitle">Розыгрыши</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-raffles">0</span></div></div>
+  <div class="phdr"><div class="ptitle" data-i18n="title-raffles">Розыгрыши</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-raffles">0</span></div></div>
   <div class="stabs" style="margin-bottom:12px">
-    <button class="stab active" id="rtab-active" onclick="raffleTab('active',this)">🎁 Активные</button>
-    <button class="stab" id="rtab-finished" onclick="raffleTab('finished',this)">🏆 Завершённые</button>
+    <button class="stab active" id="rtab-active" data-i18n="raf-tab-active" onclick="raffleTab('active',this)">🎁 Активные</button>
+    <button class="stab" id="rtab-finished" data-i18n="raf-tab-done" onclick="raffleTab('finished',this)">🏆 Завершённые</button>
   </div>
   <div id="raffles-active">
     <div class="raff-empty" id="raffles-empty">
@@ -355,19 +382,19 @@
 
 <!-- FRIENDS -->
 <div class="page" id="page-friends">
-  <div class="phdr"><div class="ptitle">Рефералы</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-friends">0</span></div></div>
+  <div class="phdr"><div class="ptitle" data-i18n="title-friends">Рефералы</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-friends">0</span></div></div>
   <div class="refblock">
-    <div class="reflbl">Реферальная ссылка</div>
+    <div class="reflbl" data-i18n="ref-lbl">Реферальная ссылка</div>
     <div style="font-size:12px;color:var(--muted2);margin-bottom:4px">За каждого приглашённого вы получаете</div>
     <div class="refamt"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>1 000</div>
     <div class="refwarn">⚠️ У реферала должен быть @username в Telegram, иначе не засчитается.</div>
     <div class="reflinkrow"><div class="reflinkt" id="ref-link">https://t.me/SATapp_bot?start=ref_...</div><button class="refcopy" onclick="copyRef()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button></div>
-    <button class="refshare" onclick="shareRef()">Поделиться в Telegram</button>
+    <button class="refshare" onclick="shareRef()" data-i18n="ref-share">Поделиться в Telegram</button>
   </div>
   <div class="refstats">
-    <div class="rstat gc"><div class="rslbl">Лично приглашённые</div><div class="rsval" id="ref-c1">0</div><div class="rssub">+1000 за каждого</div></div>
-    <div class="rstat gc"><div class="rslbl">2-й уровень</div><div class="rsval" id="ref-c2">0</div><div class="rssub">Скоро</div></div>
-    <div class="rstat gc"><div class="rslbl">Заработано</div><div class="rsval g" id="ref-e"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>0</div></div>
+    <div class="rstat gc"><div class="rslbl" data-i18n="ref-c1-lbl">Лично приглашённые</div><div class="rsval" id="ref-c1">0</div><div class="rssub" data-i18n="ref-c1-sub">+1000 за каждого</div></div>
+    <div class="rstat gc"><div class="rslbl" data-i18n="ref-c2-lbl">2-й уровень</div><div class="rsval" id="ref-c2">0</div><div class="rssub" data-i18n="ref-c2-sub">Скоро</div></div>
+    <div class="rstat gc"><div class="rslbl" data-i18n="ref-earn-lbl">Заработано</div><div class="rsval g" id="ref-e"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>0</div></div>
   </div>
   <!-- Task swiper -->
   <div class="tc-wrap" id="ref-task-wrap">
@@ -419,13 +446,13 @@
     <div class="tc-dot" id="rtdot-1"></div>
     <div class="tc-dot" id="rtdot-2"></div>
   </div>
-  <div class="sec">Ваши рефералы</div>
+  <div class="sec" data-i18n="ref-sec">Ваши рефералы</div>
   <div id="ref-list"></div>
 </div>
 
 <!-- PROFILE -->
 <div class="page" id="page-profile">
-  <div class="phdr"><div class="ptitle">Профиль</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-profile">0</span></div></div>
+  <div class="phdr"><div class="ptitle" data-i18n="title-profile">Профиль</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-profile">0</span></div></div>
   <div class="gc profuc">
     <div class="profav-wrap" id="av-wrap-p">
       <div class="profav" id="av-p">?</div>
@@ -435,40 +462,40 @@
   </div>
   <div class="gc prow">
     <div class="pro-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">Баланс монет</div><div class="pro-v" id="p-bal">0</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-balance">Баланс монет</div><div class="pro-v" id="p-bal">0</div></div>
     <button class="pro-info" onclick="toast('💡 Зарабатывай выполняя задания!','g')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>
   </div>
   <div class="gc prow prow-c" onclick="openStarsMo()">
     <div class="pro-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">Баланс Stars</div><div class="pro-v" id="p-stars" style="color:var(--star)">0 ⭐</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-stars">Баланс Stars</div><div class="pro-v" id="p-stars" style="color:var(--star)">0 ⭐</div></div>
     <span class="pro-arr">›</span>
   </div>
   <div class="gc prow prow-c" onclick="openSupport()">
     <div class="pro-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#7aa4f4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="9" x2="15" y2="9" stroke-width="1.5"/><line x1="9" y1="13" x2="12" y2="13" stroke-width="1.5"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">Нужна помощь?</div><div class="pro-v" style="font-size:15px;color:#7aa4f4">Поддержка</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-support">Нужна помощь?</div><div class="pro-v" style="font-size:15px;color:#7aa4f4" data-i18n="pro-support-link">Поддержка</div></div>
     <span class="pro-arr">›</span>
   </div>
   <div class="gc prow prow-c" onclick="go('friends')">
     <div class="pro-ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">Рефералов</div><div class="pro-v" id="p-refs">0</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-refs">Рефералов</div><div class="pro-v" id="p-refs">0</div></div>
     <span class="pro-arr">›</span>
   </div>
   <div class="gc prow">
     <div class="pro-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 19h20M3 9l4 5 5-9 5 9 4-5v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">VIP статус</div><div class="pro-v" id="p-vip">—</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-vip">VIP статус</div><div class="pro-v" id="p-vip">—</div></div>
   </div>
   <div class="gc prow">
     <div class="pro-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a10 10 0 00-20 0"/><path d="M6 17a6 6 0 0112 0"/><path d="M10 17a2 2 0 014 0"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">Цвет ника</div><div class="pro-v" id="p-color">Стандартный</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-color">Цвет ника</div><div class="pro-v" id="p-color">Стандартный</div></div>
   </div>
   <div class="gc prow prow-c" onclick="openEffectPicker()">
     <div class="pro-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">Эффект входа</div><div class="pro-v" id="p-effect">—</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-effect">Эффект входа</div><div class="pro-v" id="p-effect">—</div></div>
     <span class="pro-arr" id="p-effect-btn" style="display:none">›</span>
   </div>
   <div class="gc prow">
     <div class="pro-ico"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-    <div class="pro-c2"><div class="pro-l">Дата регистрации</div><div class="pro-v" id="p-reg">—</div></div>
+    <div class="pro-c2"><div class="pro-l" data-i18n="pro-lbl-reg">Дата регистрации</div><div class="pro-v" id="p-reg">—</div></div>
   </div>
   <div class="gc profpromo">
     <div class="profplbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Промокод</div>
@@ -477,7 +504,7 @@
 
   <!-- TRANSACTIONS -->
   <div class="tx-block">
-    <div class="tx-title">Транзакции</div>
+    <div class="tx-title" data-i18n="tx-title">Транзакции</div>
     <div class="tx-table">
       <div class="tx-head">
         <span>Статус</span><span>Сумма</span><span>Подробности</span><span>Дата</span>
@@ -490,7 +517,7 @@
 
 <!-- PvP -->
 <div class="page" id="page-pvp">
-  <div class="phdr"><div class="ptitle">ПвП</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-pvp">0</span></div></div>
+  <div class="phdr"><div class="ptitle" data-i18n="title-pvp">ПвП</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-pvp">0</span></div></div>
 
   <!-- ═══ MODE SELECT MENU ═══ -->
   <div id="pvp-menu-block" style="padding:4px 0 0">
@@ -753,23 +780,23 @@
     <div class="nav-pill" id="nav-pill"></div>
     <button class="nb active" id="nb-home" onclick="go('home')">
       <div class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-      <span class="nb-label">Главная</span>
+      <span class="nb-label" data-i18n="nav-home">Главная</span>
     </button>
     <button class="nb" id="nb-tasks" onclick="go('tasks')">
       <div class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
-      <span class="nb-label">Задания</span>
+      <span class="nb-label" data-i18n="nav-tasks">Задания</span>
     </button>
     <button class="nb" id="nb-shop" onclick="go('shop')">
       <div class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg></div>
-      <span class="nb-label">Магазин</span>
+      <span class="nb-label" data-i18n="nav-shop">Магазин</span>
     </button>
     <button class="nb" id="nb-pvp" onclick="go('pvp')">
       <div class="nb-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="m2.75 9.25 1.5 2.5 2 1.5m-4.5 0 1 1m1.5-2.5-1.5 1.5m3-1 8.5-8.5v-2h-2l-8.5 8.5"/><path d="m10.25 12.25-2.25-2.25m2-2 2.25 2.25m1-1-1.5 2.5-2 1.5m4.5 0-1 1m-1.5-2.5 1.5 1.5m-7.25-5.25-4.25-4.25v-2h2l4.25 4.25"/></svg></div>
-      <span class="nb-label">PvP</span>
+      <span class="nb-label" data-i18n="nav-pvp">PvP</span>
     </button>
     <button class="nb" id="nb-profile" onclick="go('profile')">
       <div class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-      <span class="nb-label">Профиль</span>
+      <span class="nb-label" data-i18n="nav-profile">Профиль</span>
     </button>
   </nav>
 </div>
@@ -839,6 +866,7 @@
 <script src="js/solo.js"></script>
 <script src="js/mines.js"></script>
 <script src="js/effects.js"></script>
+<script src="js/lang.js"></script>
 <script src="js/init.js"></script>
 
 <!-- PvP History Modal -->
