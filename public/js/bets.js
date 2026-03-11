@@ -16,13 +16,18 @@ let _bMatch = '';
 let _bPick  = '';
 let _bTimer = null;
 
-/* ── прямой запрос к API-Football из браузера ── */
+/* ── запрос через сервер-прокси (Railway) ── */
 async function _apiFetch(endpoint) {
-  const res = await fetch(BETS_API_BASE + endpoint, {
-    headers: { 'x-apisports-key': BETS_API_KEY }
-  });
+  // map API endpoint to our server proxy route
+  let route;
+  if (endpoint.includes('live=all')) route = '/api/sports/live';
+  else if (endpoint.includes('status=NS')) route = '/api/sports/today';
+  else route = '/api/sports/live';
+  const res = await fetch(route);
   if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+  const d = await res.json();
+  // server returns { fixtures: [...] }, convert to API format
+  return { response: d.fixtures || [] };
 }
 
 /* ── иконки команд ── */
@@ -202,9 +207,6 @@ function onBetsPageEnter(){
   if(tl) tl.style.display='';
   if(tt) tt.style.display='none';
   if(th) th.style.display='none';
-  // обновить баланс
-  const pill=document.getElementById('bets-bal-pill');
-  if(pill&&window.S) pill.textContent=(window.S.balance||0).toLocaleString('ru');
   betsLoadLive();
   _bTimer=setInterval(()=>{ if(_bTab==='live') betsLoadLive(); },30000);
 }
