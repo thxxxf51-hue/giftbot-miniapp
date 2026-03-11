@@ -584,6 +584,26 @@ body.theme-light .lgbox,body.theme-light .stars-box,body.theme-light .dp-box {
 body.theme-light .welcome { color: #7a8396; }
 body.theme-light .ptitle { color: #1a1a2e; }
 body.theme-light .sec { color: #1a1a2e; }
+
+/* ── Profile: fix name gradient on light bg ── */
+body.theme-light .profname {
+  background: linear-gradient(135deg,#111827 0%,#16a34a 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+body.theme-light .profun { color: #5a6a80 !important; }
+body.theme-light .profav { border-color: rgba(46,204,113,.5) !important; }
+
+/* ── PvP cards: keep dark bg, fix text to white ── */
+body.theme-light .pvp-card-title { color: #fff !important; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+body.theme-light .pvp-card-sub   { color: rgba(255,255,255,.75) !important; }
+body.theme-light .pvp-mode-hint  { color: rgba(255,255,255,.65) !important; }
+body.theme-light .pvp-back-btn {
+  background: rgba(255,255,255,.18) !important;
+  border-color: rgba(255,255,255,.3) !important;
+  color: #fff !important;
+}
 body.theme-light .pro-l { color: #7a8396; }
 body.theme-light .pro-v { color: #1a1a2e; }
 body.theme-light .tx-badge { background: rgba(0,0,0,0.06); color: #7a8396; }
@@ -721,3 +741,31 @@ body:not(.theme-light) .ppu-btn.ppu-active {
   border-color: rgba(93,148,239,.4);
   color: #7ab3f4;
 }
+
+/* ══ LIGHT THEME: PvP game cards — text stays white on dark bg ══ */
+body.theme-light #pvp-menu-duel,
+body.theme-light #pvp-menu-solo,
+body.theme-light #pvp-menu-mines { color: #fff; }
+
+/* ══ LIGHT THEME: Profile name & avatar ══ */
+body.theme-light .profname {
+  background: linear-gradient(135deg, #111 0%, #1a9e50 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+body.theme-light .profav {
+  border-color: rgba(46,204,113,.55);
+  box-shadow: 0 2px 12px rgba(46,204,113,.18);
+}
+body.theme-light .profuc { background: rgba(255,255,255,0.92); }
+
+/* ══ LIGHT THEME: PvP back buttons & inner pages ══ */
+body.theme-light #pvp-duel-wrap button[onclick="pvpBackToMenu()"],
+body.theme-light #pvp-solo-wrap button[onclick="pvpBackToMenu()"],
+body.theme-light #pvp-mines-wrap button[onclick="pvpBackToMenu()"] {
+  background: rgba(0,0,0,0.07);
+  border-color: rgba(0,0,0,0.1);
+  color: rgba(0,0,0,0.6);
+}
+body.theme-light .pvp-card-title { color: var(--text); }
