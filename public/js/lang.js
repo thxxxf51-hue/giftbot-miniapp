@@ -4,6 +4,7 @@
 
 const TRANSLATIONS = {
   ru: {
+    /* Home */
     'welcome':          'Добро пожаловать,',
     'mc-tasks':         'Задания',
     'mc-tasks-s':       'Выполняй и зарабатывай',
@@ -19,11 +20,13 @@ const TRANSLATIONS = {
     'promo-all':        'Все',
     'home-raffles-sec': 'Розыгрыши',
     'no-raffles':       'Пока розыгрышей нет',
+    /* Nav */
     'nav-home':         'Главная',
     'nav-tasks':        'Задания',
     'nav-shop':         'Магазин',
     'nav-pvp':          'PvP',
     'nav-profile':      'Профиль',
+    /* Titles */
     'title-tasks':      'Задания',
     'title-shop':       'Магазин',
     'title-inventory':  'Инвентарь',
@@ -31,10 +34,13 @@ const TRANSLATIONS = {
     'title-friends':    'Рефералы',
     'title-profile':    'Профиль',
     'title-pvp':        'ПвП',
+    /* Shop */
     'shop-tab-items':   '🛒 Магазин',
     'shop-tab-cases':   '📦 Кейсы',
+    /* Raffles */
     'raf-tab-active':   '🎁 Активные',
     'raf-tab-done':     '🏆 Завершённые',
+    /* Profile */
     'pro-lbl-balance':  'Баланс монет',
     'pro-lbl-stars':    'Баланс Stars',
     'pro-lbl-support':  'Нужна помощь?',
@@ -51,6 +57,7 @@ const TRANSLATIONS = {
     'tx-h-det':         'Подробности',
     'tx-h-date':        'Дата',
     'tx-empty':         'Нет транзакций',
+    /* Friends */
     'ref-lbl':          'Реферальная ссылка',
     'ref-desc':         'За каждого приглашённого вы получаете',
     'ref-share':        'Поделиться в Telegram',
@@ -60,13 +67,34 @@ const TRANSLATIONS = {
     'ref-c2-sub':       'Скоро',
     'ref-earn-lbl':     'Заработано',
     'ref-sec':          'Ваши рефералы',
+    /* Promo */
     'promo-ph':         'Введите промокод',
     'promo-btn':        'Применить',
+    /* Popup */
     'popup-dark':       'Тёмная',
     'popup-light':      'Светлая',
+    /* PvP menu cards */
     'pvp-mode-hint':    'Выбери режим игры',
+    'pvp-duel-title':   'Дуэль',
+    'pvp-duel-desc':    'Сразись с другими игроками',
+    'pvp-solo-title':   'Соло',
+    'pvp-solo-desc':    'Крути колесо удачи',
+    'pvp-mines-title':  'Мины',
+    'pvp-mines-desc':   'Открывай клетки, избегай мин',
+    /* PvP inner */
+    'btn-back':         'Назад',
+    'pvp-no-game':      'Нет активной игры',
+    'pvp-howto':        'Как играть',
+    'pvp-your-bet':     'Твоя ставка',
+    'pvp-join-btn':     '⚔️ Участвовать',
+    'pvp-leave-btn':    '↩️ Выйти (вернуть монеты)',
+    'pvp-history':      'История игр',
+    /* Solo */
+    'solo-spin-btn':    'Крутить',
+    'solo-choose-prize':'Выбрать приз',
   },
   en: {
+    /* Home */
     'welcome':          'Welcome,',
     'mc-tasks':         'Tasks',
     'mc-tasks-s':       'Complete & earn',
@@ -82,11 +110,13 @@ const TRANSLATIONS = {
     'promo-all':        'All',
     'home-raffles-sec': 'Raffles',
     'no-raffles':       'No raffles yet',
+    /* Nav */
     'nav-home':         'Home',
     'nav-tasks':        'Tasks',
     'nav-shop':         'Shop',
     'nav-pvp':          'PvP',
     'nav-profile':      'Profile',
+    /* Titles */
     'title-tasks':      'Tasks',
     'title-shop':       'Shop',
     'title-inventory':  'Inventory',
@@ -94,10 +124,13 @@ const TRANSLATIONS = {
     'title-friends':    'Referrals',
     'title-profile':    'Profile',
     'title-pvp':        'PvP',
+    /* Shop */
     'shop-tab-items':   '🛒 Shop',
     'shop-tab-cases':   '📦 Cases',
+    /* Raffles */
     'raf-tab-active':   '🎁 Active',
     'raf-tab-done':     '🏆 Finished',
+    /* Profile */
     'pro-lbl-balance':  'Coin balance',
     'pro-lbl-stars':    'Stars balance',
     'pro-lbl-support':  'Need help?',
@@ -114,6 +147,7 @@ const TRANSLATIONS = {
     'tx-h-det':         'Details',
     'tx-h-date':        'Date',
     'tx-empty':         'No transactions',
+    /* Friends */
     'ref-lbl':          'Referral link',
     'ref-desc':         'You earn for each invited friend',
     'ref-share':        'Share in Telegram',
@@ -123,21 +157,41 @@ const TRANSLATIONS = {
     'ref-c2-sub':       'Coming soon',
     'ref-earn-lbl':     'Earned',
     'ref-sec':          'Your referrals',
+    /* Promo */
     'promo-ph':         'Enter promo code',
     'promo-btn':        'Apply',
+    /* Popup */
     'popup-dark':       'Dark',
     'popup-light':      'Light',
+    /* PvP menu cards */
     'pvp-mode-hint':    'Choose game mode',
+    'pvp-duel-title':   'Duel',
+    'pvp-duel-desc':    'Battle other players',
+    'pvp-solo-title':   'Solo',
+    'pvp-solo-desc':    'Spin the lucky wheel',
+    'pvp-mines-title':  'Mines',
+    'pvp-mines-desc':   'Open cells, avoid mines',
+    /* PvP inner */
+    'btn-back':         'Back',
+    'pvp-no-game':      'No active game',
+    'pvp-howto':        'How to play',
+    'pvp-your-bet':     'Your bet',
+    'pvp-join-btn':     '⚔️ Join',
+    'pvp-leave-btn':    '↩️ Leave (refund)',
+    'pvp-history':      'Game history',
+    /* Solo */
+    'solo-spin-btn':    'Spin',
+    'solo-choose-prize':'Choose prize',
   }
 };
 
-/* ── Сохранённые настройки ── */
+/* ── State ── */
 let _lang  = localStorage.getItem('gb_lang')  || 'ru';
 let _theme = localStorage.getItem('gb_theme') || 'dark';
 
-/* ════════════════════════════════
+/* ════════════════════════════
    APPLY LANGUAGE
-════════════════════════════════ */
+════════════════════════════ */
 function applyLang(lang) {
   _lang = lang;
   localStorage.setItem('gb_lang', lang);
@@ -159,9 +213,9 @@ function applyLang(lang) {
   if (btnEn) btnEn.classList.toggle('ppu-active', lang === 'en');
 }
 
-/* ════════════════════════════════
+/* ════════════════════════════
    APPLY THEME
-════════════════════════════════ */
+════════════════════════════ */
 function applyTheme(theme) {
   _theme = theme;
   localStorage.setItem('gb_theme', theme);
@@ -173,14 +227,11 @@ function applyTheme(theme) {
   if (btnLight) btnLight.classList.toggle('ppu-active', theme === 'light');
 }
 
-/* ════════════════════════════════
+/* ════════════════════════════
    POPUP
-════════════════════════════════ */
+════════════════════════════ */
 let _popupOpen = false;
-
-function toggleAvPopup() {
-  _popupOpen ? closeAvPopup() : openAvPopup();
-}
+function toggleAvPopup() { _popupOpen ? closeAvPopup() : openAvPopup(); }
 function openAvPopup() {
   _popupOpen = true;
   document.getElementById('av-popup').classList.add('ppu-visible');
@@ -194,9 +245,9 @@ function closeAvPopup() {
   document.getElementById('av-wrap-h').classList.remove('av-popup-open');
 }
 
-/* ════════════════════════════════
+/* ════════════════════════════
    INIT
-════════════════════════════════ */
+════════════════════════════ */
 function _initLangTheme() {
   applyTheme(_theme);
   applyLang(_lang);
