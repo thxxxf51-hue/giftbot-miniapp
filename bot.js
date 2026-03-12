@@ -802,6 +802,9 @@ app.get('/api/sports/live', async function(req, res) {
   }
 });
 
+// Top European leagues IDs for priority display
+const TOP_LEAGUES = [2, 3, 4, 848, 39, 140, 78, 135, 61, 94, 88, 203];
+
 app.get('/api/sports/today', async function(req, res) {
   try {
     const requestedDate = req.query.date;
@@ -811,8 +814,20 @@ app.get('/api/sports/today', async function(req, res) {
     if (_sportsCache[cacheKey] && now - (_sportsCache[cacheKey+'_ts']||0) < 300000) {
       return res.json({ fixtures: _sportsCache[cacheKey] });
     }
+    // Fetch all today's matches
     const d = await sportsFetch('/fixtures?date=' + today + '&status=NS&timezone=Europe/Moscow');
-    const fixtures = (d.response || []).slice(0, 60);
+    let fixtures = d.response || [];
+    // Sort: top leagues first (UCL, EPL, La Liga etc), then rest
+    const topLeagues = TOP_LEAGUES || [];
+    fixtures.sort(function(a, b) {
+      const aTop = topLeagues.indexOf(a.league.id);
+      const bTop = topLeagues.indexOf(b.league.id);
+      if (aTop !== -1 && bTop === -1) return -1;
+      if (aTop === -1 && bTop !== -1) return 1;
+      if (aTop !== -1 && bTop !== -1) return aTop - bTop;
+      return 0;
+    });
+    fixtures = fixtures.slice(0, 80);
     _sportsCache[cacheKey] = fixtures;
     _sportsCache[cacheKey+'_ts'] = now;
     res.json({ fixtures: fixtures });
