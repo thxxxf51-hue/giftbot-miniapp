@@ -189,8 +189,8 @@ async function betsLoadHistory(){
   fetch('/api/bets/history?uid='+uid).then(r=>r.json()).then(d=>{
     const list=d.bets||[];
     // Sync updated balance from server
-    if(d.balance!==undefined && window.S){ window.S.balance=d.balance; if(typeof syncB==='function')syncB(); }
-    if(d.starsBalance!==undefined && window.S){ window.S.starsBalance=d.starsBalance; if(typeof syncB==='function')syncB(); }
+    if(d.balance!==undefined && typeof S!=='undefined'){ S.balance=d.balance; if(typeof syncB==='function')syncB(); }
+    if(d.starsBalance!==undefined && typeof S!=='undefined'){ S.starsBalance=d.starsBalance; if(typeof syncB==='function')syncB(); }
 
     if(!list.length){
       el.innerHTML='<div class="bets-empty">'+COIN_SVG_Y+'<br><span style="font-size:14px;font-weight:700;color:#fff">Ставок пока нет</span><br><span style="font-size:11px;color:rgba(255,255,255,.4)">Сделай первую ставку!</span></div>';
@@ -295,7 +295,7 @@ function betsOpenSlip(card, matchName, o1, ox, o2, home, away, fixId){
   const coinsBtn = document.getElementById('bsct-coins');
   if(coinsBtn) coinsBtn.classList.add('active');
   const minEl = document.getElementById('bs-mincur');
-  const coinBal = (window.S?.balance||0).toLocaleString('ru');
+  const coinBal = ((typeof S!=='undefined'?S.balance:0)||0).toLocaleString('ru');
   if(minEl) minEl.textContent = 'Баланс: '+coinBal+' монет  |  мин. 1 000';
   const amtEl = document.getElementById('bs-amount');
   if(amtEl) amtEl.value = '5000';
@@ -343,11 +343,11 @@ function betsSetCur(cur, btn){
   const minEl=document.getElementById('bs-mincur');
   const amtEl=document.getElementById('bs-amount');
   if(cur==='stars'){
-    const starBal=window.S?.starsBalance||0;
+    const starBal=(typeof S!=='undefined'?S.starsBalance:0)||0;
     if(minEl) minEl.textContent='Баланс: '+starBal+' ⭐  |  мин. 50';
     if(amtEl) amtEl.value='50';
   } else {
-    const coinBal=(window.S?.balance||0).toLocaleString('ru');
+    const coinBal=((typeof S!=='undefined'?S.balance:0)||0).toLocaleString('ru');
     if(minEl) minEl.textContent='Баланс: '+coinBal+' монет  |  мин. 1 000';
     if(amtEl) amtEl.value='5000';
   }
@@ -378,7 +378,7 @@ async function betsSubmit(){
   if(amt<min){ toast('Мин. ставка: '+min+' '+(_bCur==='stars'?'⭐':'монет'),'r'); return; }
   // Check stars balance before sending
   if(_bCur==='stars'){
-    const starBal=window.S?.starsBalance||0;
+    const starBal=(typeof S!=='undefined'?S.starsBalance:0)||0;
     if(starBal<amt){
       betsCloseSlip();
       // Open stars deposit - try standard ways
@@ -396,11 +396,15 @@ async function betsSubmit(){
     if(d.ok){
       betsCloseSlip();
       // Deduct locally so UI updates immediately
-      if(_bCur==='stars' && window.S) window.S.starsBalance=Math.max(0,(window.S.starsBalance||0)-amt);
-      else if(window.S) window.S.balance=Math.max(0,(window.S.balance||0)-amt);
+      // S is const in core.js, NOT window.S
+      if(typeof S!=='undefined'){
+        if(_bCur==='stars') S.starsBalance=Math.max(0,(S.starsBalance||0)-amt);
+        else S.balance=Math.max(0,(S.balance||0)-amt);
+      }
       if(typeof syncB==='function') syncB();
-      if(typeof updateB==='function') updateB();
-      toast('<span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Ставка принята!</span>','g');
+      // toast: pass plain text + svg icon separately
+      const _ico='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      toast('Ставка принята!','g',_ico);
     }
     else toast(d.error||'Ошибка ставки','r');
   } catch(e){ toast('Ошибка сети','r'); }
