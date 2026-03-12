@@ -2103,13 +2103,13 @@ const SUPPORT_SYS = `Ты — дружелюбный помощник подде
 
 // GET /api/support/test
 app.get('/api/support/test', async (req, res) => {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) return res.json({ ok: false, error: 'GROQ_API_KEY не установлен' });
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return res.json({ ok: false, error: 'OPENAI_API_KEY не установлен' });
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 50, messages: [{ role: 'user', content: 'скажи привет' }] })
     });
     const data = await r.json();
     const text = data?.choices?.[0]?.message?.content;
@@ -2124,7 +2124,7 @@ app.post('/api/support/ai', async (req, res) => {
   const { messages, userId } = req.body;
   if (!messages || !Array.isArray(messages)) return res.status(400).json({ ok: false });
 
-  const key = process.env.GROQ_API_KEY;
+  const key = process.env.OPENAI_API_KEY;
   if (!key) return res.status(500).json({ ok: false, error: 'no_key' });
 
   let userContext = '';
@@ -2136,17 +2136,17 @@ app.post('/api/support/ai', async (req, res) => {
   const systemPrompt = `Ты — дружелюбный помощник поддержки GiftBot. Отвечай ТОЛЬКО на русском языке, никогда не используй другие языки. Пиши кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО GiftBot:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа обязательно пиши ТОЧНО эту фразу (без изменений и опечаток): "Если ответ не помог — напишите «вызвать специалиста»"`;
 
   try {
-    const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'gpt-4o-mini',
         max_tokens: 400,
         messages: [{ role: 'system', content: systemPrompt }, ...messages]
       })
     });
     const data = await r.json();
-    console.log('[support] Groq:', r.status, JSON.stringify(data).slice(0, 200));
+    console.log('[support] OpenAI:', r.status, JSON.stringify(data).slice(0, 200));
     const text = data?.choices?.[0]?.message?.content;
     if (text) return res.json({ ok: true, text });
     return res.status(500).json({ ok: false, debug: data?.error?.message || JSON.stringify(data).slice(0,200) });
