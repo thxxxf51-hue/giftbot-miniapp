@@ -854,8 +854,16 @@ app.post('/api/bets/place', function(req, res) {
   const odds = req.body.odds;
   const amount = req.body.amount;
   const currency = req.body.currency || 'coins';
+  console.log('bets/place:', JSON.stringify({uid:uid?'ok':'MISSING', matchName:!!matchName, pick:!!pick, odds, amount, currency}));
   if (!uid || !matchName || !pick || !odds || !amount) {
-    return res.json({ ok: false, error: 'Неверные данные' });
+    const missing = [];
+    if(!uid) missing.push('uid');
+    if(!matchName) missing.push('matchName');
+    if(!pick) missing.push('pick');
+    if(!odds) missing.push('odds');
+    if(!amount) missing.push('amount');
+    console.log('bets/place MISSING:', missing.join(','));
+    return res.json({ ok: false, error: 'Неверные данные: ' + missing.join(',') });
   }
   const u = DB.users[uid];
   if (!u) return res.json({ ok: false, error: 'Пользователь не найден' });
