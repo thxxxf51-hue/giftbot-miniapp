@@ -848,41 +848,62 @@ app.get('/api/sports/debug', async function(req, res) {
 });
 
 app.post('/api/bets/place', function(req, res) {
-  const uid = req.body.uid;
-  const matchName = req.body.matchName;
-  const pick = req.body.pick;
-  const odds = req.body.odds;
-  const amount = req.body.amount;
-  const currency = req.body.currency || 'coins';
-  console.log('bets/place:', JSON.stringify({uid:uid?'ok':'MISSING', matchName:!!matchName, pick:!!pick, odds, amount, currency}));
-  if (!uid || !matchName || !pick || !odds || !amount) {
-    const missing = [];
-    if(!uid) missing.push('uid');
-    if(!matchName) missing.push('matchName');
-    if(!pick) missing.push('pick');
-    if(!odds) missing.push('odds');
-    if(!amount) missing.push('amount');
-    console.log('bets/place MISSING:', missing.join(','));
-    return res.json({ ok: false, error: 'Неверные данные: ' + missing.join(',') });
-  }
+  const uid      = String(req.body.uid || '').trim();
+  const matchName= String(req.body.matchName || '').slice(0, 120);
+  const pick     = String(req.body.pick || '').slice(0, 40);
+  const currency = ['coins','stars'].includes(req.body.currency) ? req.body.currency : 'coins';
+  const matchId  = parseInt(req.body.matchId) || 0;
+
+  // Strictly parse and clamp odds (1.01–20) — prevents odds manipulation
+  const odds = parseFloat(req.body.odds);
+  if (!isFinite(odds) || odds < 1.01 || odds > 20)
+    return res.json({ ok: false, error: 'Неверный коэффициент' });
+
+  // Strictly parse and clamp amount — prevents float/overflow exploits
+  const amount = Math.floor(Number(req.body.amount));
+  const maxBet  = currency === 'stars' ? 10000 : 10000000;
+  const min     = currency === 'stars' ? 50 : 1000;
+  if (!isFinite(amount) || amount < min || amount > maxBet)
+    return res.json({ ok: false, error: `Сумма ставки: ${min}–${maxBet.toLocaleString('ru')}` });
+
+  // Validate required fields
+  if (!uid || !matchName || !pick)
+    return res.json({ ok: false, error: 'Неверные данные' });
+
+  // Validate pick value
+  const validPicks = ['П1', 'П2', 'Ничья'];
+  if (!validPicks.some(p => pick.startsWith(p)))
+    return res.json({ ok: false, error: 'Неверный исход' });
+
   const u = DB.users[uid];
   if (!u) return res.json({ ok: false, error: 'Пользователь не найден' });
-  const min = currency === 'stars' ? 50 : 1000;
-  if (amount < min) return res.json({ ok: false, error: 'Мин. ставка: ' + min });
+
+  // Rate limit: max 10 pending bets at once
+  const pending = (u.sportsBets || []).filter(b => b.status === 'pending').length;
+  if (pending >= 10) return res.json({ ok: false, error: 'Макс. 10 активных ставок' });
+
+  // Balance check and deduction (atomic)
   if (currency === 'stars') {
-    if ((u.starsBalance || 0) < amount) return res.json({ ok: false, error: 'Недостаточно звёзд' });
-    u.starsBalance = (u.starsBalance || 0) - amount;
+    const bal = Math.floor(u.starsBalance || 0);
+    if (bal < amount) return res.json({ ok: false, error: 'Недостаточно звёзд' });
+    u.starsBalance = bal - amount;
   } else {
-    if ((u.balance || 0) < amount) return res.json({ ok: false, error: 'Недостаточно монет' });
-    u.balance = (u.balance || 0) - amount;
+    const bal = Math.floor(u.balance || 0);
+    if (bal < amount) return res.json({ ok: false, error: 'Недостаточно монет' });
+    u.balance = bal - amount;
   }
+
   if (!u.sportsBets) u.sportsBets = [];
-  const matchId = parseInt(req.body.matchId) || 0;
-  const bet = { id: Date.now(), matchId: matchId, matchName: matchName, pick: pick, odds: odds, amount: amount, currency: currency, status: 'pending', ts: Date.now() };
+  const bet = {
+    id: Date.now(), matchId, matchName, pick,
+    odds: parseFloat(odds.toFixed(2)),  // store rounded odds
+    amount, currency,
+    status: 'pending', winAmount: null, score: null, ts: Date.now()
+  };
   u.sportsBets.unshift(bet);
-  if (u.sportsBets.length > 200) u.sportsBets = u.sportsBets.slice(0, 200);
+  if (u.sportsBets.length > 100) u.sportsBets = u.sportsBets.slice(0, 100);
   saveDB();
-  res.json({ ok: true, bet: bet });
+  res.json({ ok: true, bet });
 });
 
 app.get('/api/bets/history', async function(req, res) {
