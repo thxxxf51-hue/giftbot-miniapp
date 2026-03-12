@@ -143,7 +143,7 @@ async function betsLoadLive(){
     const html=_groupAndRender(fixtures);
     if(!html){
       // No live matches — auto switch to Today tab
-      el.innerHTML='<div class="bets-empty"><div style="margin-bottom:8px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 032 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 032-10z"/><path d="M2 12h20"/></svg></div><span style="font-size:14px;font-weight:700">Нет live матчей</span>'<br><span style="font-size:11px;opacity:.6">Переключаем на предстоящие...</span></div>`;
+      el.innerHTML='<div class="bets-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg><br><span style="font-size:14px;font-weight:700">Нет live матчей</span><br><span style="font-size:11px;opacity:.6">Переключаем на предстоящие...</span></div>';
       const todayBtn=document.querySelector('.bets-tab:nth-child(2)');
       if(todayBtn) setTimeout(()=>betsSwitchTab('today',todayBtn),600);
       return;
@@ -240,21 +240,21 @@ function _histCard(b){
   let amtLine='';
   if(iw){
     const win=b.winAmount||Math.round(b.amount*b.odds);
-    amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
-      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+' '</span>'
-      +'<span style="font-size:14px;font-weight:900;color:#2ecc71">+ '+win.toLocaleString('ru')+' '+cur+' '</span>'
-      +'</div>';
+    amtLine=`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">`
+      +`<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: ${b.amount.toLocaleString("ru")} ${cur}</span>`
+      +`<span style="font-size:14px;font-weight:900;color:#2ecc71">+ ${win.toLocaleString("ru")} ${cur}</span>`
+      +`</div>`;
   } else if(il){
-    amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
-      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка</span>'
-      +'<span style="font-size:14px;font-weight:900;color:#ff6060">− '+b.amount.toLocaleString('ru')+' '+cur+' '</span>'
-      +'</div>';
+    amtLine=`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">`
+      +`<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка</span>`
+      +`<span style="font-size:14px;font-weight:900;color:#ff6060">− ${b.amount.toLocaleString("ru")} ${cur}</span>`
+      +`</div>`;
   } else {
     const pot=Math.round(b.amount*(b.odds||1));
-    amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
-      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+' '</span>'
-      +'<span style="font-size:13px;font-weight:800;color:#f4c430">→ '+pot.toLocaleString('ru')+' '+cur+' '</span>'
-      +'</div>';
+    amtLine=`<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">`
+      +`<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: ${b.amount.toLocaleString("ru")} ${cur}</span>`
+      +`<span style="font-size:13px;font-weight:800;color:#f4c430">→ ${pot.toLocaleString("ru")} ${cur}</span>`
+      +`</div>`;
   }
 
   return '<div style="background:#131208;border:1px solid rgba(255,255,255,.07);'+glow+'border-radius:14px;padding:12px 14px;margin-bottom:8px">'
