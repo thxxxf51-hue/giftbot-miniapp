@@ -1251,8 +1251,8 @@ body:not(.theme-light) .ppu-notif-item-time { color: rgba(255,255,255,.25); }
   display: flex;
   align-items: center;
   gap: 13px;
-  margin: 0 8px 8px;
-  padding: 13px 13px;
+  margin: 0 0 8px;
+  padding: 14px 16px;
   position: relative;
   z-index: 1;
 }
@@ -1289,21 +1289,22 @@ body:not(.theme-light) .ppu-notif-item-time { color: rgba(255,255,255,.25); }
 .prn-since { font-size: 11px; color: var(--muted); margin-top: 3px; }
 
 /* balances */
-.prn-bals { display: flex; gap: 8px; margin: 0 8px 8px; }
+.prn-bals { display: flex; gap: 8px; margin: 0 0 8px; }
 .prn-bal {
-  flex: 1; padding: 12px 13px;
+  flex: 1; padding: 14px 16px;
   position: relative; z-index: 1;
+  display: flex; flex-direction: column; justify-content: center;
 }
 .prn-bal-click { cursor: pointer; }
-.prn-bal-lbl { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; margin-bottom: 5px; }
+.prn-bal-lbl { font-size: 10px; color: var(--muted2); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; margin-bottom: 6px; }
 .prn-bal-val { font-size: 20px; font-weight: 900; line-height: 1; }
-.prn-bal-hint { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.prn-bal-hint { font-size: 10px; color: var(--muted); margin-top: 4px; }
 
 /* rows group */
-.prn-group { margin: 0 8px 8px; }
+.prn-group { margin: 0 0 8px; }
 .prn-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 12px 13px;
+  padding: 13px 16px;
   border-bottom: 1px solid rgba(255,255,255,.05);
   position: relative; z-index: 1;
 }
@@ -1326,7 +1327,7 @@ body.theme-light .prn-arr { color: rgba(0,0,0,.2); }
 body.theme-light .prn-row-v { color: #1a1a2e; }
 
 /* promo */
-.prn-promo { margin: 0 8px 8px; padding: 12px 13px; position: relative; z-index: 1; }
+.prn-promo { margin: 0 0 8px; padding: 14px 16px; position: relative; z-index: 1; }
 .prn-plbl {
   display: flex; align-items: center; gap: 6px;
   font-size: 12px; font-weight: 600; color: var(--green);
@@ -1365,3 +1366,62 @@ body.theme-light .prn-row-v { color: #1a1a2e; }
 body.theme-light .prn-pfield { background: rgba(0,0,0,.05); border-color: rgba(0,0,0,.1); }
 body.theme-light .prn-pin { color: #3a4a60; }
 body.theme-light .prn-pin::placeholder { color: #aaa; }
+
+/* ── profile cards: liquid glass — same as .gc on home ── */
+.prn-user,
+.prn-bal,
+.prn-group,
+.prn-promo {
+  background: rgba(28,30,32,0.9) !important;
+  backdrop-filter: blur(20px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+/* top-left highlight streak like Apple liquid glass */
+.prn-user::before,
+.prn-bal::before,
+.prn-group::before,
+.prn-promo::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255,255,255,0.07) 0%,
+    rgba(255,255,255,0.02) 30%,
+    transparent 60%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+/* bottom-right subtle reflection */
+.prn-user::after,
+.prn-bal::after,
+.prn-group::after,
+.prn-promo::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 60%; height: 40%;
+  background: linear-gradient(
+    315deg,
+    rgba(255,255,255,0.03) 0%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+body.theme-light .prn-user,
+body.theme-light .prn-bal,
+body.theme-light .prn-group,
+body.theme-light .prn-promo {
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.92) 0%,
+    rgba(240,242,245,0.85) 100%
+  ) !important;
+  border-color: rgba(0,0,0,0.07) !important;
+}
