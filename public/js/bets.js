@@ -13,6 +13,7 @@ let _bTab   = 'live';
 let _bCur   = 'coins';
 let _bOdds  = 2.0;
 let _bMatch = '';
+let _bFixId = 0;
 let _bPick  = '';
 let _bTimer = null;
 
@@ -92,7 +93,8 @@ function _card(fix, hi){
   const sH=showScore&&gh!=null?`<div style="font-size:18px;font-weight:900;color:${gh>ga?'#fff':'rgba(255,255,255,.35)'}">${gh}</div>`:'';
   const sA=showScore&&ga!=null?`<div style="font-size:18px;font-weight:900;color:${ga>gh?'#fff':'rgba(255,255,255,.35)'}">${ga}</div>`:'';
 
-  return `<div class="bmc" onclick="betsOpenSlip(this,'${Hesc} vs ${Aesc}',${o1},${ox},${o2},'${Hesc}','${Aesc}')">
+  const fixId=fix.fixture?.id||0;
+  return `<div class="bmc" data-fixid="${fixId}" onclick="betsOpenSlip(this,'${Hesc} vs ${Aesc}',${o1},${ox},${o2},'${Hesc}','${Aesc}',${fixId})">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">${statusHtml}<div style="font-size:9px;color:rgba(255,255,255,.18);font-weight:600">${live&&!pause?'идёт':pause?'перерыв':''}</div></div>
   <div style="display:flex;flex-direction:column;gap:5px">
     <div style="display:flex;align-items:center;gap:8px">
@@ -182,63 +184,92 @@ async function betsLoadToday(){
 /* ── история ставок ── */
 async function betsLoadHistory(){
   const el=document.getElementById('bets-hist-cont'); if(!el) return;
-  el.innerHTML=`<div class="bets-loading">Загружаем...</div>`;
-  try{
-    const uid=(typeof UID!=='undefined'?UID:'') || window.tgUserId || '';
-    const d=await fetch('/api/bets/history?uid='+uid).then(r=>r.json());
-    const bets=d.bets||[];
-    if(!bets.length){ el.innerHTML=`<div class="bets-empty">${COIN_SVG_Y}<br><span style="font-size:14px;font-weight:700">Ставок пока нет</span><br><span style="font-size:11px;opacity:.6">Сделай первую ставку!</span></div>`; return; }
-    const active=bets.filter(b=>b.status==='pending');
-    const done=bets.filter(b=>b.status!=='pending');
+  el.innerHTML='<div class="bets-loading">Загружаем...</div>';
+  const uid=(typeof UID!=='undefined'?UID:'')||window.tgUserId||'';
+  fetch('/api/bets/history?uid='+uid).then(r=>r.json()).then(d=>{
+    const list=d.bets||[];
+    // Sync updated balance from server
+    if(d.balance!==undefined && window.S){ window.S.balance=d.balance; if(typeof syncB==='function')syncB(); }
+    if(d.starsBalance!==undefined && window.S){ window.S.starsBalance=d.starsBalance; if(typeof syncB==='function')syncB(); }
+
+    if(!list.length){
+      el.innerHTML='<div class="bets-empty">'+COIN_SVG_Y+'<br><span style="font-size:14px;font-weight:700;color:#fff">Ставок пока нет</span><br><span style="font-size:11px;color:rgba(255,255,255,.4)">Сделай первую ставку!</span></div>';
+      return;
+    }
+    const active=list.filter(b=>b.status==='pending');
+    const done  =list.filter(b=>b.status!=='pending');
     let html='';
-    if(active.length){ html+=`<div class="bhist-sec">Активные</div>`; active.forEach(b=>{html+=_histItem(b);}); }
-    if(done.length)  { html+=`<div class="bhist-sec">Завершённые</div>`; done.forEach(b=>{html+=_histItem(b);}); }
+
+    if(active.length){
+      html+='<div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin:0 0 8px 2px">⚡ Актуальные матчи</div>';
+      active.forEach(b=>{ html+=_histCard(b); });
+    }
+
+    if(done.length){
+      if(active.length) html+='<div style="height:12px"></div>';
+      html+='<div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin:0 0 8px 2px">✓ Завершённые</div>';
+      done.forEach(b=>{ html+=_histCard(b); });
+    }
+
     el.innerHTML=html;
-  } catch(e){ el.innerHTML=`<div class="bets-empty">Ошибка загрузки</div>`; }
-}
-
-function _histItem(b){
-  const iw=b.status==='win',il=b.status==='lose',ip=b.status==='pending';
-  const dc=iw?'#2ecc71':il?'#ff6060':'#f4c430';
-  const rt=iw?`+ ${b.winAmount?.toLocaleString('ru')}`:il?`− ${b.amount?.toLocaleString('ru')}`:`→ ${Math.round((b.amount||0)*(b.odds||1))?.toLocaleString('ru')}`;
-  const dotStyle=ip?`background:${dc};box-shadow:0 0 6px ${dc};animation:bpulse 2s infinite`:`background:${dc};box-shadow:0 0 5px ${dc}`;
-  const unitSvg=b.currency==='stars'?'⭐':`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2.2" stroke-linecap="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
-  return `<div class="bhist-item"><div class="bhist-dot" style="${dotStyle}"></div><div class="bhist-info"><div class="bhist-match">${b.matchName}</div><div class="bhist-pick">${b.pick} · × ${(b.odds||0).toFixed(2)}</div></div><div class="bhist-right"><div class="bhist-stake">${(b.amount||0).toLocaleString('ru')} ${unitSvg}</div><div class="bhist-res" style="color:${dc}">${rt}</div></div></div>`;
-}
-
-/* ── переключение вкладок ── */
-function betsSwitchTab(name, el){
-  _bTab=name;
-  document.querySelectorAll('.bets-tab').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  ['live','today','history'].forEach(t=>{
-    const c=document.getElementById('bets-tab-'+t);
-    if(c) c.style.display=(t===name)?'':'none';
+  }).catch(()=>{
+    el.innerHTML='<div class="bets-empty">Ошибка загрузки</div>';
   });
-  if(name==='live')    betsLoadLive();
-  if(name==='today')   betsLoadToday();
-  if(name==='history') betsLoadHistory();
 }
 
-/* ── вход/выход со страницы ── */
-function onBetsPageEnter(){
-  clearInterval(_bTimer);
-  _bTab='live';
-  document.querySelectorAll('.bets-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
-  const tl=document.getElementById('bets-tab-live');
-  const tt=document.getElementById('bets-tab-today');
-  const th=document.getElementById('bets-tab-history');
-  if(tl) tl.style.display='';
-  if(tt) tt.style.display='none';
-  if(th) th.style.display='none';
-  betsLoadLive();
-  _bTimer=setInterval(()=>{ if(_bTab==='live') betsLoadLive(); },30000);
-}
-function onBetsPageLeave(){ clearInterval(_bTimer); }
+function _histCard(b){
+  const iw=b.status==='win', il=b.status==='lose', ip=b.status==='pending';
+  const cur=b.currency==='stars'?'⭐':'🪙';
+  const curLabel=b.currency==='stars'?'звёзд':'монет';
 
-/* ── открыть купон ── */
-function betsOpenSlip(card, matchName, o1, ox, o2, home, away){
-  _bMatch=matchName; _bOdds=o1; _bPick='П1 ('+home+')'; _bCur='coins';
+  // Status badge
+  let badge='', glow='';
+  if(ip){
+    badge='<span style="background:rgba(244,196,48,.12);border:1px solid rgba(244,196,48,.3);color:#f4c430;font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px">В игре</span>';
+  } else if(iw){
+    badge='<span style="background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.3);color:#2ecc71;font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px">Выигрыш</span>';
+    glow='box-shadow:0 0 0 1px rgba(46,204,113,.2);';
+  } else {
+    badge='<span style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);color:#ff6060;font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px">Проигрыш</span>';
+  }
+
+  // Score line
+  const scoreLine=b.score?'<span style="font-size:11px;color:rgba(255,255,255,.35);margin-left:6px">'+b.score+'</span>':'';
+
+  // Amount line
+  let amtLine='';
+  if(iw){
+    const win=b.winAmount||Math.round(b.amount*b.odds);
+    amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
+      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+'</span>'
+      +'<span style="font-size:14px;font-weight:900;color:#2ecc71">+ '+win.toLocaleString('ru')+' '+cur+'</span>'
+      +'</div>';
+  } else if(il){
+    amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
+      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка</span>'
+      +'<span style="font-size:14px;font-weight:900;color:#ff6060">− '+b.amount.toLocaleString('ru')+' '+cur+'</span>'
+      +'</div>';
+  } else {
+    const pot=Math.round(b.amount*(b.odds||1));
+    amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
+      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+'</span>'
+      +'<span style="font-size:13px;font-weight:800;color:#f4c430">→ '+pot.toLocaleString('ru')+' '+cur+'</span>'
+      +'</div>';
+  }
+
+  return '<div style="background:#131208;border:1px solid rgba(255,255,255,.07);'+glow+'border-radius:14px;padding:12px 14px;margin-bottom:8px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+    +'<div style="font-size:12px;font-weight:800;color:#fff;flex:1;margin-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+b.matchName+scoreLine+'</div>'
+    +badge
+    +'</div>'
+    +'<div style="font-size:11px;color:rgba(255,255,255,.5)">'+b.pick+' <span style="color:rgba(255,255,255,.25)">·</span> <span style="color:#bedd30">×'+( b.odds||0).toFixed(2)+'</span></div>'
+    +amtLine
+    +'</div>';
+}
+
+
+function betsOpenSlip(card, matchName, o1, ox, o2, home, away, fixId){
+  _bMatch=matchName; _bFixId=fixId||0; _bOdds=o1; _bPick='П1 ('+home+')'; _bCur='coins';
   // Set match name
   const elMatch = document.getElementById('bs-match');
   const elPick  = document.getElementById('bs-pick');
@@ -284,7 +315,8 @@ function betsPickOdd(btn){
   const o1=parseFloat(odds[0]?.dataset.odds||2);
   const ox=parseFloat(odds[1]?.dataset.odds||3);
   const o2=parseFloat(odds[2]?.dataset.odds||3.5);
-  betsOpenSlip(card,H+' vs '+A,o1,ox,o2,H,A);
+  const fId=parseInt(card.dataset.fixid||0);
+  betsOpenSlip(card,H+' vs '+A,o1,ox,o2,H,A,fId);
   const idx=[...card.querySelectorAll('.bodd')].indexOf(btn);
   document.querySelectorAll('.bsodd').forEach((b,i)=>b.classList.toggle('bsodd-sel',i===idx));
   if(idx>=0){
@@ -360,7 +392,7 @@ async function betsSubmit(){
   const btn=document.getElementById('bs-submit');
   btn.disabled=true; btn.style.opacity='.6';
   try{
-    const d=await fetch('/api/bets/place',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,matchName:_bMatch,pick:_bPick,odds:_bOdds,amount:amt,currency:_bCur})}).then(r=>r.json());
+    const d=await fetch('/api/bets/place',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,matchId:_bFixId,matchName:_bMatch,pick:_bPick,odds:_bOdds,amount:amt,currency:_bCur})}).then(r=>r.json());
     if(d.ok){
       betsCloseSlip();
       // Deduct locally so UI updates immediately
