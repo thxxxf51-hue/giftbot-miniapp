@@ -27,6 +27,7 @@ function showBanScreen(until) {
       </div>
     `}
     <div style="margin-top:32px;font-size:11px;color:#333;text-align:center">По вопросам обратитесь к администратору</div>
+    <div style="margin-top:32px;font-size:11px;color:#333;text-align:center">Админ - @assate</div>
   `;
 
   document.body.appendChild(ban);
