@@ -112,14 +112,14 @@ function updateVipUI(){
 /* ══ NICK COLOR ══ */
 function applyNick(cid){
   S.nickColor=cid;save();
-  const w=document.getElementById('h-name-wrap');
-  if(w){w.className='uname '+(cid||'nc-default');}
+  const cls='uname '+(cid||'nc-default');
+  const wh=document.getElementById('h-name-wrap');
+  if(wh)wh.className=cls;
+  const wp=document.getElementById('p-name-wrap');
+  if(wp)wp.className='prn-name '+cls;
   const pc=document.getElementById('p-color');
   const c=COLORS.find(x=>x.id===cid);
   if(pc)pc.textContent=c?c.label:'Стандартный';
-  const pn=document.getElementById('p-name');
-  if(pn&&cid){pn.style.background=c.grad;pn.style.webkitBackgroundClip='text';pn.style.webkitTextFillColor='transparent';pn.style.backgroundClip='text';}
-  else if(pn){pn.style.background='';pn.style.webkitTextFillColor='';}
 }
 
 /* ══ CROWN ══ */

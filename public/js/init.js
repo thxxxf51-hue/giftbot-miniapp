@@ -75,6 +75,9 @@ async function init(){
   }).catch(()=>{});
   document.getElementById('h-name').textContent=name;
   document.getElementById('p-name').textContent=name;
+  // sync nick color wrap on profile
+  const pnw=document.getElementById('p-name-wrap');
+  if(pnw)pnw.className='prn-name uname '+(S.nickColor||'nc-default');
   document.getElementById('p-un').textContent=uname;
   const pregRow = document.getElementById('p-reg-row');
   if(pregRow) pregRow.textContent = 'С нами с ' + (S.regDate || '—');
