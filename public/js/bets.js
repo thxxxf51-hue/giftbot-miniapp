@@ -184,7 +184,7 @@ async function betsLoadHistory(){
   const el=document.getElementById('bets-hist-cont'); if(!el) return;
   el.innerHTML=`<div class="bets-loading">Загружаем...</div>`;
   try{
-    const uid=window.UID||window.tgUserId||'';
+    const uid=(typeof UID!=='undefined'?UID:'') || window.tgUserId || '';
     const d=await fetch('/api/bets/history?uid='+uid).then(r=>r.json());
     const bets=d.bets||[];
     if(!bets.length){ el.innerHTML=`<div class="bets-empty">${COIN_SVG_Y}<br><span style="font-size:14px;font-weight:700">Ставок пока нет</span><br><span style="font-size:11px;opacity:.6">Сделай первую ставку!</span></div>`; return; }
@@ -356,7 +356,7 @@ async function betsSubmit(){
       return;
     }
   }
-  const uid=window.UID||window.tgUserId||'';
+  const uid=(typeof UID!=='undefined'?UID:'') || window.tgUserId || '';
   const btn=document.getElementById('bs-submit');
   btn.disabled=true; btn.style.opacity='.6';
   try{
