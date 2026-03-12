@@ -944,60 +944,60 @@
 <!-- PvP History Modal -->
 
 <!-- ═══ BET SLIP MODAL ═══ -->
-<div id="bets-slip-mo" onclick="if(event.target===this)betsCloseSlip()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);z-index:8000;align-items:center;justify-content:center;padding:20px">
-  <div style="width:100%;max-width:390px;background:#111008;border:1px solid rgba(244,196,48,.18);border-radius:20px;padding:16px;position:relative;animation:betSlipIn .26s cubic-bezier(.34,1.4,.64,1)">
+<div id="bets-slip-mo" onclick="if(event.target===this)betsCloseSlip()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);z-index:9000;align-items:flex-end;justify-content:center;padding-bottom:0">
+  <div style="width:100%;max-width:420px;background:#131208;border:1px solid rgba(190,221,48,.15);border-radius:24px 24px 0 0;padding:20px 16px 32px;position:relative;animation:bSlipIn .28s cubic-bezier(.34,1.4,.64,1)">
+    <!-- handle -->
+    <div style="width:36px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;margin:0 auto 16px"></div>
     <!-- close -->
-    <button onclick="betsCloseSlip()" style="position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.07);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.4)">
+    <button onclick="betsCloseSlip()" style="position:absolute;top:16px;right:16px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.5)">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="1" y1="1" x2="11" y2="11"/><line x1="11" y1="1" x2="1" y2="11"/></svg>
     </button>
-    <!-- title -->
-    <div style="font-size:13px;font-weight:800;color:#f4c430;display:flex;align-items:center;gap:6px;margin-bottom:8px">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f4c430" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>
-      Ваша ставка
+    <!-- match name -->
+    <div id="bs-match" style="font-size:13px;font-weight:800;color:#fff;margin-bottom:3px;padding-right:32px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:14px">Выбери исход</div>
+    <!-- odds row in slip -->
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      <div class="bsodd" onclick="betsSlipPick(this)" data-odds="2.0" data-label="П1"><span class="bsodd-lbl">П1</span><span class="bsodd-v">2.00</span></div>
+      <div class="bsodd" onclick="betsSlipPick(this)" data-odds="3.2" data-label="Ничья"><span class="bsodd-lbl">Х</span><span class="bsodd-v">3.20</span></div>
+      <div class="bsodd" onclick="betsSlipPick(this)" data-odds="3.5" data-label="П2"><span class="bsodd-lbl">П2</span><span class="bsodd-v">3.50</span></div>
     </div>
-    <div id="bets-slip-match" style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:3px"></div>
-    <div style="display:flex;align-items:center;gap:7px;margin-bottom:12px">
-      <div id="bets-slip-pick" style="font-size:14px;font-weight:800;color:#fff"></div>
-      <div id="bets-slip-odds" style="background:rgba(244,196,48,.14);border:1.5px solid rgba(244,196,48,.35);border-radius:7px;padding:2px 9px;font-size:12px;font-weight:900;color:#f4c430"></div>
+    <!-- selected pick -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <div style="font-size:12px;color:rgba(255,255,255,.4)">Ставка на:</div>
+      <div id="bs-pick" style="font-size:13px;font-weight:800;color:#bedd30"></div>
+      <div id="bs-odds-badge" style="background:rgba(190,221,48,.12);border:1px solid rgba(190,221,48,.3);border-radius:8px;padding:2px 8px;font-size:12px;font-weight:900;color:#bedd30;margin-left:auto"></div>
     </div>
-    <!-- change outcome -->
-    <div id="bets-slip-odds-row" style="display:flex;gap:5px;margin-bottom:12px">
-      <div class="bsodd" onclick="betsSlipPickOdd(this)" data-odds="2.0" data-label="П1"><span class="bsodd-lbl">П1</span><span class="bsodd-val">2.00</span></div>
-      <div class="bsodd" onclick="betsSlipPickOdd(this)" data-odds="3.2" data-label="Х"><span class="bsodd-lbl">Х</span><span class="bsodd-val">3.20</span></div>
-      <div class="bsodd" onclick="betsSlipPickOdd(this)" data-odds="3.5" data-label="П2"><span class="bsodd-lbl">П2</span><span class="bsodd-val">3.50</span></div>
+    <!-- currency toggle -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="bsct active" id="bsct-coins" onclick="betsSetCur('coins',this)" style="flex:1">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>
+        Монеты
+      </button>
+      <button class="bsct" id="bsct-stars" onclick="betsSetCur('stars',this)" style="flex:1">⭐ Звёзды</button>
     </div>
-    <!-- currency -->
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
-      <div style="display:flex;gap:3px;background:rgba(0,0,0,.35);border-radius:9px;padding:3px">
-        <button class="bsct active" id="bsct-coins" onclick="betsSetCur('coins',this)">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>
-          Монеты
-        </button>
-        <button class="bsct" id="bsct-stars" onclick="betsSetCur('stars',this)">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          Звёзды
-        </button>
-      </div>
-      <span id="bets-slip-mincur" style="font-size:10px;color:rgba(255,255,255,.3)">мин. 1 000</span>
+    <!-- quick amounts -->
+    <div style="display:flex;gap:5px;margin-bottom:10px">
+      <button class="bq" onclick="betsSetAmt(1000)">1К</button>
+      <button class="bq" onclick="betsSetAmt(5000)">5К</button>
+      <button class="bq" onclick="betsSetAmt(10000)">10К</button>
+      <button class="bq" onclick="betsSetAmt(25000)">25К</button>
+      <button class="bq" onclick="betsSetAmt(50000)">50К</button>
     </div>
     <!-- amount input -->
-    <input id="bets-slip-amount" type="number" value="5000" placeholder="1 000" oninput="betsCalcPot()"
-      style="width:100%;background:rgba(0,0,0,.5);border:1.5px solid rgba(244,196,48,.2);border-radius:11px;padding:10px 13px;color:#f4c430;font-size:18px;font-weight:900;outline:none;font-family:inherit;margin-bottom:8px">
-    <!-- quick -->
-    <div style="display:flex;gap:4px;margin-bottom:10px">
-      <button class="bsq" onclick="betsSetAmt(1000)">1K</button>
-      <button class="bsq" onclick="betsSetAmt(5000)">5K</button>
-      <button class="bsq" onclick="betsSetAmt(10000)">10K</button>
-      <button class="bsq" onclick="betsSetAmt(25000)">25K</button>
-      <button class="bsq" onclick="betsSetAmt(50000)">50K</button>
+    <div style="display:flex;align-items:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;margin-bottom:6px;gap:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>
+      <input id="bs-amount" type="number" value="5000" min="1" oninput="betsCalcPot()" style="flex:1;background:none;border:none;outline:none;font-size:16px;font-weight:800;color:#fff;width:100%">
     </div>
-    <!-- potential -->
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:rgba(0,0,0,.28);border-radius:10px;margin-bottom:10px">
-      <span style="font-size:10px;color:rgba(255,255,255,.35);font-weight:600">Выигрыш</span>
-      <span id="bets-slip-pot" style="font-size:15px;font-weight:900;color:#2ecc71;display:flex;align-items:center;gap:4px"></span>
+    <div id="bs-mincur" style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:14px;padding-left:2px">мин. 1 000 монет</div>
+    <!-- potential win -->
+    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.15);border-radius:12px;padding:10px 14px;margin-bottom:16px">
+      <div style="font-size:12px;color:rgba(255,255,255,.4)">Потенциальный выигрыш</div>
+      <div id="bs-pot" style="font-size:14px;font-weight:900;color:#2ecc71"></div>
     </div>
     <!-- submit -->
-    <button id="bets-slip-submit" onclick="betsSubmit()" style="width:100%;background:linear-gradient(135deg,#f0c015,#c98e0a);color:#000;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px"></button>
+    <button id="bs-submit" onclick="betsSubmit()" style="width:100%;height:48px;border-radius:14px;background:linear-gradient(135deg,#bedd30,#8faa10);border:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:900;color:#0a0c04;cursor:pointer;letter-spacing:-.3px">
+      Поставить
+    </button>
   </div>
 </div>
 
