@@ -134,7 +134,7 @@ function _groupAndRender(fixtures){
 /* ── загрузка live матчей ── */
 async function betsLoadLive(){
   const el=document.getElementById('bets-live-cont'); if(!el) return;
-  el.innerHTML=`<div class="bets-loading">⚽ Загружаем матчи...</div>`;
+  el.innerHTML=`<div class="bets-loading"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg> Загружаем матчи...</span></div>`;
   try{
     const d=await _apiFetch('/fixtures?live=all&timezone=Europe/Moscow');
     const fixtures=d.response||[];
@@ -143,7 +143,7 @@ async function betsLoadLive(){
     const html=_groupAndRender(fixtures);
     if(!html){
       // No live matches — auto switch to Today tab
-      el.innerHTML=`<div class="bets-empty">⚽<br><span style="font-size:14px;font-weight:700">Нет live матчей</span><br><span style="font-size:11px;opacity:.6">Переключаем на предстоящие...</span></div>`;
+      el.innerHTML='<div class="bets-empty"><div style="margin-bottom:8px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 032 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 032-10z"/><path d="M2 12h20"/></svg></div><span style="font-size:14px;font-weight:700">Нет live матчей</span>'<br><span style="font-size:11px;opacity:.6">Переключаем на предстоящие...</span></div>`;
       const todayBtn=document.querySelector('.bets-tab:nth-child(2)');
       if(todayBtn) setTimeout(()=>betsSwitchTab('today',todayBtn),600);
       return;
@@ -158,7 +158,7 @@ async function betsLoadLive(){
 /* ── загрузка матчей на сегодня ── */
 async function betsLoadToday(){
   const el=document.getElementById('bets-today-cont'); if(!el) return;
-  el.innerHTML=`<div class="bets-loading">⚽ Загружаем матчи...</div>`;
+  el.innerHTML=`<div class="bets-loading"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/><path d="M2 12h20"/></svg> Загружаем матчи...</span></div>`;
   try{
     // Fetch today + tomorrow to always show something
     const today=new Date().toISOString().slice(0,10);
@@ -201,13 +201,13 @@ async function betsLoadHistory(){
     let html='';
 
     if(active.length){
-      html+='<div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin:0 0 8px 2px">⚡ Актуальные матчи</div>';
+      html+='<div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin:0 0 8px 2px"><span style="display:inline-flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="#f4c430" stroke="none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Актуальные матчи</span></div>';
       active.forEach(b=>{ html+=_histCard(b); });
     }
 
     if(done.length){
       if(active.length) html+='<div style="height:12px"></div>';
-      html+='<div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin:0 0 8px 2px">✓ Завершённые</div>';
+      html+='<div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:rgba(255,255,255,.35);text-transform:uppercase;margin:0 0 8px 2px"><span style="display:inline-flex;align-items:center;gap:5px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#bedd30" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Завершённые</span></div>';
       done.forEach(b=>{ html+=_histCard(b); });
     }
 
@@ -219,18 +219,18 @@ async function betsLoadHistory(){
 
 function _histCard(b){
   const iw=b.status==='win', il=b.status==='lose', ip=b.status==='pending';
-  const cur=b.currency==='stars'?'⭐':'🪙';
+  const cur=b.currency==='stars'?'⭐':'';
   const curLabel=b.currency==='stars'?'звёзд':'монет';
 
   // Status badge
   let badge='', glow='';
   if(ip){
-    badge='<span style="background:rgba(244,196,48,.12);border:1px solid rgba(244,196,48,.3);color:#f4c430;font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px">В игре</span>';
+    badge='<span style="background:rgba(244,196,48,.12);border:1px solid rgba(244,196,48,.3);color:#f4c430;font-size:10px;font-weight:800;border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center;gap:4px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f4c430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> В игре</span>';
   } else if(iw){
-    badge='<span style="background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.3);color:#2ecc71;font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px">Выигрыш</span>';
+    badge='<span style="background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.3);color:#2ecc71;font-size:10px;font-weight:800;border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center;gap:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f4c430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 01-2-2V5h4"/><path d="M18 9h2a2 2 0 002-2V5h-4"/><path d="M12 17v4"/><path d="M8 21h8"/><path d="M6 9a6 6 0 0012 0V3H6v6z"/></svg> Выигрыш</span>';
     glow='box-shadow:0 0 0 1px rgba(46,204,113,.2);';
   } else {
-    badge='<span style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);color:#ff6060;font-size:10px;font-weight:800;border-radius:6px;padding:2px 8px">Проигрыш</span>';
+    badge='<span style="background:rgba(255,80,80,.1);border:1px solid rgba(255,80,80,.25);color:#ff6060;font-size:10px;font-weight:800;border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center;gap:4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff6060" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Проигрыш</span>';
   }
 
   // Score line
@@ -241,19 +241,19 @@ function _histCard(b){
   if(iw){
     const win=b.winAmount||Math.round(b.amount*b.odds);
     amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
-      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+'</span>'
-      +'<span style="font-size:14px;font-weight:900;color:#2ecc71">+ '+win.toLocaleString('ru')+' '+cur+'</span>'
+      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+' '</span>'
+      +'<span style="font-size:14px;font-weight:900;color:#2ecc71">+ '+win.toLocaleString('ru')+' '+cur+' '</span>'
       +'</div>';
   } else if(il){
     amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
       +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка</span>'
-      +'<span style="font-size:14px;font-weight:900;color:#ff6060">− '+b.amount.toLocaleString('ru')+' '+cur+'</span>'
+      +'<span style="font-size:14px;font-weight:900;color:#ff6060">− '+b.amount.toLocaleString('ru')+' '+cur+' '</span>'
       +'</div>';
   } else {
     const pot=Math.round(b.amount*(b.odds||1));
     amtLine='<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)">'
-      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+'</span>'
-      +'<span style="font-size:13px;font-weight:800;color:#f4c430">→ '+pot.toLocaleString('ru')+' '+cur+'</span>'
+      +'<span style="font-size:11px;color:rgba(255,255,255,.4)">Ставка: '+b.amount.toLocaleString('ru')+' '+cur+' '</span>'
+      +'<span style="font-size:13px;font-weight:800;color:#f4c430">→ '+pot.toLocaleString('ru')+' '+cur+' '</span>'
       +'</div>';
   }
 
@@ -375,7 +375,7 @@ function betsCloseSlip(){
 async function betsSubmit(){
   const amt=parseInt(document.getElementById('bs-amount').value)||0;
   const min=_bCur==='stars'?50:1000;
-  if(amt<min){ toast(`Мин. ставка: ${min} ${_bCur==='stars'?'⭐':'🪙'}`,'r'); return; }
+  if(amt<min){ toast('Мин. ставка: '+min+' '+(_bCur==='stars'?'⭐':'монет'),'r'); return; }
   // Check stars balance before sending
   if(_bCur==='stars'){
     const starBal=window.S?.starsBalance||0;
@@ -384,7 +384,7 @@ async function betsSubmit(){
       // Open stars deposit - try standard ways
       if(typeof openStarsMo==='function') openStarsMo();
       else if(typeof go==='function') go('shop');
-      toast('Недостаточно звёзд — пополни баланс ⭐','r');
+      toast('Недостаточно звёзд — пополни баланс','r');
       return;
     }
   }
@@ -400,7 +400,7 @@ async function betsSubmit(){
       else if(window.S) window.S.balance=Math.max(0,(window.S.balance||0)-amt);
       if(typeof syncB==='function') syncB();
       if(typeof updateB==='function') updateB();
-      toast('✅ Ставка принята!','g');
+      toast('<span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Ставка принята!</span>','g');
     }
     else toast(d.error||'Ошибка ставки','r');
   } catch(e){ toast('Ошибка сети','r'); }
