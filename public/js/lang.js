@@ -258,3 +258,111 @@ if (document.readyState === 'loading') {
 } else {
   _initLangTheme();
 }
+
+/* ════════════════════════════
+   NOTIFICATIONS
+════════════════════════════ */
+const _NOTIF_KEY = 'gb4_notifs_' + (typeof UID !== 'undefined' ? UID : 'u');
+let _notifPanelOpen = false;
+
+function _loadNotifs() {
+  try { return JSON.parse(localStorage.getItem(_NOTIF_KEY) || '[]'); } catch(e) { return []; }
+}
+function _saveNotifs(arr) {
+  try { localStorage.setItem(_NOTIF_KEY, JSON.stringify(arr)); } catch(e) {}
+}
+
+function _notifTimeAgo(ts) {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return 'только что';
+  if (diff < 3600) return Math.floor(diff/60) + ' мин назад';
+  if (diff < 86400) return Math.floor(diff/3600) + ' ч назад';
+  if (diff < 172800) return 'вчера';
+  return new Date(ts).toLocaleDateString('ru', {day:'numeric', month:'short'});
+}
+
+function renderNotifBadge() {
+  const notifs = _loadNotifs();
+  const unread = notifs.filter(n => !n.read).length;
+  const dot = document.getElementById('ppu-notif-dot');
+  const count = document.getElementById('ppu-notif-count');
+  if (dot) dot.style.display = unread > 0 ? 'block' : 'none';
+  if (count) {
+    count.style.display = unread > 0 ? 'block' : 'none';
+    count.textContent = unread > 9 ? '9+' : unread;
+  }
+}
+
+function renderNotifList() {
+  const notifs = _loadNotifs();
+  const list = document.getElementById('ppu-notif-list');
+  const empty = document.getElementById('ppu-notif-empty');
+  if (!list) return;
+  if (!notifs.length) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = notifs.map(function(n, i) {
+    return '<div class="ppu-notif-item ' + (n.read ? 'read' : 'unread') + '" onclick="event.stopPropagation();markNotifRead(' + i + ')">'
+      + '<div class="ppu-notif-excl">!</div>'
+      + '<div class="ppu-notif-item-body">'
+      + '<div class="ppu-notif-item-text">' + n.text.replace(/</g,'&lt;') + '</div>'
+      + '<div class="ppu-notif-item-time">' + _notifTimeAgo(n.ts) + '</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+function markNotifRead(idx) {
+  const notifs = _loadNotifs();
+  if (notifs[idx]) { notifs[idx].read = true; _saveNotifs(notifs); }
+  renderNotifList();
+  renderNotifBadge();
+}
+
+function markAllNotifsRead() {
+  const notifs = _loadNotifs();
+  notifs.forEach(function(n) { n.read = true; });
+  _saveNotifs(notifs);
+  renderNotifList();
+  renderNotifBadge();
+}
+
+function toggleNotifPanel() {
+  _notifPanelOpen = !_notifPanelOpen;
+  const panel = document.getElementById('ppu-notif-panel');
+  const chevron = document.getElementById('ppu-notif-chevron');
+  if (panel) panel.classList.toggle('open', _notifPanelOpen);
+  if (chevron) chevron.classList.toggle('open', _notifPanelOpen);
+  if (_notifPanelOpen) {
+    renderNotifList();
+    // Mark all read after short delay
+    setTimeout(markAllNotifsRead, 1200);
+  }
+}
+
+// Poll for new notifications every 30s
+function _pollNotifs() {
+  if (!UID) return;
+  fetch('/api/notifications?uid=' + UID)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d.notifications || !d.notifications.length) return;
+      const saved = _loadNotifs();
+      const savedIds = new Set(saved.map(function(n) { return n.id; }));
+      let added = 0;
+      d.notifications.forEach(function(n) {
+        if (!savedIds.has(n.id)) { saved.unshift({ id: n.id, text: n.text, ts: n.ts, read: false }); added++; }
+      });
+      if (added > 0) { _saveNotifs(saved.slice(0, 50)); renderNotifBadge(); }
+    })
+    .catch(function() {});
+}
+
+// Init on load
+document.addEventListener('DOMContentLoaded', function() {
+  renderNotifBadge();
+  _pollNotifs();
+  setInterval(_pollNotifs, 30000);
+});
