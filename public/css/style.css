@@ -909,3 +909,150 @@ body.theme-light .bets-tab.active{background:rgba(0,0,0,.07);color:#1a1a2e}
 body.theme-light .bmc{background:rgba(255,255,255,.88);border-color:rgba(0,0,0,.07)}
 body.theme-light .bets-loading,body.theme-light .bets-empty{color:rgba(0,0,0,.3)}
 body.theme-light .bhist-item{background:rgba(255,255,255,.88)}
+
+/* ── NOTIFICATION ROW IN AVATAR POPUP ── */
+.ppu-notif-sep {
+  height: 1px;
+  background: rgba(0,0,0,.08);
+  margin: 5px 0;
+}
+body:not(.theme-light) .ppu-notif-sep { background: rgba(255,255,255,.07); }
+
+.ppu-notif-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 5px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .15s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ppu-notif-row:active { background: rgba(0,0,0,.06); }
+body:not(.theme-light) .ppu-notif-row:active { background: rgba(255,255,255,.07); }
+
+.ppu-notif-ico {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  background: rgba(255,200,50,.13);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  color: #d4a000;
+}
+body:not(.theme-light) .ppu-notif-ico { background: rgba(255,200,50,.12); color: #ffc832; }
+.ppu-notif-ico svg { width: 13px; height: 13px; }
+
+.ppu-notif-dot {
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: #ff3b3b;
+  border: 2px solid #f2f5f9;
+}
+body:not(.theme-light) .ppu-notif-dot { border-color: #1e2530; }
+
+.ppu-notif-label {
+  flex: 1;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #2a3a55;
+}
+body:not(.theme-light) .ppu-notif-label { color: rgba(255,255,255,.85); }
+
+.ppu-notif-count {
+  font-size: 10px;
+  font-weight: 800;
+  background: #ff3b3b;
+  color: #fff;
+  border-radius: 10px;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.ppu-notif-chevron {
+  width: 12px; height: 12px;
+  color: #8a9ab5;
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+body:not(.theme-light) .ppu-notif-chevron { color: rgba(255,255,255,.3); }
+.ppu-notif-panel.open + * .ppu-notif-chevron,
+#ppu-notif-chevron.open { transform: rotate(180deg); }
+
+/* Panel */
+.ppu-notif-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .25s cubic-bezier(.4,0,.2,1);
+}
+.ppu-notif-panel.open { max-height: 260px; overflow-y: auto; }
+
+.ppu-notif-empty {
+  font-size: 11px;
+  color: #8a9ab5;
+  text-align: center;
+  padding: 10px 0 4px;
+}
+body:not(.theme-light) .ppu-notif-empty { color: rgba(255,255,255,.3); }
+
+/* Notification item */
+.ppu-notif-item {
+  display: flex;
+  gap: 8px;
+  padding: 8px 5px 8px 3px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .15s;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.ppu-notif-item:last-child { border-bottom: none; }
+.ppu-notif-item:active { background: rgba(0,0,0,.04); }
+body:not(.theme-light) .ppu-notif-item { border-bottom-color: rgba(255,255,255,.06); }
+body:not(.theme-light) .ppu-notif-item:active { background: rgba(255,255,255,.05); }
+
+.ppu-notif-item.unread {
+  background: rgba(255,200,50,.06);
+  border-radius: 9px;
+}
+body:not(.theme-light) .ppu-notif-item.unread { background: rgba(255,200,50,.07); }
+
+.ppu-notif-excl {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  background: rgba(255,200,50,.18);
+  color: #c48000;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-style: normal;
+}
+body:not(.theme-light) .ppu-notif-excl { background: rgba(255,200,50,.15); color: #ffc832; }
+
+.ppu-notif-item-body { flex: 1; min-width: 0; }
+.ppu-notif-item-text {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #2a3a55;
+  font-weight: 600;
+  word-break: break-word;
+}
+body:not(.theme-light) .ppu-notif-item-text { color: rgba(255,255,255,.8); }
+.ppu-notif-item.read .ppu-notif-item-text { color: #8a9ab5; font-weight: 500; }
+body:not(.theme-light) .ppu-notif-item.read .ppu-notif-item-text { color: rgba(255,255,255,.35); }
+
+.ppu-notif-item-time {
+  font-size: 9px;
+  color: #a0aec0;
+  margin-top: 2px;
+}
+body:not(.theme-light) .ppu-notif-item-time { color: rgba(255,255,255,.25); }
+
+/* Wider popup to fit notifications */
+#av-popup { width: 185px; }
+
