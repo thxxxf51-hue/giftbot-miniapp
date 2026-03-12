@@ -877,18 +877,71 @@ app.post('/api/bets/place', function(req, res) {
     u.balance = (u.balance || 0) - amount;
   }
   if (!u.sportsBets) u.sportsBets = [];
-  const bet = { id: Date.now(), matchName: matchName, pick: pick, odds: odds, amount: amount, currency: currency, status: 'pending', ts: Date.now() };
+  const matchId = parseInt(req.body.matchId) || 0;
+  const bet = { id: Date.now(), matchId: matchId, matchName: matchName, pick: pick, odds: odds, amount: amount, currency: currency, status: 'pending', ts: Date.now() };
   u.sportsBets.unshift(bet);
   if (u.sportsBets.length > 200) u.sportsBets = u.sportsBets.slice(0, 200);
   saveDB();
   res.json({ ok: true, bet: bet });
 });
 
-app.get('/api/bets/history', function(req, res) {
-  const uid = req.query.uid;
+app.get('/api/bets/history', async function(req, res) {
+  const uid = String(req.query.uid || '');
   const u = DB.users[uid];
   if (!u) return res.json({ bets: [] });
-  res.json({ bets: (u.sportsBets || []).slice(0, 50) });
+  if (!u.sportsBets || !u.sportsBets.length) return res.json({ bets: [] });
+
+  // Settle pending bets on-request using fixture IDs
+  const pending = u.sportsBets.filter(b => b.status === 'pending');
+  if (pending.length) {
+    try {
+      // Moscow = UTC+3; check today and yesterday (UTC) to catch late-night matches
+      const nowUtc = new Date();
+      const mskOffset = 3 * 60 * 60 * 1000;
+      const mskNow = new Date(nowUtc.getTime() + mskOffset);
+      const toDate = d => d.toISOString().slice(0, 10);
+      const yesterday = new Date(nowUtc.getTime() - 86400000);
+      const dates = [toDate(nowUtc), toDate(yesterday)];
+      const finished = [];
+      for (const date of dates) {
+        try {
+          const d = await sportsFetch('/fixtures?date=' + date + '&status=FT&timezone=Europe/Moscow');
+          (d.response || []).forEach(f => finished.push(f));
+        } catch(e) {}
+      }
+      const byId = {};
+      finished.forEach(f => { byId[f.fixture.id] = f; });
+
+      pending.forEach(b => {
+        // Match by matchId first, fallback to name
+        let f = b.matchId ? byId[b.matchId] : null;
+        if (!f) {
+          f = finished.find(fi =>
+            b.matchName && b.matchName.includes(fi.teams.home.name) &&
+            b.matchName.includes(fi.teams.away.name)
+          );
+        }
+        if (!f) return;
+
+        const gh = f.goals.home, ga = f.goals.away;
+        const winner = gh > ga ? 'h' : ga > gh ? 'a' : 'x';
+        const isWin = (b.pick.startsWith('П1') && winner === 'h') ||
+                      (b.pick === 'Ничья'       && winner === 'x') ||
+                      (b.pick.startsWith('П2') && winner === 'a');
+        b.status = isWin ? 'win' : 'lose';
+        b.score = gh + ':' + ga;
+        if (isWin) {
+          const win = Math.round(b.amount * b.odds);
+          b.winAmount = win;
+          if (b.currency === 'stars') u.starsBalance = (u.starsBalance || 0) + win;
+          else u.balance = (u.balance || 0) + win;
+        }
+      });
+      saveDB(); // persist settled results immediately
+    } catch(e) { console.error('settle on history:', e.message); }
+  }
+
+  res.json({ bets: u.sportsBets.slice().reverse().slice(0, 50), balance: u.balance, starsBalance: u.starsBalance });
 });
 
 setInterval(async function() {
