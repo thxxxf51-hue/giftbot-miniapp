@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>GiftBot</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://unpkg.com/@tonconnect/sdk@3/dist/tonconnect.min.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -559,6 +560,11 @@
       <div class="prn-ico" style="background:rgba(244,196,48,.08);color:#f4c430"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a10 10 0 00-20 0"/><path d="M6 17a6 6 0 0112 0"/><path d="M10 17a2 2 0 014 0"/></svg></div>
       <div class="prn-row-body"><div class="prn-row-l" data-i18n="pro-lbl-color">Цвет ника</div><div class="prn-row-v" id="p-color">Стандартный</div></div>
     </div>
+    <div class="prn-row prn-row-c" onclick="connectWallet()" id="wallet-row">
+      <div class="prn-ico" style="background:rgba(0,120,255,.1);color:#0088ff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><circle cx="16" cy="14" r="1" fill="currentColor"/></svg></div>
+      <div class="prn-row-body"><div class="prn-row-l">TON кошелёк</div><div class="prn-row-v" id="wallet-row-v" style="color:var(--muted2)">Не подключён</div></div>
+      <span class="prn-arr" id="wallet-row-btn">›</span>
+    </div>
     <div class="prn-row prn-row-c" onclick="openSupport()">
       <div class="prn-ico" style="background:rgba(122,164,244,.1);color:#7aa4f4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><line x1="9" y1="9" x2="15" y2="9" stroke-width="1.5"/><line x1="9" y1="13" x2="12" y2="13" stroke-width="1.5"/></svg></div>
       <div class="prn-row-body"><div class="prn-row-l" data-i18n="pro-lbl-support">Нужна помощь?</div><div class="prn-row-v" style="color:#7aa4f4" data-i18n="pro-support-link">Поддержка</div></div>
@@ -1010,6 +1016,7 @@
 <script src="js/bets.js"></script>
 <script src="js/bets.js"></script>
 <script src="js/lang.js"></script>
+<script src="js/wallet.js"></script>
 <script src="js/init.js"></script>
 
 <!-- PvP History Modal -->
