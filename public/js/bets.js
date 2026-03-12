@@ -239,18 +239,37 @@ function onBetsPageLeave(){ clearInterval(_bTimer); }
 /* ── открыть купон ── */
 function betsOpenSlip(card, matchName, o1, ox, o2, home, away){
   _bMatch=matchName; _bOdds=o1; _bPick='П1 ('+home+')'; _bCur='coins';
-  document.getElementById('bs-match').textContent=matchName;
-  document.getElementById('bs-pick').textContent='П1 ('+home+')';
-  document.getElementById('bs-odds-badge').textContent='× '+o1.toFixed(2);
-  const btns=document.querySelectorAll('.bsodd');
+  // Set match name
+  const elMatch = document.getElementById('bs-match');
+  const elPick  = document.getElementById('bs-pick');
+  const elBadge = document.getElementById('bs-odds-badge');
+  if(elMatch) elMatch.textContent = matchName;
+  if(elPick)  elPick.textContent  = 'П1 ('+home+')';
+  if(elBadge) elBadge.textContent = '× '+o1.toFixed(2);
+  // Update odds buttons in slip modal
   const data=[{o:o1,l:'П1 ('+home+')'},{o:ox,l:'Ничья'},{o:o2,l:'П2 ('+away+')'}];
-  btns.forEach((b,i)=>{ b.dataset.odds=data[i].o; b.dataset.label=data[i].l; b.querySelector('.bsodd-v').textContent=data[i].o.toFixed(2); b.classList.toggle('bsodd-sel',i===0); });
-  document.querySelectorAll('.bsct').forEach(b=>b.classList.remove('active'));
-  document.getElementById('bsct-coins').classList.add('active');
-  document.getElementById('bs-mincur').textContent='мин. 1 000';
-  document.getElementById('bs-amount').value='5000';
+  const slip = document.getElementById('bets-slip-mo');
+  const btns = slip ? slip.querySelectorAll('.bsodd') : [];
+  btns.forEach(function(b,i){
+    b.dataset.odds  = data[i].o;
+    b.dataset.label = data[i].l;
+    const vEl = b.querySelector('.bsodd-v');
+    if(vEl) vEl.textContent = data[i].o.toFixed(2);
+    const lEl = b.querySelector('.bsodd-lbl');
+    if(lEl) lEl.textContent = i===0?'П1':i===1?'Х':'П2';
+    b.classList.toggle('bsodd-sel', i===0);
+  });
+  // Reset currency
+  document.querySelectorAll('.bsct').forEach(function(b){ b.classList.remove('active'); });
+  const coinsBtn = document.getElementById('bsct-coins');
+  if(coinsBtn) coinsBtn.classList.add('active');
+  const minEl = document.getElementById('bs-mincur');
+  if(minEl) minEl.textContent = 'мин. 1 000 монет';
+  const amtEl = document.getElementById('bs-amount');
+  if(amtEl) amtEl.value = '5000';
   betsCalcPot();
-  document.getElementById('bets-slip-mo').classList.add('show');
+  // Show modal as flex
+  if(slip){ slip.style.display='flex'; slip.classList.add('show'); }
   try{ window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light'); }catch(e){}
 }
 
@@ -305,7 +324,10 @@ function betsCalcPot(){
   document.getElementById('bs-submit').innerHTML=`${COIN_SVG_BLK}<span>Поставить ${amt.toLocaleString('ru')} ${btnUnit}</span>`;
 }
 
-function betsCloseSlip(){ document.getElementById('bets-slip-mo').classList.remove('show'); }
+function betsCloseSlip(){
+  const slip = document.getElementById('bets-slip-mo');
+  if(slip){ slip.classList.remove('show'); slip.style.display='none'; }
+}
 
 /* ── отправка ставки ── */
 async function betsSubmit(){
