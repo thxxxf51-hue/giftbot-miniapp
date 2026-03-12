@@ -746,22 +746,33 @@ app.post('/api/draws/join', (req, res) => {
    SPORTS BETTING — API-Football
 ══════════════════════════════════════════════ */
 
-const SPORTS_API_KEY = '6505c8f33584b91aad90ca94a2721103';
-const SPORTS_BASE    = 'https://v3.football.api-sports.io';
-const _sportsCache   = { live: null, liveTs: 0, today: null, todayTs: 0 };
+// ── football-data.org ──────────────────────────────────────────────────────
+const FD_KEY  = process.env.FOOTBALL_API_KEY || 'd31c90d3d5d746aea13921a68d2defc2';
+const FD_BASE = 'https://api.football-data.org/v4';
+const _sportsCache = { live: null, liveTs: 0 };
 
-function sportsFetch(path) {
+// Competitions available on free tier
+const FD_COMPETITIONS = [
+  2001, // UEFA Champions League
+  2021, // Premier League
+  2014, // La Liga
+  2002, // Bundesliga
+  2019, // Serie A
+  2015, // Ligue 1
+  2003, // Eredivisie
+  2017, // Primeira Liga
+  2000, // FIFA World Cup
+  2018, // European Championship
+];
+
+function fdFetch(path) {
   return new Promise((resolve, reject) => {
-    const url = new URL(SPORTS_BASE + path);
+    const url = new URL(FD_BASE + path);
     const opts = {
       hostname: url.hostname,
       path: url.pathname + url.search,
       method: 'GET',
-      headers: {
-        'x-apisports-key': SPORTS_API_KEY,
-        'x-rapidapi-key': SPORTS_API_KEY,
-        'x-rapidapi-host': 'v3.football.api-sports.io'
-      }
+      headers: { 'X-Auth-Token': FD_KEY }
     };
     const req = https.request(opts, function(res) {
       let data = '';
@@ -769,20 +780,81 @@ function sportsFetch(path) {
       res.on('end', function() {
         try {
           const parsed = JSON.parse(data);
-          console.log('sportsFetch', path.split('?')[0], '-> status', res.statusCode, 'results:', parsed.results || 0);
-          resolve(parsed);
+          console.log('fdFetch', path.split('?')[0], '-> status', res.statusCode, 'count:', parsed.resultSet?.count || parsed.count || 0);
+          resolve({ _status: res.statusCode, ...parsed });
         } catch(e) {
-          console.error('sportsFetch parse error:', e.message);
+          console.error('fdFetch parse error:', e.message);
           reject(e);
         }
       });
     });
     req.on('error', function(e) {
-      console.error('sportsFetch request error:', e.message);
+      console.error('fdFetch request error:', e.message);
       reject(e);
     });
     req.end();
   });
+}
+
+// Convert football-data.org match -> api-football fixture format (bets.js expects this)
+function fdToFixture(m) {
+  const statusMap = {
+    'IN_PLAY':   '1H',
+    'PAUSED':    'HT',
+    'FINISHED':  'FT',
+    'SCHEDULED': 'NS',
+    'TIMED':     'NS',
+    'POSTPONED': 'PST',
+    'CANCELLED': 'CANC',
+    'SUSPENDED': 'SUSP',
+  };
+  const short = statusMap[m.status] || m.status || 'NS';
+  const live = ['IN_PLAY','PAUSED'].includes(m.status);
+  const gh = live || m.status === 'FINISHED' ? (m.score?.fullTime?.home ?? null) : null;
+  const ga = live || m.status === 'FINISHED' ? (m.score?.fullTime?.away ?? null) : null;
+  // elapsed: football-data doesn't give minute directly in free tier, estimate from utcDate
+  let elapsed = null;
+  if (m.status === 'IN_PLAY') {
+    const kickoff = new Date(m.utcDate).getTime();
+    const mins = Math.floor((Date.now() - kickoff) / 60000);
+    elapsed = Math.min(90, Math.max(1, mins));
+  } else if (m.status === 'PAUSED') {
+    elapsed = 45;
+  }
+  return {
+    fixture: {
+      id: m.id,
+      date: m.utcDate,
+      status: { short, elapsed }
+    },
+    league: {
+      id: m.competition?.id || 0,
+      name: m.competition?.name || 'Лига',
+    },
+    teams: {
+      home: { name: m.homeTeam?.shortName || m.homeTeam?.name || '?', logo: '' },
+      away: { name: m.awayTeam?.shortName || m.awayTeam?.name || '?', logo: '' }
+    },
+    goals: { home: gh, away: ga },
+    score: {
+      halftime: { home: m.score?.halfTime?.home ?? null, away: m.score?.halfTime?.away ?? null },
+      fulltime:  { home: m.score?.fullTime?.home ?? null, away: m.score?.fullTime?.away ?? null }
+    }
+  };
+}
+
+// Fetch matches for multiple competitions in parallel
+async function fdFetchAll(params) {
+  const results = await Promise.allSettled(
+    FD_COMPETITIONS.map(id => fdFetch('/competitions/' + id + '/matches?' + params))
+  );
+  const matches = [];
+  results.forEach(r => {
+    if (r.status === 'fulfilled' && r.value.matches) {
+      r.value.matches.forEach(m => matches.push(m));
+    }
+  });
+  return matches;
 }
 
 app.get('/api/sports/live', async function(req, res) {
@@ -791,61 +863,58 @@ app.get('/api/sports/live', async function(req, res) {
     if (_sportsCache.live && now - _sportsCache.liveTs < 30000) {
       return res.json({ fixtures: _sportsCache.live });
     }
-    const d = await sportsFetch('/fixtures?live=all&timezone=Europe/Moscow');
-    const fixtures = d.response || [];
+    const matches = await fdFetchAll('status=IN_PLAY,PAUSED');
+    const fixtures = matches.map(fdToFixture);
     _sportsCache.live = fixtures;
     _sportsCache.liveTs = now;
-    res.json({ fixtures: fixtures });
+    res.json({ fixtures });
   } catch(e) {
     console.error('sports/live error:', e.message);
     res.json({ fixtures: _sportsCache.live || [] });
   }
 });
 
-// Top European leagues IDs for priority display
-const TOP_LEAGUES = [2, 3, 4, 848, 39, 140, 78, 135, 61, 94, 88, 203];
+const TOP_LEAGUES = [2001, 2021, 2014, 2002, 2019, 2015, 2003, 2017, 2000, 2018];
 
 app.get('/api/sports/today', async function(req, res) {
   try {
-    const requestedDate = req.query.date;
-    const today = requestedDate || new Date().toISOString().slice(0, 10);
-    const cacheKey = 'today_' + today;
     const now = Date.now();
-    if (_sportsCache[cacheKey] && now - (_sportsCache[cacheKey+'_ts']||0) < 300000) {
-      return res.json({ fixtures: _sportsCache[cacheKey] });
+    const todayKey = new Date().toISOString().slice(0, 10);
+    if (_sportsCache['today_'+todayKey] && now - (_sportsCache['today_'+todayKey+'_ts']||0) < 300000) {
+      return res.json({ fixtures: _sportsCache['today_'+todayKey] });
     }
-    // Fetch all today's matches
-    const d = await sportsFetch('/fixtures?date=' + today + '&status=NS&timezone=Europe/Moscow');
-    let fixtures = d.response || [];
-    // Sort: top leagues first (UCL, EPL, La Liga etc), then rest
-    const topLeagues = TOP_LEAGUES || [];
+    const dateFrom = todayKey;
+    const dateTo   = todayKey;
+    const matches = await fdFetchAll('dateFrom=' + dateFrom + '&dateTo=' + dateTo + '&status=SCHEDULED,TIMED');
+    let fixtures = matches.map(fdToFixture);
+    // Sort by top leagues
     fixtures.sort(function(a, b) {
-      const aTop = topLeagues.indexOf(a.league.id);
-      const bTop = topLeagues.indexOf(b.league.id);
-      if (aTop !== -1 && bTop === -1) return -1;
-      if (aTop === -1 && bTop !== -1) return 1;
-      if (aTop !== -1 && bTop !== -1) return aTop - bTop;
+      const ai = TOP_LEAGUES.indexOf(a.league.id);
+      const bi = TOP_LEAGUES.indexOf(b.league.id);
+      if (ai !== -1 && bi === -1) return -1;
+      if (ai === -1 && bi !== -1) return 1;
+      if (ai !== -1 && bi !== -1) return ai - bi;
       return 0;
     });
     fixtures = fixtures.slice(0, 80);
-    _sportsCache[cacheKey] = fixtures;
-    _sportsCache[cacheKey+'_ts'] = now;
-    res.json({ fixtures: fixtures });
+    _sportsCache['today_'+todayKey] = fixtures;
+    _sportsCache['today_'+todayKey+'_ts'] = now;
+    res.json({ fixtures });
   } catch(e) {
     console.error('sports/today error:', e.message);
     res.json({ fixtures: [] });
   }
 });
 
-// DEBUG: check API connection
 app.get('/api/sports/debug', async function(req, res) {
   try {
-    const d = await sportsFetch('/status');
-    res.json({ ok: true, status: d });
+    const d = await fdFetch('/competitions/2021/matches?status=SCHEDULED&limit=1');
+    res.json({ ok: !d.errorCode, status: d._status, message: d.message || 'OK', count: d.count });
   } catch(e) {
     res.json({ ok: false, error: e.message });
   }
 });
+
 
 app.post('/api/bets/place', function(req, res) {
   const uid      = String(req.body.uid || '').trim();
@@ -918,18 +987,23 @@ app.get('/api/bets/history', async function(req, res) {
     try {
       // Moscow = UTC+3; check today and yesterday (UTC) to catch late-night matches
       const nowUtc = new Date();
-      const mskOffset = 3 * 60 * 60 * 1000;
-      const mskNow = new Date(nowUtc.getTime() + mskOffset);
       const toDate = d => d.toISOString().slice(0, 10);
       const yesterday = new Date(nowUtc.getTime() - 86400000);
       const dates = [toDate(nowUtc), toDate(yesterday)];
-      const finished = [];
+      const rawMatches = [];
       for (const date of dates) {
         try {
-          const d = await sportsFetch('/fixtures?date=' + date + '&status=FT&timezone=Europe/Moscow');
-          (d.response || []).forEach(f => finished.push(f));
+          const results = await Promise.allSettled(
+            FD_COMPETITIONS.map(id => fdFetch('/competitions/' + id + '/matches?dateFrom=' + date + '&dateTo=' + date + '&status=FINISHED'))
+          );
+          results.forEach(r => {
+            if (r.status === 'fulfilled' && r.value.matches) {
+              r.value.matches.forEach(m => rawMatches.push(m));
+            }
+          });
         } catch(e) {}
       }
+      const finished = rawMatches.map(fdToFixture);
       const byId = {};
       finished.forEach(f => { byId[f.fixture.id] = f; });
 
@@ -968,8 +1042,12 @@ app.get('/api/bets/history', async function(req, res) {
 setInterval(async function() {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const d = await sportsFetch('/fixtures?date=' + today + '&status=FT&timezone=Europe/Moscow');
-    const finished = d.response || [];
+    const cronResults = await Promise.allSettled(
+      FD_COMPETITIONS.map(id => fdFetch('/competitions/' + id + '/matches?dateFrom=' + today + '&dateTo=' + today + '&status=FINISHED'))
+    );
+    const rawFinished = [];
+    cronResults.forEach(r => { if (r.status === 'fulfilled' && r.value.matches) r.value.matches.forEach(m => rawFinished.push(m)); });
+    const finished = rawFinished.map(fdToFixture);
     if (!finished.length) return;
     const results = {};
     finished.forEach(function(f) {
