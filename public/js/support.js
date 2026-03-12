@@ -15,7 +15,7 @@ function openSupport() {
       _supportTyping(true);
       setTimeout(() => {
         _supportTyping(false);
-        _supportAddMsg('bot', 'Привет! 👋 Я ИИ-помощник GiftBot.\nЗадай любой вопрос — расскажу про игры, баланс, рефералы и всё остальное.');
+        _supportAddMsg('bot', 'Привет! 👋 Я ИИ-помощник SatApp Gifts.\nЗадай любой вопрос — расскажу про игры, баланс, рефералы и всё остальное.');
       }, 900);
     }, 300);
     supportStartPoll();
