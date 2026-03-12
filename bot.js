@@ -843,18 +843,10 @@ function fdToFixture(m) {
   };
 }
 
-// Fetch matches for multiple competitions in parallel
+// Single request — /matches endpoint returns all competitions at once (no rate limit hit)
 async function fdFetchAll(params) {
-  const results = await Promise.allSettled(
-    FD_COMPETITIONS.map(id => fdFetch('/competitions/' + id + '/matches?' + params))
-  );
-  const matches = [];
-  results.forEach(r => {
-    if (r.status === 'fulfilled' && r.value.matches) {
-      r.value.matches.forEach(m => matches.push(m));
-    }
-  });
-  return matches;
+  const d = await fdFetch('/matches?' + params);
+  return d.matches || [];
 }
 
 app.get('/api/sports/live', async function(req, res) {
@@ -863,7 +855,7 @@ app.get('/api/sports/live', async function(req, res) {
     if (_sportsCache.live && now - _sportsCache.liveTs < 30000) {
       return res.json({ fixtures: _sportsCache.live });
     }
-    const matches = await fdFetchAll('status=IN_PLAY,PAUSED');
+    const matches = await fdFetchAll('status=LIVE');
     const fixtures = matches.map(fdToFixture);
     _sportsCache.live = fixtures;
     _sportsCache.liveTs = now;
@@ -885,7 +877,7 @@ app.get('/api/sports/today', async function(req, res) {
     }
     const dateFrom = todayKey;
     const dateTo   = todayKey;
-    const matches = await fdFetchAll('dateFrom=' + dateFrom + '&dateTo=' + dateTo + '&status=SCHEDULED,TIMED');
+    const matches = await fdFetchAll('dateFrom=' + dateFrom + '&dateTo=' + dateTo + '&status=SCHEDULED,TIMED&competitions=2001,2021,2014,2002,2019,2015,2003,2017,2000,2018');
     let fixtures = matches.map(fdToFixture);
     // Sort by top leagues
     fixtures.sort(function(a, b) {
@@ -993,14 +985,8 @@ app.get('/api/bets/history', async function(req, res) {
       const rawMatches = [];
       for (const date of dates) {
         try {
-          const results = await Promise.allSettled(
-            FD_COMPETITIONS.map(id => fdFetch('/competitions/' + id + '/matches?dateFrom=' + date + '&dateTo=' + date + '&status=FINISHED'))
-          );
-          results.forEach(r => {
-            if (r.status === 'fulfilled' && r.value.matches) {
-              r.value.matches.forEach(m => rawMatches.push(m));
-            }
-          });
+          const d = await fdFetch('/matches?dateFrom=' + date + '&dateTo=' + date + '&status=FINISHED&competitions=2001,2021,2014,2002,2019,2015,2003,2017,2000,2018');
+          if (d.matches) d.matches.forEach(m => rawMatches.push(m));
         } catch(e) {}
       }
       const finished = rawMatches.map(fdToFixture);
@@ -1042,11 +1028,8 @@ app.get('/api/bets/history', async function(req, res) {
 setInterval(async function() {
   try {
     const today = new Date().toISOString().slice(0, 10);
-    const cronResults = await Promise.allSettled(
-      FD_COMPETITIONS.map(id => fdFetch('/competitions/' + id + '/matches?dateFrom=' + today + '&dateTo=' + today + '&status=FINISHED'))
-    );
-    const rawFinished = [];
-    cronResults.forEach(r => { if (r.status === 'fulfilled' && r.value.matches) r.value.matches.forEach(m => rawFinished.push(m)); });
+    const cronRaw = await fdFetch('/matches?dateFrom=' + today + '&dateTo=' + today + '&status=FINISHED&competitions=2001,2021,2014,2002,2019,2015,2003,2017,2000,2018');
+    const rawFinished = cronRaw.matches || [];
     const finished = rawFinished.map(fdToFixture);
     if (!finished.length) return;
     const results = {};
