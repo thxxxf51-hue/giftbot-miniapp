@@ -862,8 +862,8 @@ app.post('/api/bets/place', function(req, res) {
   const min = currency === 'stars' ? 50 : 1000;
   if (amount < min) return res.json({ ok: false, error: 'Мин. ставка: ' + min });
   if (currency === 'stars') {
-    if ((u.stars || 0) < amount) return res.json({ ok: false, error: 'Недостаточно звёзд' });
-    u.stars = (u.stars || 0) - amount;
+    if ((u.starsBalance || 0) < amount) return res.json({ ok: false, error: 'Недостаточно звёзд' });
+    u.starsBalance = (u.starsBalance || 0) - amount;
   } else {
     if ((u.balance || 0) < amount) return res.json({ ok: false, error: 'Недостаточно монет' });
     u.balance = (u.balance || 0) - amount;
@@ -910,7 +910,7 @@ setInterval(async function() {
         if (isWin) {
           const win = Math.round(b.amount * b.odds);
           b.winAmount = win;
-          if (b.currency === 'stars') u.stars = (u.stars || 0) + win;
+          if (b.currency === 'stars') u.starsBalance = (u.starsBalance || 0) + win;
           else u.balance = (u.balance || 0) + win;
         }
         settled++;
