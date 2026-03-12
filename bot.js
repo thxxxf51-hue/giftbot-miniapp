@@ -843,7 +843,7 @@ function fdToFixture(m) {
   };
 }
 
-// Single request — /matches endpoint returns all competitions at once (no rate limit hit)
+// Single /matches request — one call, all competitions
 async function fdFetchAll(params) {
   const d = await fdFetch('/matches?' + params);
   return d.matches || [];
@@ -852,11 +852,17 @@ async function fdFetchAll(params) {
 app.get('/api/sports/live', async function(req, res) {
   try {
     const now = Date.now();
-    if (_sportsCache.live && now - _sportsCache.liveTs < 30000) {
+    // Short cache 20s for live
+    if (_sportsCache.live && now - _sportsCache.liveTs < 20000) {
       return res.json({ fixtures: _sportsCache.live });
     }
-    const matches = await fdFetchAll('status=LIVE');
-    const fixtures = matches.map(fdToFixture);
+    // IN_PLAY = actively playing, PAUSED = half-time break
+    const matches = await fdFetchAll('status=IN_PLAY,PAUSED');
+    // Extra guard: exclude any FINISHED matches that slipped through
+    const live = matches.filter(function(m) {
+      return m.status === 'IN_PLAY' || m.status === 'PAUSED';
+    });
+    const fixtures = live.map(fdToFixture);
     _sportsCache.live = fixtures;
     _sportsCache.liveTs = now;
     res.json({ fixtures });
@@ -872,25 +878,35 @@ app.get('/api/sports/today', async function(req, res) {
   try {
     const now = Date.now();
     const todayKey = new Date().toISOString().slice(0, 10);
-    if (_sportsCache['today_'+todayKey] && now - (_sportsCache['today_'+todayKey+'_ts']||0) < 300000) {
-      return res.json({ fixtures: _sportsCache['today_'+todayKey] });
+    const cacheKey = 'today_' + todayKey;
+    if (_sportsCache[cacheKey] && now - (_sportsCache[cacheKey+'_ts']||0) < 180000) {
+      return res.json({ fixtures: _sportsCache[cacheKey] });
     }
-    const dateFrom = todayKey;
-    const dateTo   = todayKey;
-    const matches = await fdFetchAll('dateFrom=' + dateFrom + '&dateTo=' + dateTo + '&status=SCHEDULED,TIMED&competitions=2001,2021,2014,2002,2019,2015,2003,2017,2000,2018');
-    let fixtures = matches.map(fdToFixture);
-    // Sort by top leagues
+    // dateFrom = today, dateTo = tomorrow — shows today's remaining + tomorrow's matches
+    const d = new Date();
+    const dateFrom = d.toISOString().slice(0, 10);
+    const d2 = new Date(d.getTime() + 86400000);
+    const dateTo = d2.toISOString().slice(0, 10);
+    // No status filter — get SCHEDULED and TIMED both (API may return either)
+    const matches = await fdFetchAll('dateFrom=' + dateFrom + '&dateTo=' + dateTo);
+    // Keep only upcoming (not finished, not live)
+    const upcoming = matches.filter(function(m) {
+      return m.status === 'SCHEDULED' || m.status === 'TIMED';
+    });
+    let fixtures = upcoming.map(fdToFixture);
+    // Sort: top leagues first, then by kickoff time
     fixtures.sort(function(a, b) {
       const ai = TOP_LEAGUES.indexOf(a.league.id);
       const bi = TOP_LEAGUES.indexOf(b.league.id);
       if (ai !== -1 && bi === -1) return -1;
       if (ai === -1 && bi !== -1) return 1;
       if (ai !== -1 && bi !== -1) return ai - bi;
-      return 0;
+      // same priority → sort by time
+      return new Date(a.fixture.date) - new Date(b.fixture.date);
     });
     fixtures = fixtures.slice(0, 80);
-    _sportsCache['today_'+todayKey] = fixtures;
-    _sportsCache['today_'+todayKey+'_ts'] = now;
+    _sportsCache[cacheKey] = fixtures;
+    _sportsCache[cacheKey+'_ts'] = now;
     res.json({ fixtures });
   } catch(e) {
     console.error('sports/today error:', e.message);
@@ -900,8 +916,13 @@ app.get('/api/sports/today', async function(req, res) {
 
 app.get('/api/sports/debug', async function(req, res) {
   try {
-    const d = await fdFetch('/competitions/2021/matches?status=SCHEDULED&limit=1');
-    res.json({ ok: !d.errorCode, status: d._status, message: d.message || 'OK', count: d.count });
+    const today = new Date().toISOString().slice(0, 10);
+    const d2 = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const d = await fdFetch('/matches?dateFrom=' + today + '&dateTo=' + d2);
+    const total = (d.matches || []).length;
+    const byStatus = {};
+    (d.matches || []).forEach(function(m) { byStatus[m.status] = (byStatus[m.status]||0)+1; });
+    res.json({ ok: !d.errorCode, status: d._status, total, byStatus });
   } catch(e) {
     res.json({ ok: false, error: e.message });
   }
