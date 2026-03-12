@@ -53,6 +53,7 @@ const DB = {
   bansByUid:     _saved?.bansByUid     || {},
   bigWins:       _saved?.bigWins       || [], // {uid, firstName, photoUrl, amount, game, ts}
   notifyOpen:    _saved?.notifyOpen    ?? true, // уведомления о входе в приложение
+  notifications: _saved?.notifications || [], // push уведомления от админа
 };
 
 // Автосохранение каждые 30 секунд
@@ -929,6 +930,13 @@ app.get('/api/sports/debug', async function(req, res) {
 });
 
 
+
+// GET /api/notifications — fetch notifications for user (unread first, max 50)
+app.get('/api/notifications', function(req, res) {
+  const notifs = (DB.notifications || []).slice().reverse().slice(0, 50);
+  res.json({ notifications: notifs });
+});
+
 app.post('/api/bets/place', function(req, res) {
   const uid      = String(req.body.uid || '').trim();
   const matchName= String(req.body.matchName || '').slice(0, 120);
@@ -1576,6 +1584,20 @@ bot.command('stars', (ctx) => {
 /* ══ РАССЫЛКА ══ */
 
 // /broadcast ТЕКСТ — отправить всем пользователям
+
+// /send ТЕКСТ — добавить уведомление в приложение (видят все пользователи)
+bot.command('send', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const text = ctx.message.text.replace('/send', '').trim();
+  if (!text) return ctx.reply('Формат: /send ТЕКСТ\n\nПример:\n/send Новый турнир! Участвуй прямо сейчас');
+  if (!DB.notifications) DB.notifications = [];
+  const notif = { id: Date.now(), text, ts: Date.now() };
+  DB.notifications.unshift(notif);
+  if (DB.notifications.length > 100) DB.notifications = DB.notifications.slice(0, 100);
+  saveDB();
+  ctx.reply('✅ Уведомление отправлено!\n\n❕ ' + text + '\n\n👥 Увидят все пользователи при следующем опросе (до 30 сек)');
+});
+
 bot.command('broadcast', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const text = ctx.message.text.replace('/broadcast', '').trim();
