@@ -406,3 +406,46 @@ async function betsSubmit(){
   } catch(e){ toast('Ошибка сети','r'); }
   finally{ btn.disabled=false; btn.style.opacity=''; betsCalcPot(); }
 }
+
+
+/* ── lifecycle ── */
+function onBetsPageEnter(){
+  // Reset to Live tab
+  betsSwitchTab('live', document.querySelector('.bets-tab'));
+  // Start auto-refresh
+  if(_bTimer) clearInterval(_bTimer);
+  _bTimer = setInterval(function(){
+    const activeTab = document.querySelector('.bets-tab.active');
+    const tab = activeTab ? activeTab.textContent.trim().toLowerCase() : 'live';
+    if(tab.includes('live')) betsLoadLive();
+  }, 30000);
+}
+
+function onBetsPageLeave(){
+  if(_bTimer){ clearInterval(_bTimer); _bTimer=null; }
+}
+
+function betsSwitchTab(tab, btn){
+  // Update tab buttons
+  document.querySelectorAll('.bets-tab').forEach(function(b){ b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  else {
+    // find by text
+    document.querySelectorAll('.bets-tab').forEach(function(b){
+      if((tab==='live'&&b.textContent.includes('Live'))||
+         (tab==='today'&&b.textContent.includes('Сегодня'))||
+         (tab==='history'&&b.textContent.includes('ставки')))
+        b.classList.add('active');
+    });
+  }
+  // Show/hide tab panes
+  var panes = {live:'bets-tab-live', today:'bets-tab-today', history:'bets-tab-history'};
+  Object.keys(panes).forEach(function(k){
+    var el = document.getElementById(panes[k]);
+    if(el) el.style.display = k===tab ? 'block' : 'none';
+  });
+  // Load content
+  if(tab==='live')    betsLoadLive();
+  if(tab==='today')   betsLoadToday();
+  if(tab==='history') betsLoadHistory();
+}
