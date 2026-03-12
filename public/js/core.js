@@ -19,7 +19,7 @@ const UID=String(TGU.id);
 /* ══ STORAGE ══ */
 const SK='gb4_'+UID;
 function load(){try{const d=JSON.parse(localStorage.getItem(SK)||'{}');return d.v===5?d:null;}catch{return null;}}
-function save(){try{localStorage.setItem(SK,JSON.stringify({v:5,balance:S.balance,starsBalance:S.starsBalance,doneTasks:[...S.doneTasks],usedPromos:[...S.usedPromos],regDate:S.regDate,refs:S.refs,refEarned:S.refEarned,refBy:S.refBy,vipExpiry:S.vipExpiry,nickColor:S.nickColor,hasCrown:S.hasCrown,legendExpiry:S.legendExpiry,legendColor:S.legendColor,inventory:S.inventory,bonusMulti:S.bonusMulti,vipDiscount:S.vipDiscount,task3refsDone:S.task3refsDone,task5refsDone:S.task5refsDone,entryEffect:S.entryEffect,effectExpiries:S.effectExpiries,ownedEffects:S.ownedEffects}));}catch{}}
+function save(){try{localStorage.setItem(SK,JSON.stringify({v:5,balance:S.balance,starsBalance:S.starsBalance,doneTasks:[...S.doneTasks],usedPromos:[...S.usedPromos],regDate:S.regDate,refs:S.refs,refEarned:S.refEarned,refBy:S.refBy,vipExpiry:S.vipExpiry,nickColor:S.nickColor,hasCrown:S.hasCrown,legendExpiry:S.legendExpiry,legendColor:S.legendColor,inventory:S.inventory,bonusMulti:S.bonusMulti,vipDiscount:S.vipDiscount,task3refsDone:S.task3refsDone,task5refsDone:S.task5refsDone,entryEffect:S.entryEffect,effectExpiries:S.effectExpiries,ownedEffects:S.ownedEffects,walletAddress:S.walletAddress}));}catch{}}
 
 const sv=load();
 const today=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
@@ -53,6 +53,7 @@ const S={
     return existing;
   })(),
   ownedEffects:sv?.ownedEffects||[],
+  walletAddress:sv?.walletAddress||null,
 };
 
 /* ══ REF PARAM ══ */

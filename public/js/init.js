@@ -95,6 +95,8 @@ async function init(){
   applyNick(S.nickColor);
   applyCrown();
   applyLegend();
+  // TON wallet restore
+  initTonConnect();
   updateVipUI();
   updateEffectUI();
   syncB();
