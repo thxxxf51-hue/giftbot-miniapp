@@ -184,7 +184,7 @@ async function betsLoadHistory(){
   const el=document.getElementById('bets-hist-cont'); if(!el) return;
   el.innerHTML=`<div class="bets-loading">Загружаем...</div>`;
   try{
-    const uid=window.S?.uid||window.tgUserId||'';
+    const uid=window.UID||window.tgUserId||'';
     const d=await fetch('/api/bets/history?uid='+uid).then(r=>r.json());
     const bets=d.bets||[];
     if(!bets.length){ el.innerHTML=`<div class="bets-empty">${COIN_SVG_Y}<br><span style="font-size:14px;font-weight:700">Ставок пока нет</span><br><span style="font-size:11px;opacity:.6">Сделай первую ставку!</span></div>`; return; }
@@ -264,7 +264,8 @@ function betsOpenSlip(card, matchName, o1, ox, o2, home, away){
   const coinsBtn = document.getElementById('bsct-coins');
   if(coinsBtn) coinsBtn.classList.add('active');
   const minEl = document.getElementById('bs-mincur');
-  if(minEl) minEl.textContent = 'мин. 1 000 монет';
+  const coinBal = (window.S?.balance||0).toLocaleString('ru');
+  if(minEl) minEl.textContent = 'Баланс: '+coinBal+' монет  |  мин. 1 000';
   const amtEl = document.getElementById('bs-amount');
   if(amtEl) amtEl.value = '5000';
   betsCalcPot();
@@ -307,8 +308,17 @@ function betsSetCur(cur, btn){
   _bCur=cur;
   document.querySelectorAll('.bsct').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(cur==='stars'){ document.getElementById('bs-mincur').textContent='мин. 50 ⭐'; document.getElementById('bs-amount').value='50'; }
-  else{ document.getElementById('bs-mincur').textContent='мин. 1 000'; document.getElementById('bs-amount').value='5000'; }
+  const minEl=document.getElementById('bs-mincur');
+  const amtEl=document.getElementById('bs-amount');
+  if(cur==='stars'){
+    const starBal=window.S?.starsBalance||0;
+    if(minEl) minEl.textContent='Баланс: '+starBal+' ⭐  |  мин. 50';
+    if(amtEl) amtEl.value='50';
+  } else {
+    const coinBal=(window.S?.balance||0).toLocaleString('ru');
+    if(minEl) minEl.textContent='Баланс: '+coinBal+' монет  |  мин. 1 000';
+    if(amtEl) amtEl.value='5000';
+  }
   betsCalcPot();
 }
 
@@ -334,12 +344,32 @@ async function betsSubmit(){
   const amt=parseInt(document.getElementById('bs-amount').value)||0;
   const min=_bCur==='stars'?50:1000;
   if(amt<min){ toast(`Мин. ставка: ${min} ${_bCur==='stars'?'⭐':'🪙'}`,'r'); return; }
-  const uid=window.S?.uid||window.tgUserId||'';
+  // Check stars balance before sending
+  if(_bCur==='stars'){
+    const starBal=window.S?.starsBalance||0;
+    if(starBal<amt){
+      betsCloseSlip();
+      // Open stars deposit - try standard ways
+      if(typeof openStarsMo==='function') openStarsMo();
+      else if(typeof go==='function') go('shop');
+      toast('Недостаточно звёзд — пополни баланс ⭐','r');
+      return;
+    }
+  }
+  const uid=window.UID||window.tgUserId||'';
   const btn=document.getElementById('bs-submit');
   btn.disabled=true; btn.style.opacity='.6';
   try{
     const d=await fetch('/api/bets/place',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,matchName:_bMatch,pick:_bPick,odds:_bOdds,amount:amt,currency:_bCur})}).then(r=>r.json());
-    if(d.ok){ betsCloseSlip(); if(typeof syncB==='function') syncB(); toast('Ставка принята!','g'); }
+    if(d.ok){
+      betsCloseSlip();
+      // Deduct locally so UI updates immediately
+      if(_bCur==='stars' && window.S) window.S.starsBalance=Math.max(0,(window.S.starsBalance||0)-amt);
+      else if(window.S) window.S.balance=Math.max(0,(window.S.balance||0)-amt);
+      if(typeof syncB==='function') syncB();
+      if(typeof updateB==='function') updateB();
+      toast('✅ Ставка принята!','g');
+    }
     else toast(d.error||'Ошибка ставки','r');
   } catch(e){ toast('Ошибка сети','r'); }
   finally{ btn.disabled=false; btn.style.opacity=''; betsCalcPot(); }
