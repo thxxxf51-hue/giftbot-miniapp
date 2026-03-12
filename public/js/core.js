@@ -1,4 +1,4 @@
-/* ══ TELEGRAM ══ */
+///* ══ TELEGRAM ══ *///
 const tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#0a0a0a');tg.setBackgroundColor('#0a0a0a');}catch(e){}}
 /* Parse user safely — try initDataUnsafe first, then parse initData string */
