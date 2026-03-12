@@ -76,7 +76,17 @@ async function init(){
   document.getElementById('h-name').textContent=name;
   document.getElementById('p-name').textContent=name;
   document.getElementById('p-un').textContent=uname;
-  document.getElementById('p-reg').textContent=S.regDate;
+  const pregRow = document.getElementById('p-reg-row');
+  if(pregRow) pregRow.textContent = 'С нами с ' + (S.regDate || '—');
+  // VIP badge on avatar
+  const vipBadge = document.getElementById('p-vip-badge');
+  if(vipBadge) {
+    const vipActive = S.vipExpiry && Date.now() < S.vipExpiry;
+    vipBadge.style.display = vipActive ? 'block' : 'none';
+  }
+  // tx count hint
+  const txCount = document.getElementById('p-tx-count');
+  if(txCount && S.transactions) txCount.textContent = S.transactions.length ? S.transactions.length + ' записей' : 'Нет';
   document.getElementById('p-refs').textContent=S.refs.length;
   document.getElementById('ref-link').textContent=`https://t.me/SATapp_bot?start=ref_${UID}`;
   applyNick(S.nickColor);

@@ -1,4 +1,4 @@
-///* ══ TELEGRAM ══ *///
+/* ══ TELEGRAM ══ */
 const tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#0a0a0a');tg.setBackgroundColor('#0a0a0a');}catch(e){}}
 /* Parse user safely — try initDataUnsafe first, then parse initData string */
@@ -101,9 +101,12 @@ function activateVip(days){const now=Date.now();S.vipExpiry=(S.vipExpiry&&S.vipE
 function updateVipUI(){
   const el=document.getElementById('p-vip');if(!el)return;
   const st=vipStatus();
-  if(st==='active'){const d=Math.ceil((S.vipExpiry-Date.now())/86400000);el.innerHTML=`<span class="vip-active">✅ VIP активен (${d} дн.)</span>`;}
-  else if(st==='expired'){el.innerHTML=`<span class="vip-expired">⚠️ VIP истёк</span>`;}
-  else{el.innerHTML=`<span class="vip-none">❌ VIP нет</span>`;}
+  if(st==='active'){const d=Math.ceil((S.vipExpiry-Date.now())/86400000);el.textContent='до '+new Date(S.vipExpiry).toLocaleDateString('ru',{day:'numeric',month:'long'});}
+  else if(st==='expired'){el.textContent='Истёк';}
+  else{el.textContent='—';}
+  // avatar vip badge
+  const badge=document.getElementById('p-vip-badge');
+  if(badge) badge.style.display=(st==='active'?'block':'none');
 }
 
 /* ══ NICK COLOR ══ */
