@@ -306,10 +306,12 @@ async function loadTxList() {
     const r = await fetch('/api/transactions?userId=' + UID);
     const d = await r.json();
     const serverTxs = (d.ok && d.transactions) ? d.transactions : [];
-    // Merge with local cache (server is authoritative, local fills gap)
+    // Merge server + local, deduplicate by date+amount
     const localTxs = S.localTx || [];
-    // Deduplicate: use server if available, otherwise local
-    const all = serverTxs.length ? serverTxs : localTxs;
+    const seen = new Set(serverTxs.map(t => t.date + t.amount));
+    const merged = [...serverTxs, ...localTxs.filter(t => !seen.has(t.date + t.amount))];
+    merged.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+    const all = merged;
     if (!all.length) {
       el.innerHTML = '<div class="tx-empty">Нет транзакций</div>';
       return;
