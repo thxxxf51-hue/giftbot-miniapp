@@ -105,12 +105,14 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .twip{background:rgba(255,200,0,.1);color:#f4c430;border:1px solid rgba(255,200,0,.2);border-radius:7px;padding:3px 8px;font-size:10px;font-weight:700;flex-shrink:0;position:relative;z-index:1;white-space:nowrap}
 
 .stabs{display:flex;gap:5px;margin-bottom:12px;background:rgba(0,0,0,.3);border-radius:11px;padding:3px}
-.stab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
+.stab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.stab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
 .stab.active{background:var(--glass);color:var(--text)}
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sitem{padding:13px 9px 11px;text-align:center;cursor:pointer;transition:transform .1s}
 .sitem:active{transform:scale(.96)}
-.sico{font-size:30px;margin-bottom:6px}
+.sico{width:36px;height:36px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+.sico svg{width:28px;height:28px;stroke:var(--green);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sname{font-size:11px;font-weight:600;margin-bottom:4px}
 .sprice{color:var(--green);font-weight:700;font-size:11px;margin-bottom:7px}
 .sbuy{width:100%;background:var(--green);color:#000;border:none;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .1s;position:relative;z-index:1}
@@ -122,16 +124,18 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ccard{cursor:pointer;transition:transform .12s;overflow:hidden;border-radius:15px;border:1px solid var(--gb)}
 .ccard:active{transform:scale(.96)}
-.ccimg{height:96px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.ccimg-ico{width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
-.ccimg-ico svg{width:26px;height:26px;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.ccimg::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.06),transparent 70%)}
+.ccimg{height:110px;overflow:hidden;position:relative;display:block}
+.ccimg img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+.ccard:active .ccimg img{transform:scale(1.04)}
+.ccimg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 55%);pointer-events:none}
+.ccimg-placeholder{width:100%;height:100%;background:rgba(255,255,255,.03)}
 .ccinfo{padding:7px 9px 9px;background:var(--glass)}
 .ccname{font-size:12px;font-weight:700;margin-bottom:2px}
 .ccprice{color:var(--green);font-weight:700;font-size:10px;display:flex;align-items:center;gap:3px;margin-bottom:5px}
 .ccprice svg{width:10px;height:10px;stroke:var(--green);fill:none;stroke-width:2}
 .ccprice.star-price{color:var(--star)}
-.ccpvbtn{width:100%;background:rgba(255,255,255,.05);border:none;border-radius:6px;padding:4px;font-size:9px;color:var(--muted2);cursor:pointer;font-family:inherit;position:relative;z-index:1;transition:background .15s}
+.ccpvbtn{width:100%;background:rgba(255,255,255,.05);border:none;border-radius:6px;padding:4px;font-size:9px;color:var(--muted2);cursor:pointer;font-family:inherit;position:relative;z-index:1;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:3px}
+.ccpvbtn svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
 .ccpvbtn:active{background:rgba(255,255,255,.1)}
 
 .inv-grid{display:flex;flex-direction:column;gap:8px}
@@ -245,8 +249,10 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .ritem{min-width:84px;height:94px;border-radius:10px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:#1a1c1e;border:1.5px solid rgba(255,255,255,.06)}
 .rw.compact .ritem{height:66px;min-width:78px}
 .ritem.win{border-color:var(--green)!important;background:#0d2218!important;box-shadow:0 0 14px rgba(46,204,113,.2)}
-.rico{font-size:26px}
-.rw.compact .rico{font-size:20px}
+.rico{width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.rico svg{width:22px;height:22px;stroke:rgba(255,255,255,.7);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.rw.compact .rico{width:22px;height:22px}
+.rw.compact .rico svg{width:18px;height:18px}
 .rname{font-size:8px;color:var(--muted2);font-weight:600;text-align:center;padding:0 3px}
 .rval{font-size:9px;color:var(--green);font-weight:700}
 .rcline{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--green);transform:translateX(-50%);box-shadow:0 0 10px var(--green);pointer-events:none;z-index:3}
@@ -289,7 +295,8 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .pvclose{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--muted2);border:none}
 .pvgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:0 12px 12px}
 .pvitem{background:rgba(255,255,255,.04);border-radius:9px;padding:9px 5px;text-align:center}
-.pvico{font-size:20px;margin-bottom:3px}
+.pvico{width:28px;height:28px;margin:0 auto 4px;display:flex;align-items:center;justify-content:center}
+.pvico svg{width:22px;height:22px;stroke:rgba(255,255,255,.75);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .pvname{font-size:8px;color:var(--muted2);font-weight:600}
 .pvval{font-size:9px;color:var(--green);font-weight:700;margin-top:1px}
 
