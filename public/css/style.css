@@ -273,7 +273,8 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .cres{display:none;padding:22px 18px;text-align:center;max-height:70vh;overflow-y:auto}
 .cres::-webkit-scrollbar{display:none}
 .cres.show{display:block}
-.cres-ico{font-size:58px;display:block;margin-bottom:10px;animation:bounce .5s ease}
+.cres-ico{width:64px;height:64px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;animation:bounce .5s ease}
+.cres-ico svg{width:48px;height:48px;stroke:var(--green);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 @keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
 .cres-t{font-size:18px;font-weight:800;margin-bottom:4px}
 .cres-s{font-size:12px;color:var(--muted2);margin-bottom:16px}
