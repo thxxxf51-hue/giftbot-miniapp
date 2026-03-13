@@ -92,14 +92,17 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .ti{padding:12px 13px;display:flex;align-items:center;gap:11px;margin-bottom:7px;cursor:pointer;transition:transform .1s,opacity .1s}
 .ti:active{transform:scale(.97);opacity:.8}
 .tico{width:40px;height:40px;border-radius:11px;background:var(--gdim);border:1px solid var(--gbor);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;position:relative;z-index:1}
+.tico svg{width:18px;height:18px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tinf{flex:1;min-width:0;position:relative;z-index:1}
 .ttag{display:inline-block;border-radius:5px;padding:1px 6px;font-size:9px;font-weight:700;margin-bottom:2px;letter-spacing:.3px}
 .ttag.r{background:var(--rdim);color:var(--red)}
 .ttag.g{background:var(--gdim);color:var(--green)}
+.ttag.b{background:rgba(0,136,255,.12);color:#0088ff}
 .tname{font-size:13px;font-weight:600;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tdesc{font-size:10px;color:var(--muted2)}
 .trew{color:var(--green);font-weight:700;font-size:11px;white-space:nowrap;flex-shrink:0;position:relative;z-index:1}
 .tdone{background:var(--gdim);color:var(--green);border-radius:7px;padding:3px 8px;font-size:11px;font-weight:700;flex-shrink:0;position:relative;z-index:1}
+.twip{background:rgba(255,200,0,.1);color:#f4c430;border:1px solid rgba(255,200,0,.2);border-radius:7px;padding:3px 8px;font-size:10px;font-weight:700;flex-shrink:0;position:relative;z-index:1;white-space:nowrap}
 
 .stabs{display:flex;gap:5px;margin-bottom:12px;background:rgba(0,0,0,.3);border-radius:11px;padding:3px}
 .stab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s}
@@ -446,6 +449,8 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tx-row { display: grid; grid-template-columns: 1.1fr .7fr 2fr 1fr; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; gap: 4px; }
 .tx-row:last-child { border-bottom: none; }
 .tx-badge { display: inline-block; background: rgba(255,255,255,.07); border-radius: 6px; padding: 2px 7px; font-size: 10px; font-weight: 700; color: var(--muted2); white-space: nowrap; }
+.tx-badge-task_reward { background: rgba(46,204,113,.12); color: #2ecc71; }
+.tx-badge-adjustment  { background: rgba(231,76,60,.12);  color: #e74c3c; }
 .tx-amt { font-size: 13px; font-weight: 800; }
 .tx-amt.pos { color: #2ecc71; }
 .tx-amt.neg { color: #e74c3c; }
