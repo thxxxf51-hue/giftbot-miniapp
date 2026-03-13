@@ -92,7 +92,8 @@ function updateCmBtnState(){
   const total=curC.price*curSpinCount;
   const btn=document.getElementById('cm-btn');
   btn.disabled=S.balance<total;
-  btn.textContent=S.balance<total?`Нужно ${total.toLocaleString('ru')} 🪙`:'🎰 Открыть';
+  const lack=total-S.balance;
+  btn.textContent=S.balance<total?`Не хватает ${lack.toLocaleString('ru')} 🪙`:'🎰 Открыть';
 }
 
 function buildReel(trackId,drops){
