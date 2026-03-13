@@ -19,7 +19,7 @@ const UID=String(TGU.id);
 /* ══ STORAGE ══ */
 const SK='gb4_'+UID;
 function load(){try{const d=JSON.parse(localStorage.getItem(SK)||'{}');return d.v===5?d:null;}catch{return null;}}
-function save(){try{localStorage.setItem(SK,JSON.stringify({v:5,balance:S.balance,starsBalance:S.starsBalance,doneTasks:[...S.doneTasks],usedPromos:[...S.usedPromos],regDate:S.regDate,refs:S.refs,refEarned:S.refEarned,refBy:S.refBy,vipExpiry:S.vipExpiry,nickColor:S.nickColor,hasCrown:S.hasCrown,legendExpiry:S.legendExpiry,legendColor:S.legendColor,inventory:S.inventory,bonusMulti:S.bonusMulti,vipDiscount:S.vipDiscount,task3refsDone:S.task3refsDone,task5refsDone:S.task5refsDone,entryEffect:S.entryEffect,effectExpiries:S.effectExpiries,ownedEffects:S.ownedEffects,walletAddress:S.walletAddress}));}catch{}}
+function save(){try{localStorage.setItem(SK,JSON.stringify({v:5,balance:S.balance,starsBalance:S.starsBalance,doneTasks:[...S.doneTasks],usedPromos:[...S.usedPromos],regDate:S.regDate,refs:S.refs,refEarned:S.refEarned,refBy:S.refBy,vipExpiry:S.vipExpiry,nickColor:S.nickColor,hasCrown:S.hasCrown,legendExpiry:S.legendExpiry,legendColor:S.legendColor,inventory:S.inventory,bonusMulti:S.bonusMulti,vipDiscount:S.vipDiscount,task3refsDone:S.task3refsDone,task5refsDone:S.task5refsDone,entryEffect:S.entryEffect,effectExpiries:S.effectExpiries,ownedEffects:S.ownedEffects,walletAddress:S.walletAddress,localTx:S.localTx||[]}));}catch{}}
 
 const sv=load();
 const today=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'long',year:'numeric'});
@@ -54,6 +54,7 @@ const S={
   })(),
   ownedEffects:sv?.ownedEffects||[],
   walletAddress:sv?.walletAddress||null,
+  localTx:sv?.localTx||[],
 };
 
 /* ══ REF PARAM ══ */
@@ -304,21 +305,39 @@ async function loadTxList() {
   try {
     const r = await fetch('/api/transactions?userId=' + UID);
     const d = await r.json();
-    if (!d.ok || !d.transactions || !d.transactions.length) {
+    const serverTxs = (d.ok && d.transactions) ? d.transactions : [];
+    // Merge with local cache (server is authoritative, local fills gap)
+    const localTxs = S.localTx || [];
+    // Deduplicate: use server if available, otherwise local
+    const all = serverTxs.length ? serverTxs : localTxs;
+    if (!all.length) {
       el.innerHTML = '<div class="tx-empty">Нет транзакций</div>';
       return;
     }
-    el.innerHTML = d.transactions.map(tx => {
-      const isPos = String(tx.amount).startsWith('+');
-      const isNeg = String(tx.amount).startsWith('-');
+    el.innerHTML = all.map(tx => {
+      const amt = String(tx.amount);
+      const isPos = amt.startsWith('+');
+      const isNeg = amt.startsWith('-');
       return `<div class="tx-row">
-        <span><span class="tx-badge">${tx.type}</span></span>
+        <span><span class="tx-badge tx-badge-${tx.type}">${tx.type}</span></span>
         <span class="tx-amt ${isPos?'pos':isNeg?'neg':''}">${tx.amount}</span>
         <span class="tx-det">${tx.details||'—'}</span>
         <span class="tx-date">${tx.date||'—'}</span>
       </div>`;
     }).join('');
   } catch {
-    el.innerHTML = '<div class="tx-empty">Ошибка загрузки</div>';
+    // Fallback to local
+    const localTxs = S.localTx || [];
+    if (!localTxs.length) { el.innerHTML = '<div class="tx-empty">Нет транзакций</div>'; return; }
+    el.innerHTML = localTxs.map(tx => {
+      const isPos = String(tx.amount).startsWith('+');
+      const isNeg = String(tx.amount).startsWith('-');
+      return `<div class="tx-row">
+        <span><span class="tx-badge tx-badge-${tx.type}">${tx.type}</span></span>
+        <span class="tx-amt ${isPos?'pos':isNeg?'neg':''}">${tx.amount}</span>
+        <span class="tx-det">${tx.details||'—'}</span>
+        <span class="tx-date">${tx.date||'—'}</span>
+      </div>`;
+    }).join('');
   }
 }

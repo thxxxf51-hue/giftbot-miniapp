@@ -2,33 +2,44 @@
 function renderTasks(){
   document.getElementById('tasks-list').innerHTML=TASKS.map(t=>{
     const done=S.doneTasks.has(t.id);
+    const ico=TASK_ICONS[t.icoKey]||t.ico||'';
+    let badge='';
+    if(done) badge='<div class="tdone">✓</div>';
+    else if(t.wip) badge='<div class="twip">В разработке</div>';
+    else badge=`<div class="trew">+${t.rew}🪙</div>`;
     return`<div class="gc ti" onclick="openTask(${t.id})">
-      <div class="tico">${t.ico}</div>
+      <div class="tico">${ico}</div>
       <div class="tinf">
         <div class="ttag ${t.tc}">${t.tag}</div>
         <div class="tname">${t.name}</div>
         <div class="tdesc">${t.desc}</div>
       </div>
-      ${done?'<div class="tdone">✓</div>':`<div class="trew">+${t.rew}🪙</div>`}
+      ${badge}
     </div>`;
   }).join('');
 }
 
 function openTask(id){
   const t=TASKS.find(x=>x.id===id);if(!t)return;
+  if(t.wip){toast('⏳ Задание в разработке','g');return;}
   if(S.doneTasks.has(id)){toast('✅ Уже выполнено','g');return;}
   if(t.check==='ref'){
     if(S.refs.length>0){completeTask(id);}
-    else{openGenMo('👥 Пригласи друга',`Пригласи друга по реф-ссылке и получи +${t.rew} монет`,'👥 К рефералам',()=>{closeGenMo();go('friends');});}
+    else{openGenMo('Пригласи друга',`Пригласи друга по реф-ссылке и получи +${t.rew} монет`,'👥 К рефералам',()=>{closeGenMo();go('friends');});}
     return;
   }
   if(t.check==='case'){
-    openGenMo('📦 Открыть кейс',`Открой любой кейс в Магазине → Кейсы и получи +${t.rew} монет`,'📦 В магазин',()=>{closeGenMo();go('shop');setTimeout(()=>{document.querySelectorAll('.stab')[1]?.click();},300);});
+    openGenMo('Открыть кейс',`Открой любой кейс в Магазине → Кейсы и получи +${t.rew} монет`,'📦 В магазин',()=>{closeGenMo();go('shop');setTimeout(()=>{document.querySelectorAll('.stab')[1]?.click();},300);});
+    return;
+  }
+  if(t.check==='wallet'){
+    if(S.walletAddress){completeTask(id);}
+    else{openGenMo('Подключи TON кошелёк',`Подключи кошелёк в разделе Профиль и получи +${t.rew} монет`,'💎 К профилю',()=>{closeGenMo();go('profile');});}
     return;
   }
   if(t.check==='sub'){
-    openGenMo('📢 '+t.name,`Подпишись на @${t.channel} и вернись — нажми "Проверить подписку"`,
-      '📢 Перейти на канал',()=>{
+    openGenMo(''+t.name,`Подпишись на @${t.channel} и вернись — нажми "Проверить подписку"`,
+      'Перейти на канал',()=>{
         if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
         closeGenMo();
         setTimeout(()=>showVerifyBtn(t),800);
@@ -36,8 +47,8 @@ function openTask(id){
     );return;
   }
   if(t.check==='chat'){
-    openGenMo('💬 '+t.name,`Зайди в @${t.channel}, напиши любое слово и вернись — нажми "Проверить"`,
-      '💬 Открыть чат',()=>{
+    openGenMo(''+t.name,`Зайди в @${t.channel}, напиши любое слово и вернись — нажми "Проверить"`,
+      'Открыть чат',()=>{
         if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
         closeGenMo();
         setTimeout(()=>showVerifyBtn(t),800);
@@ -48,7 +59,7 @@ function openTask(id){
 
 function showVerifyBtn(t){
   openGenMo(
-    '🔍 Проверка задания',
+    'Проверка задания',
     t.check==='sub'
       ? `Подписался ли ты на @${t.channel}?`
       : `Написал ли ты слово в @${t.channel}?`,
@@ -87,7 +98,35 @@ async function verifyTask(t){
 function completeTask(id){
   S.doneTasks.add(id);
   const t=TASKS.find(x=>x.id===id);
-  if(t){S.balance+=t.rew;syncB();}
+  if(t){
+    S.balance+=t.rew;
+    syncB();
+    // Save task reward to transactions
+    _addTxLocal('task_reward', `+${t.rew}`, 'Задание');
+    _sendTxToServer('task_reward', `+${t.rew}`, 'Задание');
+  }
   closeGenMo();renderTasks();
   toast(`+${t?.rew||0} монет! 🎉`,'g');
+}
+
+/* Send tx to server */
+async function _sendTxToServer(type, amount, details){
+  try{
+    await fetch('/api/transactions/add',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:UID, type, amount, details})
+    });
+  }catch{}
+}
+
+/* Local tx cache for immediate display */
+function _addTxLocal(type, amount, details){
+  if(!S.localTx) S.localTx=[];
+  const now=new Date();
+  const date=now.toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
+  S.localTx.unshift({type,amount,details,date});
+  if(S.localTx.length>50) S.localTx=S.localTx.slice(0,50);
+  save();
+  loadTxList();
 }

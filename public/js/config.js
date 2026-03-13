@@ -89,11 +89,20 @@ const ITEMS=[
 ];
 
 /* ══ TASKS ══ */
+const TASK_ICONS = {
+  sub:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 8.62 19.79 19.79 0 01.5 2.18 2 2 0 012.48.5h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.34a16 16 0 006.75 6.75l1.21-1.21a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>`,
+  chat:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`,
+  ref:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>`,
+  case:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>`,
+  wallet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1" fill="currentColor"/></svg>`,
+};
+
 const TASKS=[
-  {id:1,ico:'📢',tag:'Канал',tc:'r',name:'Подписаться на канал',desc:'Подпишись на @broketalking',rew:100,url:'https://t.me/broketalking',check:'sub',channel:'broketalking'},
-  {id:2,ico:'💬',tag:'Задание',tc:'r',name:'Написать в чат',desc:'Напиши любое слово в @drainself',rew:50,url:'https://t.me/drainself',check:'chat',channel:'drainself'},
-  {id:4,ico:'👥',tag:'Друзья',tc:'g',name:'Пригласить первого друга',desc:'Пригласи по реф-ссылке',rew:1000,check:'ref'},
-  {id:6,ico:'📦',tag:'Задание',tc:'r',name:'Открыть первый кейс',desc:'Открой любой кейс в Магазине',rew:200,check:'case'},
+  {id:1, icoKey:'sub',    tag:'Канал',   tc:'r', name:'Подписаться на канал',     desc:'Подпишись на @broketalking',          rew:100,  url:'https://t.me/broketalking', check:'sub',    channel:'broketalking'},
+  {id:2, icoKey:'chat',   tag:'Задание', tc:'r', name:'Написать в чат',           desc:'Напиши любое слово в @drainself',     rew:50,   url:'https://t.me/drainself',    check:'chat',   channel:'drainself', wip:true},
+  {id:4, icoKey:'ref',    tag:'Друзья',  tc:'g', name:'Пригласить первого друга', desc:'Пригласи по реф-ссылке',              rew:1000,                                  check:'ref'},
+  {id:6, icoKey:'case',   tag:'Задание', tc:'r', name:'Открыть первый кейс',      desc:'Открой любой кейс в Магазине',        rew:200,                                   check:'case'},
+  {id:7, icoKey:'wallet', tag:'Кошелёк', tc:'b', name:'Подключить TON кошелёк',   desc:'Подключи TonKeeper или Telegram Wallet', rew:2000,                               check:'wallet'},
 ];
 
 /* ══ NICK COLORS ══ */
