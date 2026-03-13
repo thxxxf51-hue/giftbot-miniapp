@@ -319,7 +319,7 @@ async function loadTxList() {
       const isPos = amt.startsWith('+');
       const isNeg = amt.startsWith('-');
       return `<div class="tx-row">
-        <span><span class="tx-badge tx-badge-${tx.type}">${tx.type}</span></span>
+        <span><span class="tx-badge">${tx.type}</span></span>
         <span class="tx-amt ${isPos?'pos':isNeg?'neg':''}">${tx.amount}</span>
         <span class="tx-det">${tx.details||'—'}</span>
         <span class="tx-date">${tx.date||'—'}</span>
@@ -333,7 +333,7 @@ async function loadTxList() {
       const isPos = String(tx.amount).startsWith('+');
       const isNeg = String(tx.amount).startsWith('-');
       return `<div class="tx-row">
-        <span><span class="tx-badge tx-badge-${tx.type}">${tx.type}</span></span>
+        <span><span class="tx-badge">${tx.type}</span></span>
         <span class="tx-amt ${isPos?'pos':isNeg?'neg':''}">${tx.amount}</span>
         <span class="tx-det">${tx.details||'—'}</span>
         <span class="tx-date">${tx.date||'—'}</span>
