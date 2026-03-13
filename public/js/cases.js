@@ -12,7 +12,7 @@ function rCases(){
     } else {
       priceHtml=`<div class="ccprice">${_COIN_SVG}${c.price}</div>`;
     }
-    const photoHtml=c.photo?`<img src="${c.photo}" alt="${c.name}" loading="lazy">`:`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
+    const photoHtml=c.photo?`<img src="${c.photo}" alt="${c.name}" loading="lazy" style="object-position:${c.photoPos||'center center'}">`:`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
     return`<div class="${wrapClass}" ${c.wip?'':'onclick="openCaseMo('+c.id+')"'}>
       <div class="ccimg">${photoHtml}</div>
       <div class="ccinfo">
