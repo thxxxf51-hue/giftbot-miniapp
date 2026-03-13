@@ -449,8 +449,6 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tx-row { display: grid; grid-template-columns: 1.1fr .7fr 2fr 1fr; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.04); align-items: center; gap: 4px; }
 .tx-row:last-child { border-bottom: none; }
 .tx-badge { display: inline-block; background: rgba(255,255,255,.07); border-radius: 6px; padding: 2px 7px; font-size: 10px; font-weight: 700; color: var(--muted2); white-space: nowrap; }
-.tx-badge-task_reward { background: rgba(46,204,113,.12); color: #2ecc71; }
-.tx-badge-adjustment  { background: rgba(231,76,60,.12);  color: #e74c3c; }
 .tx-amt { font-size: 13px; font-weight: 800; }
 .tx-amt.pos { color: #2ecc71; }
 .tx-amt.neg { color: #e74c3c; }
