@@ -1,4 +1,7 @@
 /* ══ CASES ══ */
+const _COIN_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+const _EYE_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+
 function rCases(){
   document.getElementById('shop-cases').innerHTML=CASES.map(c=>{
     let priceHtml='';
@@ -7,14 +10,15 @@ function rCases(){
       priceHtml=`<div class="ccprice star-price">⭐ ${c.starsPrice} Stars</div>`;
       wrapClass='gc ccard ccard-wip';
     } else {
-      priceHtml=`<div class="ccprice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${c.price}</div>`;
+      priceHtml=`<div class="ccprice">${_COIN_SVG}${c.price}</div>`;
     }
+    const photoHtml=c.photo?`<img src="${c.photo}" alt="${c.name}" loading="lazy">`:`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
     return`<div class="${wrapClass}" ${c.wip?'':'onclick="openCaseMo('+c.id+')"'}>
-      <div class="ccimg" style="background:${c.bg}"><div class="ccimg-ico" style="background:${c.ib};border:1px solid ${c.ic}40">${c.icon}</div></div>
+      <div class="ccimg">${photoHtml}</div>
       <div class="ccinfo">
         <div class="ccname">${c.name}</div>
         ${priceHtml}
-        ${c.wip?'':` <button class="ccpvbtn" onclick="event.stopPropagation();showPrizePrev(${c.id})">👁 Возможные призы</button>`}
+        ${c.wip?'':` <button class="ccpvbtn" onclick="event.stopPropagation();showPrizePrev(${c.id})">${_EYE_SVG} Возможные призы</button>`}
       </div>
     </div>`;
   }).join('');
@@ -23,7 +27,7 @@ function rCases(){
 function showPrizePrev(id){
   const c=CASES.find(x=>x.id===id);if(!c)return;
   document.getElementById('pv-t').textContent=`📦 ${c.name}`;
-  document.getElementById('pv-grid').innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${d.i}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
+  document.getElementById('pv-grid').innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${DROP_ICONS[d.icoKey]||''}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
   document.getElementById('pvmo').classList.add('show');
 }
 
@@ -95,7 +99,7 @@ function buildReel(trackId,drops){
   const track=document.getElementById(trackId);
   if(!track)return;
   let items=[];for(let i=0;i<10;i++)items.push(...drops);
-  track.innerHTML=items.map((d,idx)=>`<div class="ritem" id="${trackId}-${idx}"><div class="rico">${d.i}</div><div class="rname">${d.n}</div><div class="rval">${d.v}</div></div>`).join('');
+  track.innerHTML=items.map((d,idx)=>`<div class="ritem" id="${trackId}-${idx}"><div class="rico">${DROP_ICONS[d.icoKey]||''}</div><div class="rname">${d.n}</div><div class="rval">${d.v}</div></div>`).join('');
   track.style.transition='none';track.style.transform='translateX(0)';
 }
 
@@ -165,7 +169,7 @@ function spinCase(){
       if(winner.inv)addInv(winner.inv,winner.cnt||1);
       document.getElementById('cm-spin').style.display='none';
       const r=document.getElementById('cres');r.classList.add('show');
-      document.getElementById('cr-ico').textContent=winner.i;
+      document.getElementById('cr-ico').innerHTML=DROP_ICONS[winner.icoKey]||winner.n;
       document.getElementById('cr-t').textContent='Вы получили: '+winner.n;
       document.getElementById('cr-s').innerHTML=`<span>${coins>0?'+'+coins.toLocaleString('ru')+' монет':winner.v}</span>`;
       toast('🎉 '+winner.n+'!','g');
@@ -198,14 +202,14 @@ function spinCase(){
       if(totalCoins>0){S.balance+=totalCoins;syncB();}
       const summary={};
       for(const w of actualWinners){
-        const key=w.i+'__'+w.n;
+        const key=(w.icoKey||w.n)+'__'+w.n;
         if(!summary[key])summary[key]={...w,count:0,totalCoins:0};
         summary[key].count++;
         summary[key].totalCoins+=(w.coins||0);
       }
       const rows=Object.values(summary).map(s=>`
         <div class="multi-win-row">
-          <span class="multi-win-ico">${s.i}</span>
+          <span class="multi-win-ico">${DROP_ICONS[s.icoKey]||''}</span>
           <span class="multi-win-name">${s.n}</span>
           <span class="multi-win-val">×${s.count}${s.totalCoins>0?' · +'+s.totalCoins.toLocaleString('ru')+' 🪙':''}</span>
         </div>`).join('');
@@ -237,10 +241,10 @@ function closeCase(){
 
 /* ══ MEGA GIFT ══ */
 const MEGA_DROPS=[
-  {i:'🏆',n:'VIP',v:'7 дней',vipDays:7},
-  {i:'🎟️',n:'Билеты',v:'х10',inv:'ticket',cnt:10},
-  {i:'👑',n:'Корона',v:'14 дней',inv:'crown',cnt:1},
-  {i:'📦',n:'Кейс Богача',v:'бесплатно',freeCase:3},
+  {icoKey:'vip',n:'VIP',v:'7 дней',vipDays:7},
+  {icoKey:'ticket',n:'Билеты',v:'х10',inv:'ticket',cnt:10},
+  {icoKey:'crown',n:'Корона',v:'14 дней',inv:'crown',cnt:1},
+  {icoKey:'megagift',n:'Кейс Богача',v:'бесплатно',freeCase:3},
 ];
 let megaSpinning=false;
 function openMegaGift(){
@@ -264,7 +268,7 @@ function spinMega(){
     if(winner.freeCase){curC=CASES.find(c=>c.id===winner.freeCase);if(curC){S.balance+=curC.price;}}
     document.getElementById('mega-spin').style.display='none';
     const r=document.getElementById('mega-res');r.classList.add('show');
-    document.getElementById('mr-ico').textContent=winner.i;
+    document.getElementById('mr-ico').innerHTML=DROP_ICONS[winner.icoKey]||winner.n;
     document.getElementById('mr-t').textContent='Вы получили: '+winner.n;
     document.getElementById('mr-s').textContent=winner.v;
     toast('🎉 '+winner.n+'!','g');

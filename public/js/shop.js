@@ -25,7 +25,7 @@ function rShopItems(){
     else btn=`<button class="sbuy${ok2?'':' nomoney'}"${ok2?'':' disabled'} onclick="buyItem(${x.id})">${ok2?'Купить':'Мало монет'}</button>`;
     const priceLabel=x.id===3&&S.vipDiscount?`<span style="text-decoration:line-through;opacity:.5">${x.price}</span> <span style="color:var(--green)">${price} 🪙</span>`:`${price} 🪙`;
     return`<div class="gc sitem">
-      <div class="sico">${x.ico}</div>
+      <div class="sico">${ITEM_ICONS[x.icoKey]||''}</div>
       <div class="sname">${x.name}</div>
       <div class="sprice">${priceLabel}</div>
       ${btn}
@@ -41,9 +41,11 @@ function buyItem(id){
   openGenMo(`Купить ${x.name}?`,`Спишется ${price} монет`,`🛒 Купить — ${price} 🪙`,()=>{
     S.balance-=price;
     if(x.vipDays){activateVip(x.vipDays);if(id===3&&S.vipDiscount){S.vipDiscount=false;save();}}
+    if(x.crownDays){activateCrownTimed(x.crownDays);}
     syncB();rShopItems();closeGenMo();
     if(x.vipDays)addServerTx('vip_buy','-'+price,'Покупка VIP на '+x.vipDays+' дн.');
-    toast(`${x.ico} ${x.vipDays?'VIP на '+x.vipDays+' дн. активирован!':'Куплено!'}`,'g');
+    if(x.crownDays)addServerTx('crown_buy','-'+price,'Покупка Короны на '+x.crownDays+' дн.');
+    toast(x.vipDays?'👑 VIP на '+x.vipDays+' дн. активирован!':x.crownDays?'👑 Корона на '+x.crownDays+' дн. активирована!':'✅ Куплено!','g');
   });
 }
 
