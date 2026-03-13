@@ -102,8 +102,8 @@ function completeTask(id){
     S.balance+=t.rew;
     syncB();
     // Save task reward to transactions
-    _addTxLocal('task_reward', `+${t.rew}`, 'Задание');
-    _sendTxToServer('task_reward', `+${t.rew}`, 'Задание');
+    _addTxLocal('task_reward', `+${t.rew}`, 'Задание выполнено');
+    _sendTxToServer('task_reward', `+${t.rew}`, 'Задание выполнено');
   }
   closeGenMo();renderTasks();
   toast(`+${t?.rew||0} монет! 🎉`,'g');
