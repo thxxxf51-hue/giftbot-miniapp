@@ -59,7 +59,7 @@ const CASES=[
      {icoKey:'coins',n:'Монеты',v:'+3500',coins:3500},
    ]},
   {id:3,name:'Кейс Богача',price:5555,bg:'linear-gradient(145deg,#1a1500,#1e1800)',ic:'#F4C430',ib:'rgba(244,196,48,.15)',
-   photo:'https://i.imgur.com/dpfHwkG.jpeg',photoPos:'center 35%',
+   photo:'https://i.imgur.com/dpfHwkG.jpeg',photoPos:'center 30%',
    drops:[
      {icoKey:'coins',n:'Монеты',v:'+1500',coins:1500},
      {icoKey:'vip',n:'VIP',v:'7 дней',vipDays:7},
