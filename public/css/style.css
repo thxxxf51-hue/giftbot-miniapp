@@ -107,7 +107,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 
 .stabs{display:flex;gap:5px;margin-bottom:12px;background:rgba(0,0,0,.3);border-radius:11px;padding:3px}
 .stab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
-.stab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
+.stab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;vertical-align:middle}
 .stab.active{background:var(--glass);color:var(--text)}
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sitem{padding:13px 9px 11px;text-align:center;cursor:pointer;transition:transform .1s}
