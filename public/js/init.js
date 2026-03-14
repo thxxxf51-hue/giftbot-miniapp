@@ -53,10 +53,14 @@ function showBanScreen(until) {
 
 /* ══ СБРОС localStorage ══ */
 function hardReset() {
-  // Удаляем только ключ этого пользователя, не трогаем остальных
-  try { localStorage.removeItem('gb4_' + UID); } catch {}
-  // Перезагружаем страницу — приложение запустится с чистым slate
-  location.reload();
+  // Используем SK (определён в core.js) — гарантированно правильный ключ
+  try {
+    localStorage.removeItem(SK);
+    // Также чистим кеш уведомлений
+    localStorage.removeItem('gb4_notifs_' + UID);
+  } catch {}
+  // Небольшая задержка чтобы localStorage точно очистился
+  setTimeout(() => location.reload(), 50);
 }
 
 /* ══ INIT ══ */
@@ -180,11 +184,11 @@ async function init(){
   const bar = document.getElementById('splash-bar');
   const pct = document.getElementById('splash-pct');
   const steps = [
-    { w: 22,  t: 'Инициализация...', delay: 180 },
-    { w: 45,  t: 'Загрузка данных...', delay: 420 },
-    { w: 68,  t: 'Подключение...', delay: 350 },
-    { w: 85,  t: 'Почти готово...', delay: 300 },
-    { w: 100, t: 'Готово!', delay: 250 },
+    { w: 18,  t: 'Инициализация...', delay: 350 },
+    { w: 40,  t: 'Загрузка данных...', delay: 600 },
+    { w: 65,  t: 'Подключение...', delay: 550 },
+    { w: 85,  t: 'Почти готово...', delay: 500 },
+    { w: 100, t: 'Готово!', delay: 400 },
   ];
   let i = 0;
   function nextStep() {
@@ -194,9 +198,9 @@ async function init(){
     if (pct) pct.textContent = s.t;
     setTimeout(nextStep, s.delay);
   }
-  setTimeout(nextStep, 300);
+  setTimeout(nextStep, 400);
 
-  // Hide splash after ~1.8s
+  // Hide splash after ~3s
   setTimeout(function() {
     const splash = document.getElementById('splash-screen');
     if (splash) {
@@ -205,7 +209,7 @@ async function init(){
         splash.style.display = 'none';
       }, 550);
     }
-  }, 1800);
+  }, 3000);
 })();
 
 init();
