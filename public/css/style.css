@@ -1148,10 +1148,40 @@ body:not(.theme-light) .ppu-notif-item-time { color: rgba(255,255,255,.25); }
   position: relative; z-index: 1;
 }
 @keyframes splashLogoPulse {
-  0%,100% { box-shadow: 0 0 0 0   rgba(190,221,48,.35), 0 12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(190,221,48,.12); }
-  50%      { box-shadow: 0 0 0 16px rgba(190,221,48,0),   0 12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(190,221,48,.12); }
+  0%,100% { box-shadow: 0 0 0 0   rgba(190,221,48,.25), 0 12px 40px rgba(0,0,0,.6), inset 0 1px 0 rgba(190,221,48,.1); }
+  50%      { box-shadow: 0 0 0 12px rgba(190,221,48,0),   0 16px 48px rgba(0,0,0,.65),inset 0 1px 0 rgba(190,221,48,.1); }
 }
-.splash-logo svg { width: 42px; height: 42px; }
+.splash-logo svg { width: 42px; height: 42px; animation: splashSvgRotate 18s linear infinite; }
+@keyframes splashSvgRotate { to { transform: rotate(360deg); } }
+
+/* squares pop in one by one → hold → shrink back → repeat */
+.splash-logo svg rect:nth-child(1) { animation: splashRectLoop 3.2s 0s    cubic-bezier(.34,1.56,.64,1) infinite; }
+.splash-logo svg rect:nth-child(2) { animation: splashRectLoop 3.2s .18s  cubic-bezier(.34,1.56,.64,1) infinite; }
+.splash-logo svg rect:nth-child(3) { animation: splashRectLoop 3.2s .36s  cubic-bezier(.34,1.56,.64,1) infinite; }
+.splash-logo svg rect:nth-child(4) { animation: splashRectLoop 3.2s .54s  cubic-bezier(.34,1.56,.64,1) infinite; }
+@keyframes splashRectLoop {
+  0%       { opacity: 0;   transform: scale(.25); }
+  18%      { opacity: var(--op, 1); transform: scale(1.08); }
+  24%      { opacity: var(--op, 1); transform: scale(1); }
+  62%      { opacity: var(--op, 1); transform: scale(1); }
+  78%,100% { opacity: 0;   transform: scale(.25); }
+}
+
+/* glare element inside logo box */
+.splash-glare {
+  position: absolute; inset: 0; border-radius: 24px;
+  pointer-events: none; z-index: 2; overflow: hidden;
+}
+.splash-glare::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; width: 40%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,.09) 50%, transparent 80%);
+  animation: splashGlareSweep 3.6s cubic-bezier(.4,0,.6,1) infinite;
+}
+@keyframes splashGlareSweep {
+  0%       { left: -40%; }
+  40%,100% { left: 140%; }
+}
 
 /* Rings around logo */
 .splash-rings { position:absolute; inset:-28px; pointer-events:none; }
