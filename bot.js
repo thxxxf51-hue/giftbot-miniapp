@@ -40,7 +40,7 @@ function saveDB() {
 const _saved = loadDB();
 
 const DB = {
-  repairMode: false,
+  repairMode:    _saved?.repairMode    || false,
   users:         _saved?.users         || {},
   promos:        _saved?.promos        || {},
   draws:         _saved?.draws         || {},
