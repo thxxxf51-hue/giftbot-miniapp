@@ -14,6 +14,14 @@ if (!BOT_TOKEN) { console.error('BOT_TOKEN not set!'); process.exit(1); }
 const bot = new Telegraf(BOT_TOKEN);
 const app = express();
 app.use(express.json());
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ══ PERSISTENT DB ══ */
