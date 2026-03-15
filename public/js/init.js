@@ -1,3 +1,45 @@
+
+/* ═══ SWIPE TO ENTER ═══ */
+function initSwipe(){
+  const track=document.getElementById('sw-track');
+  const thumb=document.getElementById('sw-thumb');
+  const success=document.getElementById('sw-success');
+  if(!track||!thumb)return;
+  let drag=false,sx=0,cx=0;
+  function mx(){return track.offsetWidth-44;}
+  function setX(x){
+    x=Math.max(0,Math.min(x,mx()));cx=x;
+    thumb.style.transform='translateX('+x+'px)';
+    const arr=document.querySelector('.sw-arrows');
+    if(arr)arr.style.opacity=Math.max(0,(1-x/mx()*2.5)*.42);
+    if(x>=mx()-4)swipeDone();
+  }
+  function swipeDone(){
+    thumb.style.transform='translateX('+mx()+'px)';
+    if(success)success.classList.add('show');
+    try{localStorage.setItem('gb4_swiped','1');}catch(e){}
+    setTimeout(function(){
+      const sw=document.getElementById('swipe-screen');
+      if(sw){sw.classList.add('hide');setTimeout(function(){sw.style.display='none';},500);}
+    },400);
+  }
+  function reset(){
+    if(cx<mx()-4){
+      thumb.style.transition='transform .35s cubic-bezier(.22,1,.36,1)';
+      cx=0;thumb.style.transform='translateX(0)';
+      setTimeout(function(){thumb.style.transition='';},350);
+      const arr=document.querySelector('.sw-arrows');
+      if(arr)arr.style.opacity='';
+    }
+  }
+  thumb.addEventListener('mousedown',function(e){drag=true;sx=e.clientX-cx;thumb.style.animation='none';e.preventDefault();});
+  window.addEventListener('mousemove',function(e){if(drag)setX(e.clientX-sx);});
+  window.addEventListener('mouseup',function(){if(drag){drag=false;reset();}});
+  thumb.addEventListener('touchstart',function(e){drag=true;sx=e.touches[0].clientX-cx;thumb.style.animation='none';e.preventDefault();},{passive:false});
+  window.addEventListener('touchmove',function(e){if(drag){setX(e.touches[0].clientX-sx);e.preventDefault();}},{passive:false});
+  window.addEventListener('touchend',function(){if(drag){drag=false;reset();}});
+}
+
 /* ══ BAN SCREEN ══ */
 let _banTimer = null;
 
@@ -200,13 +242,18 @@ async function init(){
   }
   setTimeout(nextStep, 400);
 
-  // Hide splash after ~3s
+  // Hide splash after ~3s → show swipe screen
   setTimeout(function() {
     const splash = document.getElementById('splash-screen');
     if (splash) {
       splash.classList.add('splash-hide');
       setTimeout(function() {
         splash.style.display = 'none';
+        // Show swipe screen
+        const sw = document.getElementById('swipe-screen');
+        let swiped=false;try{swiped=!!localStorage.getItem('gb4_swiped');}catch(e){}
+        if (sw && !swiped) { sw.classList.add('show'); initSwipe(); }
+        else if (sw) { sw.style.display='none'; }
       }, 550);
     }
   }, 3000);
