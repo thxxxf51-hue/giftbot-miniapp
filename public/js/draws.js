@@ -97,7 +97,7 @@ function renderFinishedDraws(draws){
 
 function renderHomeDraws(draws){
   const el=document.getElementById('h-raf-block');if(!el)return;
-  if(!draws.length){el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:20px;opacity:.3;gap:8px"><div style="font-size:28px">🎁</div><div style="font-size:12px;color:var(--muted)">Пока розыгрышей нет</div></div>`;return;}
+  if(!draws.length){el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:20px;opacity:.4;gap:8px"><div style="width:40px;height:40px;color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div><div style="font-size:12px;color:var(--muted)">Пока розыгрышей нет</div></div>`;return;}
   el.innerHTML=draws.slice(0,2).map(d=>`<div onclick="go('raffles')" style="background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px">
     <div style="font-size:22px">${d.imageUrl?`<img src="${d.imageUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover">`:'🎁'}</div>
     <div style="flex:1">
