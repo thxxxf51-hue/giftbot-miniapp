@@ -1430,3 +1430,56 @@ body.theme-light .prn-pin { color: #3a4a60; }
 body.theme-light .prn-pin::placeholder { color: #aaa; }
 
 
+
+/* ═══════════════════════════════════════════
+   SWIPE TO ENTER SCREEN
+═══════════════════════════════════════════ */
+#swipe-screen{
+  position:fixed;inset:0;background:#0d1117;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 18px;overflow:hidden;
+  opacity:0;pointer-events:none;z-index:99998;
+  transition:opacity .6s cubic-bezier(.22,1,.36,1);
+}
+#swipe-screen.show{opacity:1;pointer-events:all}
+#swipe-screen.hide{opacity:0;pointer-events:none}
+
+.sw-glow{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(190,221,48,.06) 0%,transparent 70%);top:40%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+
+.sw-logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#161e04,#243309);border:1px solid rgba(190,221,48,.2);display:flex;align-items:center;justify-content:center;margin-bottom:10px;animation:swFadeUp .5s .05s cubic-bezier(.22,1,.36,1) both}
+.sw-logo svg{width:24px;height:24px}
+.sw-title{font-size:19px;font-weight:900;letter-spacing:-.5px;color:#fff;margin-bottom:3px;animation:swFadeUp .5s .1s cubic-bezier(.22,1,.36,1) both}
+.sw-sub{font-size:11px;color:rgba(255,255,255,.28);margin-bottom:20px;animation:swFadeUp .5s .15s cubic-bezier(.22,1,.36,1) both}
+@keyframes swFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.sw-info-cards{width:100%;display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.sw-icard{
+  display:flex;align-items:center;gap:11px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);
+  border-radius:13px;padding:11px 13px;
+  opacity:0;transform:translateX(-36px);
+}
+.sw-icard:nth-child(1){animation:swSlideIn .55s .28s cubic-bezier(.22,1,.36,1) forwards}
+.sw-icard:nth-child(2){animation:swSlideIn .55s .42s cubic-bezier(.22,1,.36,1) forwards}
+.sw-icard:nth-child(3){animation:swSlideIn .55s .56s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes swSlideIn{to{opacity:1;transform:translateX(0)}}
+.sw-icard-ico{width:34px;height:34px;border-radius:9px;background:rgba(190,221,48,.09);border:1px solid rgba(190,221,48,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sw-icard-ico svg{width:17px;height:17px;stroke:#bedd30;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sw-icard-t{font-size:12px;font-weight:700;color:#efefef;margin-bottom:2px}
+.sw-icard-s{font-size:10px;font-weight:500;color:rgba(255,255,255,.28);line-height:1.4}
+
+.sw-track-wrap{width:100%;animation:swFadeUp .5s .65s cubic-bezier(.22,1,.36,1) both}
+.sw-track{width:100%;height:48px;border-radius:24px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);position:relative;overflow:hidden;display:flex;align-items:center}
+.sw-track::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(190,221,48,.04),transparent);animation:swTrackShimmer 2s ease-in-out infinite}
+@keyframes swTrackShimmer{0%,100%{opacity:.4}50%{opacity:1}}
+.sw-arrows{position:absolute;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:3px;pointer-events:none;animation:swArrowFade 1.4s ease-in-out infinite}
+@keyframes swArrowFade{0%,100%{opacity:.18}50%{opacity:.42}}
+.sw-arr{color:#bedd30;font-size:15px;font-weight:900;line-height:1}
+.sw-thumb{width:40px;height:40px;border-radius:20px;background:linear-gradient(135deg,#bedd30,#a8c220);display:flex;align-items:center;justify-content:center;position:absolute;left:4px;box-shadow:0 4px 16px rgba(190,221,48,.35);cursor:grab;touch-action:none;z-index:2;animation:swThumbHint 2.8s 1.4s ease-in-out 2}
+.sw-thumb:active{cursor:grabbing}
+@keyframes swThumbHint{0%,100%{transform:translateX(0)}35%{transform:translateX(22px)}65%{transform:translateX(10px)}}
+.sw-thumb svg{width:16px;height:16px}
+.sw-success{position:absolute;inset:0;border-radius:24px;background:linear-gradient(135deg,#bedd30,#a8c220);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease;pointer-events:none}
+.sw-success.show{opacity:1}
+.sw-success svg{width:22px;height:22px}
+.sw-hint{font-size:10px;font-weight:600;color:rgba(255,255,255,.1);letter-spacing:.08em;margin-top:13px;animation:swFadeUp .5s .75s cubic-bezier(.22,1,.36,1) both}
