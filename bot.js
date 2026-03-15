@@ -2469,8 +2469,8 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
   if (changed) saveDB();
 })();
 
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, async () => {
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ Server on port ${PORT}`);
   if (APP_URL) {
     try {
