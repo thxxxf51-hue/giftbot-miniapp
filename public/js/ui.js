@@ -249,3 +249,71 @@ function _navPillUpdate(page){
     }
   });
 })();
+
+/* ══ ACCENT THEME ══ */
+const ACCENT_THEMES = [
+  { id:'green',   name:'Зелёный',     color:'#2ecc71', dark:'#27ae60', r:46,  g:204, b:113 },
+  { id:'blue',    name:'Синий',       color:'#4a9eff', dark:'#2d7dd2', r:74,  g:158, b:255 },
+  { id:'purple',  name:'Фиолет.',     color:'#a855f7', dark:'#8b3fe8', r:168, g:85,  b:247 },
+  { id:'orange',  name:'Оранжевый',   color:'#ff8c42', dark:'#e07230', r:255, g:140, b:66  },
+  { id:'pink',    name:'Розовый',     color:'#ff6b9d', dark:'#e0507f', r:255, g:107, b:157 },
+];
+
+function applyAccent(id, persist) {
+  if (persist === undefined) persist = true;
+  const t = ACCENT_THEMES.find(x => x.id === id) || ACCENT_THEMES[0];
+  const root = document.documentElement;
+  root.style.setProperty('--green',  t.color);
+  root.style.setProperty('--green2', t.dark);
+  root.style.setProperty('--gdim',   `rgba(${t.r},${t.g},${t.b},0.12)`);
+  root.style.setProperty('--gbor',   `rgba(${t.r},${t.g},${t.b},0.25)`);
+  root.style.setProperty('--ar', t.r);
+  root.style.setProperty('--ag', t.g);
+  root.style.setProperty('--ab', t.b);
+  if (persist) localStorage.setItem('gb_accent', t.id);
+  const lbl = document.getElementById('p-accent-val');
+  if (lbl) { lbl.textContent = t.name; lbl.style.color = t.color; }
+  _accentUpdatePpu(t.id);
+}
+
+function _accentLoadSaved() {
+  const saved = localStorage.getItem('gb_accent') || 'green';
+  applyAccent(saved, false);
+}
+
+function _accentUpdatePpu(activeId) {
+  const row = document.getElementById('ppu-accent-row');
+  if (!row) return;
+  row.innerHTML = ACCENT_THEMES.map(t =>
+    `<div class="ppu-ac-dot${t.id===activeId?' ppu-ac-sel':''}" style="background:${t.color}" title="${t.name}" onclick="event.stopPropagation();applyAccent('${t.id}')"></div>`
+  ).join('');
+}
+
+function openAccentPicker() {
+  const grid = document.getElementById('ac-grid');
+  if (!grid) return;
+  const activeId = localStorage.getItem('gb_accent') || 'green';
+  grid.innerHTML = ACCENT_THEMES.map(t => `
+    <div class="ac-item${t.id===activeId?' ac-sel':''}" onclick="applyAccent('${t.id}');_accentRefreshGrid('${t.id}')">
+      <div class="ac-dot" style="background:linear-gradient(135deg,${t.color},${t.dark})">
+        <div class="ac-check">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+      <div class="ac-name">${t.name}</div>
+    </div>`).join('');
+  document.getElementById('acmo').classList.add('show');
+  try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('light'); } catch{}
+}
+
+function _accentRefreshGrid(activeId) {
+  document.querySelectorAll('#ac-grid .ac-item').forEach((el, i) => {
+    el.classList.toggle('ac-sel', ACCENT_THEMES[i]?.id === activeId);
+  });
+}
+
+function closeAccentPicker() {
+  document.getElementById('acmo').classList.remove('show');
+}
+
+_accentLoadSaved();
