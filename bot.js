@@ -1284,11 +1284,12 @@ bot.action(/^pub_promo:(.+)$/, async (ctx) => {
   if (!isAdmin(ctx.from.id)) return ctx.answerCbQuery('⛔ Нет доступа');
   const code = ctx.match[1];
   try {
-    await bot.telegram.sendMessage('@satapp_news', `\`${code}\``, {
+    const safeCode = code.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+    await bot.telegram.sendMessage('@satapp_news', `\`${safeCode}\``, {
       parse_mode: 'MarkdownV2',
       reply_markup: {
         inline_keyboard: [[
-          { text: '🎮 Открыть приложение', web_app: { url: APP_URL } }
+          { text: '🎮 Открыть приложение', url: APP_URL }
         ]]
       }
     });
