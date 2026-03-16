@@ -1285,7 +1285,7 @@ bot.action(/^pub_promo:(.+)$/, async (ctx) => {
   const code = ctx.match[1];
   try {
     const safeCode = code.replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
-    await bot.telegram.sendMessage('@satapp_news', `\`${safeCode}\``, {
+    await bot.telegram.sendMessage('@satapp_news', `🎟 Промокод: \`${safeCode}\``, {
       parse_mode: 'MarkdownV2',
       reply_markup: {
         inline_keyboard: [[
