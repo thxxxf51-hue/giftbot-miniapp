@@ -2122,6 +2122,15 @@ function startPvpSpin() {
     if (DB.pvp.game) {
       const doneGame = DB.pvp.game;
       doneGame.state = 'done';
+      // Auto-credit winner on server — do not rely on frontend collect call
+      if (doneGame.winner && !doneGame.collected) {
+        const prize = doneGame.pendingPrize || doneGame.totalBet || 0;
+        if (prize > 0) {
+          const winnerUser = getUser(doneGame.winner.uid);
+          winnerUser.balance = (winnerUser.balance || 0) + prize;
+          doneGame.collected = true;
+        }
+      }
       // Save to history
       if (doneGame.winner) {
         DB.pvp.history.unshift({
@@ -2216,12 +2225,17 @@ app.post('/api/pvp/collect', (req, res) => {
   const g = DB.pvp.game;
   if (!g || !g.winner) return res.json({ ok: false, error: 'Нет завершённой игры' });
   if (g.winner.uid !== uid) return res.json({ ok: false, error: 'Вы не победитель' });
-  if (g.collected) return res.json({ ok: false, error: 'Уже получено' });
+
+  const u = getUser(uid);
+
+  // If server already auto-credited — just return current balance
+  if (g.collected) {
+    return res.json({ ok: true, prize: g.pendingPrize || g.totalBet || 0, balance: u.balance });
+  }
 
   const prize = g.pendingPrize || g.totalBet || 0;
   if (prize <= 0) return res.json({ ok: false, error: 'Приз = 0' });
 
-  const u = getUser(uid);
   u.balance += prize;
   g.collected = true;
   saveDB();
