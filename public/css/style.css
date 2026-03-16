@@ -1065,21 +1065,21 @@ body:not(.theme-light) .ppu-notif-item.unread { background: rgba(255,200,50,.06)
 
 /* Type icon */
 .ppu-ni-ico {
-  width: 22px; height: 22px;
-  border-radius: 6px;
+  width: 20px; height: 20px;
+  border-radius: 5px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px;
   flex-shrink: 0;
-  margin-top: 0px;
+  margin-top: 1px;
 }
-.ppu-ni-ico.t-promo  { background: rgba(46,204,113,.14); }
-.ppu-ni-ico.t-win    { background: rgba(255,200,50,.14); }
-.ppu-ni-ico.t-system { background: rgba(74,158,255,.14); }
-.ppu-ni-ico.t-alert  { background: rgba(255,80,50,.14);  }
-body.theme-light .ppu-ni-ico.t-promo  { background: rgba(39,174,96,.1); }
-body.theme-light .ppu-ni-ico.t-win    { background: rgba(200,156,0,.1); }
-body.theme-light .ppu-ni-ico.t-system { background: rgba(0,100,220,.1); }
-body.theme-light .ppu-ni-ico.t-alert  { background: rgba(200,60,30,.1); }
+.ppu-ni-ico svg { width: 11px; height: 11px; stroke-width: 2.2; }
+.ppu-ni-ico.t-promo  { background: rgba(46,204,113,.13); color: #2ecc71; }
+.ppu-ni-ico.t-win    { background: rgba(255,200,50,.13);  color: #e6b800; }
+.ppu-ni-ico.t-system { background: rgba(74,158,255,.13);  color: #4a9eff; }
+.ppu-ni-ico.t-alert  { background: rgba(255,80,50,.13);   color: #ff5032; }
+body.theme-light .ppu-ni-ico.t-promo  { background: rgba(39,174,96,.1);  color: #1faa60; }
+body.theme-light .ppu-ni-ico.t-win    { background: rgba(200,156,0,.1);  color: #b88a00; }
+body.theme-light .ppu-ni-ico.t-system { background: rgba(0,100,220,.1);  color: #0064dc; }
+body.theme-light .ppu-ni-ico.t-alert  { background: rgba(200,60,30,.1);  color: #c83c1e; }
 
 .ppu-notif-item-body { flex: 1; min-width: 0; }
 .ppu-notif-item-text {
@@ -1132,7 +1132,7 @@ body:not(.theme-light) .ppu-ni-del { color: rgba(255,255,255,.2); }
 }
 body.theme-light .notif-toast { background: #fff; border-color: rgba(0,0,0,.1); box-shadow: 0 8px 32px rgba(0,0,0,.18); }
 .notif-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-.notif-toast-ico { font-size: 20px; flex-shrink: 0; }
+.notif-toast-ico { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .notif-toast-body { flex: 1; min-width: 0; }
 .notif-toast-title { font-size: 11px; font-weight: 800; color: rgba(255,255,255,.55); margin-bottom: 2px; }
 body.theme-light .notif-toast-title { color: rgba(0,0,0,.4); }
