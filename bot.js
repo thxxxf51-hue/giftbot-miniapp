@@ -941,10 +941,22 @@ app.get('/api/sports/debug', async function(req, res) {
 
 
 
-// GET /api/notifications — fetch notifications for user (unread first, max 50)
+// GET /api/notifications — fetch notifications (supports ?lastId= for efficient polling)
 app.get('/api/notifications', function(req, res) {
-  const notifs = (DB.notifications || []).slice().reverse().slice(0, 50);
+  const all = (DB.notifications || []).slice(0, 100);
+  const lastId = Number(req.query.lastId) || 0;
+  const notifs = lastId ? all.filter(n => n.id > lastId) : all.slice(0, 50);
   res.json({ notifications: notifs });
+});
+
+// DELETE /api/notifications/:id — delete single notification (admin only, unused from frontend)
+app.delete('/api/notifications/:id', function(req, res) {
+  const id = Number(req.params.id);
+  if (!DB.notifications) return res.json({ ok: false });
+  const before = DB.notifications.length;
+  DB.notifications = DB.notifications.filter(n => n.id !== id);
+  if (DB.notifications.length < before) { saveDB(); return res.json({ ok: true }); }
+  res.json({ ok: false, error: 'not found' });
 });
 
 app.post('/api/bets/place', function(req, res) {
@@ -1639,17 +1651,68 @@ bot.command('stars', (ctx) => {
 
 // /broadcast ТЕКСТ — отправить всем пользователям
 
-// /send ТЕКСТ — добавить уведомление в приложение (видят все пользователи)
+// /send [тип] ТЕКСТ — добавить уведомление в приложение (видят все пользователи)
+// Типы: promo | win | system | alert (опционально, по умолчанию system)
 bot.command('send', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
-  const text = ctx.message.text.replace('/send', '').trim();
-  if (!text) return ctx.reply('Формат: /send ТЕКСТ\n\nПример:\n/send Новый турнир! Участвуй прямо сейчас');
+  const raw = ctx.message.text.replace(/^\/send\S*\s*/, '').trim();
+  if (!raw) return ctx.reply(
+    '📨 Формат: /send [тип] ТЕКСТ\n\n' +
+    'Типы уведомлений:\n' +
+    '  promo  — 🎁 акции и бонусы\n' +
+    '  win    — 🏆 победы и розыгрыши\n' +
+    '  system — 🔔 системные (по умолчанию)\n' +
+    '  alert  — ⚠️ важные предупреждения\n\n' +
+    'Примеры:\n' +
+    '/send promo Кейсы со скидкой 20% — только сегодня!\n' +
+    '/send win Поздравляем победителей турнира!\n' +
+    '/send Технические работы завтра в 03:00'
+  );
+  const TYPES = ['promo','win','system','alert'];
+  const parts = raw.split(' ');
+  let type = 'system', text = raw;
+  if (TYPES.includes(parts[0])) { type = parts.shift(); text = parts.join(' ').trim(); }
+  if (!text) return ctx.reply('❌ Текст уведомления не может быть пустым');
   if (!DB.notifications) DB.notifications = [];
-  const notif = { id: Date.now(), text, ts: Date.now() };
+  const notif = { id: Date.now(), type, text, ts: Date.now() };
   DB.notifications.unshift(notif);
   if (DB.notifications.length > 100) DB.notifications = DB.notifications.slice(0, 100);
   saveDB();
-  ctx.reply('✅ Уведомление отправлено!\n\n❕ ' + text + '\n\n👥 Увидят все пользователи при следующем опросе (до 30 сек)');
+  const typeEmoji = { promo:'🎁', win:'🏆', system:'🔔', alert:'⚠️' };
+  ctx.reply(`✅ Уведомление отправлено!\n\n${typeEmoji[type]||'🔔'} [${type}] ${text}\n\n👥 Увидят все пользователи в течение 30 сек`);
+});
+
+// /deln ID — удалить конкретное уведомление
+bot.command('deln', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const idStr = ctx.message.text.replace(/^\/deln\S*\s*/, '').trim();
+  const id = Number(idStr);
+  if (!id) return ctx.reply('Формат: /deln ID\n\nID можно найти в /notiflist');
+  if (!DB.notifications) DB.notifications = [];
+  const before = DB.notifications.length;
+  DB.notifications = DB.notifications.filter(n => n.id !== id);
+  if (DB.notifications.length < before) { saveDB(); ctx.reply('🗑 Уведомление #' + id + ' удалено'); }
+  else ctx.reply('❌ Уведомление с ID ' + id + ' не найдено');
+});
+
+// /clearnotifs — удалить все уведомления
+bot.command('clearnotifs', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  DB.notifications = [];
+  saveDB();
+  ctx.reply('🗑 Все уведомления удалены');
+});
+
+// /notiflist — список текущих уведомлений
+bot.command('notiflist', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const notifs = DB.notifications || [];
+  if (!notifs.length) return ctx.reply('📭 Уведомлений нет');
+  const typeEmoji = { promo:'🎁', win:'🏆', system:'🔔', alert:'⚠️' };
+  const lines = notifs.slice(0, 20).map(n =>
+    `${typeEmoji[n.type]||'🔔'} #${n.id}\n   [${n.type||'system'}] ${n.text}\n   ${new Date(n.ts).toLocaleString('ru')}`
+  ).join('\n\n');
+  ctx.reply(`📋 Активных: ${notifs.length}\n\n${lines}\n\n🗑 Удалить: /deln ID\n🗑 Очистить все: /clearnotifs`);
 });
 
 bot.command('broadcast', async (ctx) => {
