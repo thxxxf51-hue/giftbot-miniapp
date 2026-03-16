@@ -1289,7 +1289,7 @@ bot.action(/^pub_promo:(.+)$/, async (ctx) => {
       parse_mode: 'MarkdownV2',
       reply_markup: {
         inline_keyboard: [[
-          { text: '🎮 Открыть приложение', url: APP_URL }
+          { text: '🎮 Открыть приложение', url: 'https://t.me/satapp_bot' }
         ]]
       }
     });
