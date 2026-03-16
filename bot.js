@@ -2112,10 +2112,8 @@ function startPvpSpin() {
     if (rand <= 0) { winner = g.players[i]; break; }
   }
   g.winner = winner;
-
-  // Credit winner
-  const u = DB.users[winner.uid];
-  if (u) { u.balance += total; }
+  g.pendingPrize = total;
+  g.collected = false;
   saveDB();
 
   pvpTimer = setTimeout(() => {
@@ -2206,6 +2204,28 @@ app.post('/api/pvp/leave', (req, res) => {
   res.json({ ok: true, refunded: player.bet });
 });
 
+
+app.post('/api/pvp/collect', (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.json({ ok: false, error: 'missing userId' });
+  const uid = String(userId);
+
+  // Check current game or recently ended game
+  const g = DB.pvp.game;
+  if (!g || !g.winner) return res.json({ ok: false, error: 'Нет завершённой игры' });
+  if (g.winner.uid !== uid) return res.json({ ok: false, error: 'Вы не победитель' });
+  if (g.collected) return res.json({ ok: false, error: 'Уже получено' });
+
+  const prize = g.pendingPrize || g.totalBet || 0;
+  if (prize <= 0) return res.json({ ok: false, error: 'Приз = 0' });
+
+  const u = getUser(uid);
+  u.balance += prize;
+  g.collected = true;
+  saveDB();
+
+  res.json({ ok: true, prize, balance: u.balance });
+});
 
 /* ══ AVATAR PROXY (решает CORS для canvas) ══ */
 app.get('/api/avatar', async (req, res) => {

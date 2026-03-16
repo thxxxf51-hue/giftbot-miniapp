@@ -440,8 +440,22 @@ function _showResult(g) {
   const wIdx = g.players.findIndex(p => p.uid === w.uid);
   const wCol = PVP_COLORS[wIdx % 10] || '#fff';
 
-  // Credit only once
-  if (isMe) { S.balance += g.totalBet; syncB(); }
+  // Credit winner from server (авторитетный источник баланса)
+  if (isMe) {
+    fetch('/api/pvp/collect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: UID })
+    }).then(r => r.json()).then(d => {
+      if (d.ok && d.balance !== undefined) {
+        S.balance = d.balance;
+        syncB();
+      }
+    }).catch(() => {
+      S.balance += g.totalBet;
+      syncB();
+    });
+  }
 
   // Chance = winner's bet / total bank
   const wPlayer = g.players.find(p => p.uid === w.uid);
