@@ -50,6 +50,13 @@
 <!-- ══ END SPLASH ══ -->
 
 <div class="toast g" id="toast"></div>
+<div class="notif-toast" id="notif-toast" onclick="openNotifFromToast()">
+  <div class="notif-toast-ico" id="notif-toast-ico">🔔</div>
+  <div class="notif-toast-body">
+    <div class="notif-toast-title">Уведомление</div>
+    <div class="notif-toast-text" id="notif-toast-text">—</div>
+  </div>
+</div>
 
 <!-- ACCENT THEME PICKER -->
 <div class="acmo" id="acmo" onclick="if(event.target===this)closeAccentPicker()">
@@ -339,8 +346,14 @@
             <svg class="ppu-notif-chevron" id="ppu-notif-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
           <div class="ppu-notif-panel" id="ppu-notif-panel">
+            <div class="ppu-notif-panel-hdr" id="ppu-notif-panel-hdr" style="display:none">
+              <button class="ppu-notif-markall" onclick="event.stopPropagation();markAllNotifsRead()">Прочитать все</button>
+            </div>
             <div id="ppu-notif-list"></div>
-            <div class="ppu-notif-empty" id="ppu-notif-empty">Нет уведомлений</div>
+            <div class="ppu-notif-empty" id="ppu-notif-empty">
+              <div class="ppu-notif-empty-ico">🔔</div>
+              <div class="ppu-notif-empty-txt">Нет уведомлений</div>
+            </div>
           </div>
         </div>
       </div>
