@@ -372,38 +372,39 @@ function toggleNotifPanel() {
 }
 
 // In-app toast for new notification
-const _NOTIF_COLORS = { promo:'#2ecc71', win:'#ffc832', system:'#4a9eff', alert:'#ff5032' };
+const _NOTIF_STYLES = {
+  promo:  { bg: 'linear-gradient(135deg,#0d1f14,#122010)', border: 'rgba(46,204,113,.45)',  color: '#2ecc71'  },
+  win:    { bg: 'linear-gradient(135deg,#2a2500,#1f1c00)', border: 'rgba(255,200,50,.4)',   color: '#ffc832'  },
+  system: { bg: 'linear-gradient(135deg,#0d1526,#101a2c)', border: 'rgba(74,158,255,.4)',   color: '#4a9eff'  },
+  alert:  { bg: 'linear-gradient(135deg,#1f0d0d,#200d0d)', border: 'rgba(255,96,96,.45)',   color: '#ff6060'  },
+};
 
 function _showNotifToast(n) {
   const type     = n.type || 'system';
-  const color    = _NOTIF_COLORS[type] || _NOTIF_COLORS.system;
+  const s        = _NOTIF_STYLES[type] || _NOTIF_STYLES.system;
   const toast    = document.getElementById('notif-toast');
   const ico      = document.getElementById('notif-toast-ico');
   const txt      = document.getElementById('notif-toast-text');
   const titleEl  = document.getElementById('notif-toast-title');
-  const side     = document.getElementById('notif-toast-side');
-  const icoWrap  = document.getElementById('notif-toast-ico-wrap');
   const progress = document.getElementById('notif-toast-progress');
   if (!toast) return;
 
   if (ico)     ico.innerHTML       = _NOTIF_TOAST_SVG[type] || _NOTIF_TOAST_SVG.system;
   if (titleEl) titleEl.textContent = _NOTIF_TITLES[type] || 'Уведомление';
   if (txt)     txt.textContent     = n.text;
-  if (side)    side.style.background   = color;
-  if (icoWrap) icoWrap.style.background = color + '25';
+
+  toast.style.background  = s.bg;
+  toast.style.borderColor = s.border;
   if (progress) {
-    progress.style.background     = color;
-    progress.style.animationName  = 'none';
+    progress.style.background    = s.color;
+    progress.style.animationName = 'none';
   }
 
   toast.classList.remove('show');
   void toast.offsetWidth;
   toast.classList.add('show');
 
-  if (progress) {
-    void progress.offsetWidth;
-    progress.style.animationName = '';
-  }
+  if (progress) { void progress.offsetWidth; progress.style.animationName = ''; }
 
   if (_notifToastTimer) clearTimeout(_notifToastTimer);
   _notifToastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 4500);
