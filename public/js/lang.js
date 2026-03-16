@@ -372,25 +372,51 @@ function toggleNotifPanel() {
 }
 
 // In-app toast for new notification
+const _NOTIF_COLORS = { promo:'#2ecc71', win:'#ffc832', system:'#4a9eff', alert:'#ff5032' };
+
 function _showNotifToast(n) {
-  const type = n.type || 'system';
-  const toast = document.getElementById('notif-toast');
-  const ico   = document.getElementById('notif-toast-ico');
-  const txt   = document.getElementById('notif-toast-text');
-  const title = toast && toast.querySelector('.notif-toast-title');
+  const type     = n.type || 'system';
+  const color    = _NOTIF_COLORS[type] || _NOTIF_COLORS.system;
+  const toast    = document.getElementById('notif-toast');
+  const ico      = document.getElementById('notif-toast-ico');
+  const txt      = document.getElementById('notif-toast-text');
+  const titleEl  = document.getElementById('notif-toast-title');
+  const side     = document.getElementById('notif-toast-side');
+  const icoWrap  = document.getElementById('notif-toast-ico-wrap');
+  const progress = document.getElementById('notif-toast-progress');
   if (!toast) return;
-  if (ico)   ico.innerHTML = _NOTIF_TOAST_SVG[type] || _NOTIF_TOAST_SVG.system;
-  if (title) title.textContent = _NOTIF_TITLES[type] || 'Уведомление';
-  if (txt)   txt.textContent   = n.text;
+
+  if (ico)     ico.innerHTML       = _NOTIF_TOAST_SVG[type] || _NOTIF_TOAST_SVG.system;
+  if (titleEl) titleEl.textContent = _NOTIF_TITLES[type] || 'Уведомление';
+  if (txt)     txt.textContent     = n.text;
+  if (side)    side.style.background   = color;
+  if (icoWrap) icoWrap.style.background = color + '25';
+  if (progress) {
+    progress.style.background     = color;
+    progress.style.animationName  = 'none';
+  }
+
+  toast.classList.remove('show');
+  void toast.offsetWidth;
   toast.classList.add('show');
+
+  if (progress) {
+    void progress.offsetWidth;
+    progress.style.animationName = '';
+  }
+
   if (_notifToastTimer) clearTimeout(_notifToastTimer);
   _notifToastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 4500);
 }
 
-function openNotifFromToast() {
+function _hideNotifToast() {
   const toast = document.getElementById('notif-toast');
   if (toast) toast.classList.remove('show');
-  // Open the home popup to notifications section
+  if (_notifToastTimer) { clearTimeout(_notifToastTimer); _notifToastTimer = null; }
+}
+
+function openNotifFromToast() {
+  _hideNotifToast();
   if (typeof openAvPopup === 'function') openAvPopup();
   setTimeout(function(){
     const toggle = document.getElementById('ppu-notif-toggle');
