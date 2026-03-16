@@ -264,6 +264,11 @@ if (document.readyState === 'loading') {
 ════════════════════════════ */
 const _NOTIF_KEY = 'gb4_notifs_' + (typeof UID !== 'undefined' ? UID : 'u');
 let _notifPanelOpen = false;
+let _notifLastId = 0;
+let _notifToastTimer = null;
+
+const _NOTIF_ICONS = { promo:'🎁', win:'🏆', system:'🔔', alert:'⚠️' };
+const _NOTIF_TITLES = { promo:'Акция', win:'Победа!', system:'Уведомление', alert:'Важно' };
 
 function _loadNotifs() {
   try { return JSON.parse(localStorage.getItem(_NOTIF_KEY) || '[]'); } catch(e) { return []; }
@@ -283,34 +288,41 @@ function _notifTimeAgo(ts) {
 
 function renderNotifBadge() {
   const notifs = _loadNotifs();
-  const unread = notifs.filter(n => !n.read).length;
-  const dot = document.getElementById('ppu-notif-dot');
+  const unread = notifs.filter(function(n){ return !n.read; }).length;
+  const dot   = document.getElementById('ppu-notif-dot');
   const count = document.getElementById('ppu-notif-count');
-  if (dot) dot.style.display = unread > 0 ? 'block' : 'none';
+  if (dot)   dot.style.display   = unread > 0 ? 'block' : 'none';
   if (count) {
     count.style.display = unread > 0 ? 'block' : 'none';
-    count.textContent = unread > 9 ? '9+' : unread;
+    count.textContent   = unread > 9 ? '9+' : unread;
   }
 }
 
 function renderNotifList() {
   const notifs = _loadNotifs();
-  const list = document.getElementById('ppu-notif-list');
+  const list  = document.getElementById('ppu-notif-list');
   const empty = document.getElementById('ppu-notif-empty');
+  const hdr   = document.getElementById('ppu-notif-panel-hdr');
   if (!list) return;
+  const hasUnread = notifs.some(function(n){ return !n.read; });
+  if (hdr) hdr.style.display = (notifs.length && hasUnread) ? 'flex' : 'none';
   if (!notifs.length) {
     list.innerHTML = '';
-    if (empty) empty.style.display = 'block';
+    if (empty) empty.style.display = 'flex';
     return;
   }
   if (empty) empty.style.display = 'none';
   list.innerHTML = notifs.map(function(n, i) {
+    const type = n.type || 'system';
+    const ico  = _NOTIF_ICONS[type] || '🔔';
     return '<div class="ppu-notif-item ' + (n.read ? 'read' : 'unread') + '" onclick="event.stopPropagation();markNotifRead(' + i + ')">'
-      + '<div class="ppu-notif-excl">!</div>'
+      + '<div class="ppu-ni-ico t-' + type + '">' + ico + '</div>'
       + '<div class="ppu-notif-item-body">'
       + '<div class="ppu-notif-item-text">' + n.text.replace(/</g,'&lt;') + '</div>'
       + '<div class="ppu-notif-item-time">' + _notifTimeAgo(n.ts) + '</div>'
-      + '</div></div>';
+      + '</div>'
+      + '<button class="ppu-ni-del" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="Удалить">×</button>'
+      + '</div>';
   }).join('');
 }
 
@@ -329,40 +341,84 @@ function markAllNotifsRead() {
   renderNotifBadge();
 }
 
+function deleteNotif(id) {
+  const notifs = _loadNotifs().filter(function(n){ return n.id !== id; });
+  _saveNotifs(notifs);
+  renderNotifList();
+  renderNotifBadge();
+}
+
 function toggleNotifPanel() {
   _notifPanelOpen = !_notifPanelOpen;
-  const panel = document.getElementById('ppu-notif-panel');
+  const panel   = document.getElementById('ppu-notif-panel');
   const chevron = document.getElementById('ppu-notif-chevron');
-  if (panel) panel.classList.toggle('open', _notifPanelOpen);
+  if (panel)   panel.classList.toggle('open', _notifPanelOpen);
   if (chevron) chevron.classList.toggle('open', _notifPanelOpen);
   if (_notifPanelOpen) {
     renderNotifList();
-    // Mark all read after short delay
-    setTimeout(markAllNotifsRead, 1200);
+    setTimeout(markAllNotifsRead, 1500);
   }
 }
 
-// Poll for new notifications every 30s
+// In-app toast for new notification
+function _showNotifToast(n) {
+  const type = n.type || 'system';
+  const toast = document.getElementById('notif-toast');
+  const ico   = document.getElementById('notif-toast-ico');
+  const txt   = document.getElementById('notif-toast-text');
+  const title = toast && toast.querySelector('.notif-toast-title');
+  if (!toast) return;
+  if (ico)   ico.textContent   = _NOTIF_ICONS[type] || '🔔';
+  if (title) title.textContent = _NOTIF_TITLES[type] || 'Уведомление';
+  if (txt)   txt.textContent   = n.text;
+  toast.classList.add('show');
+  if (_notifToastTimer) clearTimeout(_notifToastTimer);
+  _notifToastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 4500);
+}
+
+function openNotifFromToast() {
+  const toast = document.getElementById('notif-toast');
+  if (toast) toast.classList.remove('show');
+  // Open the home popup to notifications section
+  if (typeof openAvPopup === 'function') openAvPopup();
+  setTimeout(function(){
+    const toggle = document.getElementById('ppu-notif-toggle');
+    if (toggle && !_notifPanelOpen) toggle.click();
+  }, 200);
+}
+
+// Efficient poll — sends lastId so server returns only newer notifs
 function _pollNotifs() {
   if (!UID) return;
-  fetch('/api/notifications?uid=' + UID)
-    .then(function(r) { return r.json(); })
+  const url = '/api/notifications?uid=' + UID + (_notifLastId ? '&lastId=' + _notifLastId : '');
+  fetch(url)
+    .then(function(r){ return r.json(); })
     .then(function(d) {
       if (!d.notifications || !d.notifications.length) return;
-      const saved = _loadNotifs();
-      const savedIds = new Set(saved.map(function(n) { return n.id; }));
-      let added = 0;
+      const saved    = _loadNotifs();
+      const savedIds = new Set(saved.map(function(n){ return n.id; }));
+      let latestNew  = null;
       d.notifications.forEach(function(n) {
-        if (!savedIds.has(n.id)) { saved.unshift({ id: n.id, text: n.text, ts: n.ts, read: false }); added++; }
+        if (!savedIds.has(n.id)) {
+          saved.unshift({ id: n.id, type: n.type || 'system', text: n.text, ts: n.ts, read: false });
+          if (!latestNew || n.id > latestNew.id) latestNew = n;
+        }
+        if (n.id > _notifLastId) _notifLastId = n.id;
       });
-      if (added > 0) { _saveNotifs(saved.slice(0, 50)); renderNotifBadge(); }
+      _saveNotifs(saved.slice(0, 50));
+      renderNotifBadge();
+      if (latestNew) _showNotifToast(latestNew);
+      if (_notifPanelOpen) renderNotifList();
     })
-    .catch(function() {});
+    .catch(function(){});
 }
 
 // Init on load
 document.addEventListener('DOMContentLoaded', function() {
+  // Set lastId from saved notifs so we only fetch truly new ones
+  const existing = _loadNotifs();
+  if (existing.length) _notifLastId = Math.max.apply(null, existing.map(function(n){ return n.id || 0; }));
   renderNotifBadge();
   _pollNotifs();
-  setInterval(_pollNotifs, 30000);
+  setInterval(_pollNotifs, 25000);
 });
