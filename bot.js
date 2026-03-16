@@ -1268,7 +1268,29 @@ bot.command('cpromo', (ctx) => {
   if (p.length < 4) return ctx.reply('Формат: /cpromo КОД СУММА КОЛ-ВО\nПример: /cpromo SUMMER500 500 100');
   const c = p[1].toUpperCase();
   DB.promos[c] = { reward: Number(p[2]), maxUses: Number(p[3]), usedCount: 0, vipOnly: false };
-  ctx.reply(`✅ Промокод создан!\n📌 Код: ${c}\n💰 Награда: ${p[2]} монет\n🔢 Активаций: ${p[3]}`);
+  ctx.reply(
+    `✅ Промокод создан!\n📌 Код: ${c}\n💰 Награда: ${p[2]} монет\n🔢 Активаций: ${p[3]}`,
+    {
+      reply_markup: {
+        inline_keyboard: [[
+          { text: '📢 Опубликовать', callback_data: `pub_promo:${c}` }
+        ]]
+      }
+    }
+  );
+});
+
+bot.action(/^pub_promo:(.+)$/, async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return ctx.answerCbQuery('⛔ Нет доступа');
+  const code = ctx.match[1];
+  try {
+    await bot.telegram.sendMessage('@satapp_news', `🎁 Промокод: \`${code}\``, { parse_mode: 'MarkdownV2' });
+    await ctx.answerCbQuery('✅ Опубликовано!');
+    await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+  } catch (e) {
+    await ctx.answerCbQuery('❌ Ошибка публикации');
+    console.error('pub_promo error:', e.message);
+  }
 });
 
 bot.command('vpromo', (ctx) => {
