@@ -25,7 +25,9 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ══ PERSISTENT DB ══ */
-const DB_FILE = path.join(__dirname, 'db.json');
+const DB_FILE = process.env.DB_PATH || path.join(__dirname, 'db.json');
+// Убедимся что директория для БД существует
+try { fs.mkdirSync(path.dirname(DB_FILE), { recursive: true }); } catch {}
 
 function loadDB() {
   try {
