@@ -162,6 +162,29 @@ function supportStartPoll() {
 }
 
 // ── Helpers ──────────────────────────────────────────────────
+function _supportAvatarHtml(who) {
+  if (who === 'bot') {
+    return `<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#1a1a2e,#2a2a4a);border:1.5px solid rgba(122,164,244,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="8" width="14" height="10" rx="3" fill="#7aa4f4" opacity=".9"/>
+        <rect x="9" y="3" width="6" height="5" rx="2" fill="#7aa4f4" opacity=".7"/>
+        <rect x="11" y="6" width="2" height="2" rx="1" fill="#1a1a2e"/>
+        <circle cx="9" cy="13" r="1.5" fill="#1a1a2e"/>
+        <circle cx="15" cy="13" r="1.5" fill="#1a1a2e"/>
+        <rect x="9" y="15.5" width="6" height="1.2" rx=".6" fill="#1a1a2e" opacity=".6"/>
+        <rect x="2" y="11" width="3" height="1.5" rx=".75" fill="#7aa4f4" opacity=".5"/>
+        <rect x="19" y="11" width="3" height="1.5" rx=".75" fill="#7aa4f4" opacity=".5"/>
+      </svg>
+    </div>`;
+  }
+  if (who === 'specialist') {
+    return `<div style="width:34px;height:34px;border-radius:50%;overflow:hidden;border:1.5px solid rgba(122,164,244,.4);flex-shrink:0;margin-top:2px">
+      <img src="/img/specialist.jpg" style="width:100%;height:100%;object-fit:cover">
+    </div>`;
+  }
+  return '';
+}
+
 function _supportAddMsg(who, text) {
   const msgs = document.getElementById('support-msgs');
   const isUser = who === 'user';
@@ -182,12 +205,28 @@ function _supportAddMsg(who, text) {
     .replace(/«выз[а-яёa-z]* специалиста[»"']?/gi, '«<b style="color:rgba(46,204,113,.9)">вызвать специалиста</b>»')
     .replace(/напишите «вызвать специалиста»/gi, 'напишите <b style="color:rgba(46,204,113,.9)">«вызвать специалиста»</b>');
 
+  const avatarHtml = !isUser ? _supportAvatarHtml(who) : '';
+  const senderLabel = who === 'specialist' ? 'Специалист' : who === 'bot' ? 'ИИ-помощник' : '';
+
   const d = document.createElement('div');
-  d.style.cssText = `display:flex;flex-direction:column;max-width:82%;align-self:${isUser ? 'flex-end' : 'flex-start'}`;
-  d.innerHTML = `
-    <div style="padding:11px 14px;border-radius:${isUser ? '18px 18px 5px 18px' : '18px 18px 18px 5px'};font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap;background:${isUser ? '#2ecc71' : '#1c1c23'};${!isUser ? 'border:1px solid rgba(255,255,255,.06)' : ''}">${formatted}</div>
-    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:3px;padding:0 4px;text-align:${isUser ? 'right' : 'left'}">${who === 'specialist' ? '👤 Специалист · ' : ''}${time}</div>
-  `;
+  d.style.cssText = `display:flex;flex-direction:row;align-items:flex-start;gap:8px;max-width:88%;align-self:${isUser ? 'flex-end' : 'flex-start'}`;
+  if (isUser) {
+    d.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:flex-end">
+        <div style="padding:11px 14px;border-radius:18px 18px 5px 18px;font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap;background:#2ecc71">${formatted}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:3px;padding:0 4px;text-align:right">${time}</div>
+      </div>
+    `;
+  } else {
+    d.innerHTML = `
+      ${avatarHtml}
+      <div style="display:flex;flex-direction:column;align-items:flex-start;max-width:calc(100% - 42px)">
+        ${senderLabel ? `<div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:3px;padding:0 4px">${senderLabel}</div>` : ''}
+        <div style="padding:11px 14px;border-radius:18px 18px 18px 5px;font-size:14px;line-height:1.5;word-break:break-word;white-space:pre-wrap;background:#1c1c23;border:1px solid rgba(255,255,255,.06)">${formatted}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:3px;padding:0 4px;text-align:left">${time}</div>
+      </div>
+    `;
+  }
   msgs.appendChild(d);
   msgs.scrollTop = msgs.scrollHeight;
 }
@@ -198,8 +237,13 @@ function _supportTyping(show) {
   const msgs = document.getElementById('support-msgs');
   const t = document.createElement('div');
   t.id = 'support-typing';
-  t.style.cssText = 'background:#1c1c23;border-radius:18px 18px 18px 5px;padding:12px 16px;display:flex;gap:5px;align-items:center;border:1px solid rgba(255,255,255,.06);align-self:flex-start';
-  t.innerHTML = '<span class="std"></span><span class="std" style="animation-delay:.2s"></span><span class="std" style="animation-delay:.4s"></span>';
+  t.style.cssText = 'display:flex;flex-direction:row;align-items:flex-start;gap:8px;align-self:flex-start';
+  t.innerHTML = `
+    ${_supportAvatarHtml('bot')}
+    <div style="background:#1c1c23;border-radius:18px 18px 18px 5px;padding:12px 16px;display:flex;gap:5px;align-items:center;border:1px solid rgba(255,255,255,.06)">
+      <span class="std"></span><span class="std" style="animation-delay:.2s"></span><span class="std" style="animation-delay:.4s"></span>
+    </div>
+  `;
   msgs.appendChild(t);
   msgs.scrollTop = msgs.scrollHeight;
 }
