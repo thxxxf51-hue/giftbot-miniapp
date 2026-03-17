@@ -7,7 +7,7 @@ const Jimp = require('jimp');
 
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
-const APP_URL = process.env.APP_URL || '';
+const APP_URL = process.env.APP_URL || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : '');
 const GITHUB_TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN || '';
 const GITHUB_REPO = 'thxxxf51-hue/giftbot-miniapp';
 
