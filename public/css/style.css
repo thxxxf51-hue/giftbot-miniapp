@@ -79,13 +79,13 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .home-balance-val{font-size:16px;font-weight:800}
 .home-balance-ico{font-size:14px}
 
-.hm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.hm-card{background:var(--glass);border:1px solid var(--gb);border-radius:22px;padding:24px 18px 21px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;cursor:pointer;transition:transform .13s,opacity .13s;position:relative;overflow:hidden}
+.hm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.hm-card{background:var(--glass);border:1px solid var(--gb);border-radius:18px;padding:18px 12px 16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;cursor:pointer;transition:transform .13s,opacity .13s;position:relative;overflow:hidden}
 .hm-card:active{transform:scale(.95);opacity:.85}
 .hm-card--full{grid-column:span 2}
-.hm-ico{width:33px;height:33px;stroke:#00FFA3;flex-shrink:0;filter:drop-shadow(0 0 5px rgba(0,255,163,0.55))}
-.hm-t{font-size:17px;font-weight:700;color:#F0F0F0}
-.hm-s{font-size:14px;color:#AAAAAA}
+.hm-ico{width:26px;height:26px;stroke:#00FFA3;flex-shrink:0;filter:drop-shadow(0 0 5px rgba(0,255,163,0.55))}
+.hm-t{font-size:13px;font-weight:700;color:#F0F0F0}
+.hm-s{font-size:10px;color:#AAAAAA}
 
 .hm-promo{background:var(--glass);border:1px solid var(--gb);border-radius:16px;padding:10px 12px;margin-bottom:14px}
 .hm-promo-label{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#00FFA3;margin-bottom:8px}
@@ -121,7 +121,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 
 /* ══ TASKS V3 ══ */
 .tlist{display:flex;flex-direction:column;gap:10px}
-.tc{background:var(--glass);border:1px solid var(--gb);border-radius:16px;padding:14px 15px;cursor:pointer;transition:transform .12s,opacity .12s}
+.tc{background:var(--glass);border:1px solid rgba(64,160,255,0.22);border-radius:16px;padding:13px 14px;cursor:pointer;transition:transform .12s,opacity .12s;box-shadow:0 0 14px rgba(60,140,255,0.07),inset 0 0 10px rgba(60,140,255,0.03)}
 .tc:active{transform:scale(.98);opacity:.9}
 .tc--wip{opacity:.75}
 .tc-top{display:flex;align-items:center;gap:5px;margin-bottom:8px}
