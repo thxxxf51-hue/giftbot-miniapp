@@ -323,7 +323,7 @@
 
 <!-- HOME -->
 <div class="page active" id="page-home">
-  <div class="hhdr">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
     <div class="huser">
       <div class="av-wrap" id="av-wrap-h" onclick="toggleAvPopup()" style="position:relative">
         <div class="av" id="av-h">?</div>
@@ -393,36 +393,39 @@
       <div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-home">0</span></div>
     </div>
   </div>
-  <div class="mgrid">
-    <div class="mc" onclick="go('tasks')">
-      <div class="mc-ico"><svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
-      <div class="mc-t" data-i18n="mc-tasks">Задания</div><div class="mc-s" data-i18n="mc-tasks-s">Выполняй и зарабатывай</div>
+  <div class="home-menu-grid">
+    <div class="home-menu-item" onclick="go('tasks')">
+      <div class="hmi-icon">✅</div>
+      <div class="hmi-title" data-i18n="mc-tasks">Задания</div>
+      <div class="hmi-desc" data-i18n="mc-tasks-s">Выполняй</div>
     </div>
-    <div class="mc" onclick="go('shop')">
-      <div class="mc-ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.98 1.61h9.72a2 2 0 001.98-1.61L23 6H6"/></svg></div>
-      <div class="mc-t" data-i18n="mc-shop">Магазин</div><div class="mc-s" data-i18n="mc-shop-s">Трать монеты</div>
+    <div class="home-menu-item" onclick="go('shop')">
+      <div class="hmi-icon">🛍</div>
+      <div class="hmi-title" data-i18n="mc-shop">Магазин</div>
+      <div class="hmi-desc" data-i18n="mc-shop-s">Трать</div>
     </div>
-    <div class="mc" onclick="go('raffles')">
-      <div class="mc-ico"><svg class="thin" viewBox="0 0 24 24" fill="none"><path d="M12 7V20M12 7H8.46429C7.94332 7 7.4437 6.78929 7.07533 6.41421C6.70695 6.03914 6.5 5.53043 6.5 5C6.5 4.46957 6.70695 3.96086 7.07533 3.58579C7.4437 3.21071 7.94332 3 8.46429 3C11.2143 3 12 7 12 7ZM12 7H15.5357C16.0567 7 16.5563 6.78929 16.9247 6.41421C17.293 6.03914 17.5 5.53043 17.5 5C17.5 4.46957 17.293 3.96086 16.9247 3.58579C16.5563 3.21071 16.0567 3 15.5357 3C12.7857 3 12 7 12 7ZM5 12H19V17.8C19 18.9201 19 19.4802 18.782 19.908C18.5903 20.2843 18.2843 20.5903 17.908 20.782C17.4802 21 16.9201 21 15.8 21H8.2C7.07989 21 6.51984 21 6.09202 20.782C5.71569 20.5903 5.40973 20.2843 5.21799 19.908C5 19.4802 5 18.9201 5 17.8V12ZM4.6 12H19.4C19.9601 12 20.2401 12 20.454 11.891C20.6422 11.7951 20.7951 11.6422 20.891 11.454C21 11.2401 21 10.9601 21 10.4V8.6C21 8.03995 21 7.75992 20.891 7.54601C20.7951 7.35785 20.6422 7.20487 20.454 7.10899C20.2401 7 19.9601 7 19.4 7H4.6C4.03995 7 3.75992 7 3.54601 7.10899C3.35785 7.20487 3.20487 7.35785 3.10899 7.54601C3 7.75992 3 8.03995 3 8.6V10.4C3 10.9601 3 11.2401 3.10899 11.454C3.35785 11.7951 3.53601 11.6422 3.54601 11.891C3.75992 12 4.03995 12 4.6 12Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-      <div class="mc-t" data-i18n="mc-raffles">Розыгрыши</div><div class="mc-s" data-i18n="mc-raffles-s">Испытай удачу</div>
+    <div class="home-menu-item" onclick="go('raffles')">
+      <div class="hmi-icon">🎁</div>
+      <div class="hmi-title" data-i18n="mc-raffles">Розыгрыши</div>
+      <div class="hmi-desc" data-i18n="mc-raffles-s">Удача</div>
     </div>
-    <div class="mc" onclick="go('friends')">
-      <div class="mc-ico"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
-      <div class="mc-t" data-i18n="mc-friends">Рефералы</div><div class="mc-s" data-i18n="mc-friends-s">Приглашай друзей</div>
+    <div class="home-menu-item" onclick="go('friends')">
+      <div class="hmi-icon">👥</div>
+      <div class="hmi-title" data-i18n="mc-friends">Рефералы</div>
+      <div class="hmi-desc" data-i18n="mc-friends-s">Друзья</div>
     </div>
-    <div class="mc" onclick="go('inventory')" style="grid-column:span 2">
-      <div class="mc-ico"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
-      <div class="mc-t" data-i18n="mc-inventory">Инвентарь</div><div class="mc-s" data-i18n="mc-inventory-s">Твои предметы и бонусы</div>
+    <div class="home-menu-item" onclick="go('inventory')" style="grid-column:span 2">
+      <div class="hmi-icon">📦</div>
+      <div class="hmi-title" data-i18n="mc-inventory">Инвентарь</div>
+      <div class="hmi-desc" data-i18n="mc-inventory-s">Предметы</div>
     </div>
   </div>
-  <div class="gc pcrd">
-    <div class="plbl"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><span data-i18n="promo-lbl">Промокод</span></div>
-    <div class="prow2"><input class="pin" id="pi-h" placeholder="Введите промокод" data-i18n-ph="promo-ph" autocapitalize="characters"><button class="pbtn" data-i18n="promo-btn" onclick="usePromo('pi-h')">Применить</button></div>
+  <div class="home-promo">
+    <div class="promo-icon">🎟</div>
+    <input class="promo-input" id="pi-h" placeholder="Промокод" data-i18n-ph="promo-ph" autocapitalize="characters">
+    <button class="promo-btn" data-i18n="promo-btn" onclick="usePromo('pi-h')">OK</button>
   </div>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <div class="sec" style="margin-bottom:0" data-i18n="home-raffles-sec">Розыгрыши</div>
-    <button style="background:var(--gdim);color:var(--green);border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit" data-i18n="promo-all" onclick="go('raffles')">Все</button>
-  </div>
+  <div class="home-section-title" data-i18n="home-raffles-sec">🎪 Розыгрыши</div>
   <div id="h-raf-block">
     <div style="display:flex;flex-direction:column;align-items:center;padding:20px;opacity:.4;gap:8px"><div style="width:40px;height:40px;color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div><div style="font-size:12px;color:var(--muted)">Пока розыгрышей нет</div></div>
   </div>
