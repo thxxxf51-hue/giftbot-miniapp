@@ -1,27 +1,37 @@
 /* ══ TASKS ══ */
+const COIN_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+
 function renderTasks(){
-  const grid=document.createElement('div');
-  grid.className='task-grid';
+  const wrap=document.createElement('div');
+  wrap.className='tlist';
   TASKS.forEach(t=>{
     const done=S.doneTasks.has(t.id);
-    const ico=TASK_ICONS[t.icoKey]||t.ico||'';
-    let badge='';
-    if(done) badge='<div class="task-badge task-badge--done">✓ Выполнено</div>';
-    else if(t.wip) badge='<div class="task-badge task-badge--wip">В разработке</div>';
-    else badge=`<div class="task-badge task-badge--reward">+${t.rew}<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:-1px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></div>`;
     const card=document.createElement('div');
-    card.className='task-card';
+    card.className='tc'+( done?' tc--done':'')+(t.wip?' tc--wip':'');
     card.onclick=()=>openTask(t.id);
+
+    let tags=`<div class="tc-tag tc-tag--${t.tc}">${t.tag}</div>`;
+    if(t.isNew) tags+=`<div class="tc-tag tc-tag--new">NEW</div>`;
+    if(done)    tags+=`<div class="tc-tag tc-tag--done">Выполнено</div>`;
+
+    const rew=done?'':`<div class="tc-rew">${COIN_ICO} ${t.rew.toLocaleString('ru')}</div>`;
+
+    let progress='';
+    if(!done && t.prog!=null){
+      const pct=Math.min(100,Math.round((t.prog.cur/t.prog.max)*100));
+      progress=`<div class="tc-prog-bar"><div class="tc-prog-fill" style="width:${pct}%"></div></div>
+                <div class="tc-prog-txt">${t.prog.cur} / ${t.prog.max}${t.prog.unit?' '+t.prog.unit:''}</div>`;
+    }
+
     card.innerHTML=`
-      <div class="task-icon">${ico}</div>
-      <div class="task-tag ${t.tc}">${t.tag}</div>
-      <div class="task-name">${t.name}</div>
-      <div class="task-desc">${t.desc}</div>
-      ${badge}`;
-    grid.appendChild(card);
+      <div class="tc-top">${tags}${rew}</div>
+      <div class="tc-name">${t.name}</div>
+      <div class="tc-desc">${t.desc}</div>
+      ${progress}`;
+    wrap.appendChild(card);
   });
   document.getElementById('tasks-list').innerHTML='';
-  document.getElementById('tasks-list').appendChild(grid);
+  document.getElementById('tasks-list').appendChild(wrap);
 }
 
 function openTask(id){
