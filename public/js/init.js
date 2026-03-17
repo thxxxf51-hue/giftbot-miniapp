@@ -266,3 +266,4 @@ async function init(){
 })();
 
 init();
+if(typeof initAdmin==='function') initAdmin();

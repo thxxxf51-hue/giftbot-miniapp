@@ -1047,6 +1047,35 @@
   </div>
 
 </div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin" style="display:none">
+  <div class="adm-page">
+    <div class="adm-hdr">
+      <div>
+        <div class="adm-title">Админ-панель</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:2px">GiftBot · Только для тебя</div>
+      </div>
+      <div class="adm-badge">ADMIN</div>
+    </div>
+    <div class="adm-tabs">
+      <button class="adm-tab active" data-tab="dashboard" onclick="loadAdminSection('dashboard')">📊 Дашборд</button>
+      <button class="adm-tab" data-tab="users" onclick="loadAdminSection('users')">👥 Юзеры</button>
+      <button class="adm-tab" data-tab="tasks" onclick="loadAdminSection('tasks')">🎯 Задания</button>
+      <button class="adm-tab" data-tab="draws" onclick="loadAdminSection('draws')">🎁 Розыгрыши</button>
+      <button class="adm-tab" data-tab="promos" onclick="loadAdminSection('promos')">🎟 Промокоды</button>
+      <button class="adm-tab" data-tab="notifs" onclick="loadAdminSection('notifs')">📢 Уведомления</button>
+    </div>
+    <div id="adm-dashboard" class="adm-section active"></div>
+    <div id="adm-users" class="adm-section"></div>
+    <div id="adm-tasks" class="adm-section"></div>
+    <div id="adm-draws" class="adm-section"></div>
+    <div id="adm-promos" class="adm-section"></div>
+    <div id="adm-notifs" class="adm-section"></div>
+  </div>
+</div>
+<!-- /ADMIN PAGE -->
+
 </div><!-- /pages -->
 
 <div class="nav-wrap">
@@ -1144,6 +1173,7 @@
 <script src="js/bets.js"></script>
 <script src="js/lang.js"></script>
 <script src="js/wallet.js"></script>
+<script src="js/admin.js"></script>
 <script src="js/init.js"></script>
 
 <!-- PvP History Modal -->

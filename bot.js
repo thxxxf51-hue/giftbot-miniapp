@@ -8,6 +8,75 @@ const Jimp = require('jimp');
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
 const APP_URL = process.env.APP_URL || '';
+const GITHUB_TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN || '';
+const GITHUB_REPO = 'thxxxf51-hue/giftbot-miniapp';
+
+/* ══ GITHUB DB BACKUP ══ */
+async function backupDBToGitHub() {
+  if (!GITHUB_TOKEN) return false;
+  try {
+    const content = Buffer.from(JSON.stringify(DB), 'utf8').toString('base64');
+    let sha;
+    const getR = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/db.json?ref=db-backup`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (getR.ok) { const d = await getR.json(); sha = d.sha; }
+    const body = { message: `db backup ${new Date().toISOString()}`, content, branch: 'db-backup' };
+    if (sha) body.sha = sha;
+    const putR = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/db.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (putR.ok) { console.log('✅ DB backed up to GitHub'); return true; }
+    const err = await putR.json();
+    console.log('GitHub backup error:', err.message);
+    return false;
+  } catch (e) { console.log('GitHub backup error:', e.message); return false; }
+}
+
+async function restoreDBFromGitHub() {
+  if (!GITHUB_TOKEN) return false;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/db.json?ref=db-backup`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) return false;
+    const data = await r.json();
+    const content = Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8');
+    const parsed = JSON.parse(content);
+    const localUsers = Object.keys(DB.users || {}).length;
+    const backupUsers = Object.keys(parsed.users || {}).length;
+    if (backupUsers > localUsers) {
+      Object.assign(DB, parsed);
+      saveDB();
+      console.log(`✅ DB restored from GitHub backup (${backupUsers} users > local ${localUsers})`);
+      return true;
+    }
+    return false;
+  } catch (e) { console.log('GitHub restore error:', e.message); return false; }
+}
+
+async function ensureDbBackupBranch() {
+  if (!GITHUB_TOKEN) return;
+  try {
+    const r = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/branches/db-backup`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (r.ok) return;
+    const mainR = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/refs/heads/main`, {
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!mainR.ok) return;
+    const mainData = await mainR.json();
+    await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/refs`, {
+      method: 'POST',
+      headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: 'refs/heads/db-backup', sha: mainData.object.sha })
+    });
+    console.log('✅ Created db-backup branch on GitHub');
+  } catch (e) { console.log('ensureDbBackupBranch error:', e.message); }
+}
 
 if (!BOT_TOKEN) { console.error('BOT_TOKEN not set!'); process.exit(1); }
 
@@ -64,15 +133,30 @@ const DB = {
   bigWins:       _saved?.bigWins       || [], // {uid, firstName, photoUrl, amount, game, ts}
   notifyOpen:    _saved?.notifyOpen    ?? true, // уведомления о входе в приложение
   notifications: _saved?.notifications || [], // push уведомления от админа
-  customTasks:   _saved?.customTasks   || [], // задания, созданные админом через /ctask
+  customTasks:      _saved?.customTasks      || [], // задания, созданные админом через /ctask
+  customTaskCounter:_saved?.customTaskCounter|| 0,
 };
+
+// Init task counter from existing tasks if not set
+if (!DB.customTaskCounter) DB.customTaskCounter = 1000 + (DB.customTasks || []).length;
 
 // Автосохранение каждые 30 секунд
 setInterval(saveDB, 30000);
 
-// Сохранение при завершении процесса
-process.on('SIGTERM', () => { saveDB(); process.exit(0); });
-process.on('SIGINT',  () => { saveDB(); process.exit(0); });
+// GitHub backup каждые 10 минут
+setInterval(() => backupDBToGitHub(), 10 * 60 * 1000);
+
+// Сохранение при завершении процесса + GitHub backup
+process.on('SIGTERM', async () => {
+  saveDB();
+  try { await backupDBToGitHub(); } catch {}
+  process.exit(0);
+});
+process.on('SIGINT', async () => {
+  saveDB();
+  try { await backupDBToGitHub(); } catch {}
+  process.exit(0);
+});
 
 
 /* ══ TRANSACTIONS ══ */
@@ -1361,7 +1445,7 @@ bot.command('ctask', (ctx) => {
     return ctx.reply('❌ Неизвестный тип. Используй: sub:канал, chat:канал, ref, case, wallet');
   }
 
-  const nextId = 1000 + (DB.customTasks || []).length + 1;
+  const nextId = ++DB.customTaskCounter;
   const task = { id: nextId, icoKey: check, tag, tc, name, desc, rew: reward, check, isNew };
   if (channel) { task.channel = channel; task.url = url; }
 
@@ -2800,21 +2884,260 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
   if (changed) saveDB();
 })();
 
+/* ══════════════════════════════════════════
+   ADMIN REST API — all endpoints protected
+   ══════════════════════════════════════════ */
+function adminCheck(req, res) {
+  const uid = String(req.query.userId || req.body?.userId || '');
+  if (!isAdmin(uid)) { res.status(403).json({ error: 'Forbidden' }); return false; }
+  return true;
+}
+
+app.get('/api/admin/stats', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const topUsers = Object.entries(DB.users)
+    .map(([uid, u]) => ({ uid, username: u.username||'?', firstName: u.firstName||'', balance: u.balance||0 }))
+    .sort((a, b) => b.balance - a.balance).slice(0, 5);
+  res.json({
+    users: Object.keys(DB.users).length,
+    draws: Object.keys(DB.draws).length,
+    tasks: (DB.customTasks||[]).length,
+    promos: Object.keys(DB.promos||{}).length,
+    notifications: (DB.notifications||[]).length,
+    topUsers
+  });
+});
+
+app.get('/api/admin/users', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const q = (req.query.q||'').toLowerCase();
+  let users = Object.entries(DB.users).map(([uid, u]) => ({
+    uid,
+    username: u.username||'',
+    firstName: u.firstName||'',
+    balance: u.balance||0,
+    starsBalance: u.starsBalance||0,
+    regDate: u.regDate||'',
+    refs: (u.refs||[]).length,
+    banned: !!(DB.bans?.[u.username] || DB.bansByUid?.[uid])
+  })).sort((a, b) => b.balance - a.balance);
+  if (q) users = users.filter(u => u.username.toLowerCase().includes(q) || u.firstName.toLowerCase().includes(q));
+  res.json(users.slice(0, 100));
+});
+
+app.post('/api/admin/balance', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { targetUsername, amount, action } = req.body;
+  if (!targetUsername || !amount || !action) return res.status(400).json({ error: 'Missing fields' });
+  const username = targetUsername.replace('@','').toLowerCase();
+  let targetUID = null;
+  for (const [uid, u] of Object.entries(DB.users)) {
+    if ((u.username||'').toLowerCase() === username) { targetUID = uid; break; }
+  }
+  if (!targetUID) {
+    try {
+      const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=@${username}`);
+      const d = await r.json();
+      if (d.ok && d.result?.id) { targetUID = String(d.result.id); const u = getUser(targetUID); u.username = username; u.firstName = d.result.first_name||''; }
+    } catch {}
+  }
+  if (!targetUID) return res.status(404).json({ error: `User @${username} not found` });
+  const u = getUser(targetUID);
+  const before = u.balance;
+  const amt = Number(amount);
+  if (action === 'add') {
+    u.balance += amt;
+    addTx(targetUID, 'adjustment', `+${amt}`, 'Начислено администратором');
+    try { await bot.telegram.sendMessage(Number(targetUID), `💰 Администратор начислил тебе ${amt.toLocaleString('ru')} монет!\n💼 Баланс: ${u.balance.toLocaleString('ru')}`); } catch {}
+  } else {
+    u.balance = Math.max(0, u.balance - amt);
+    addTx(targetUID, 'adjustment', `-${amt}`, 'Снято администратором');
+    try { await bot.telegram.sendMessage(Number(targetUID), `⚠️ Администратор снял ${amt.toLocaleString('ru')} монет.\n💼 Баланс: ${u.balance.toLocaleString('ru')}`); } catch {}
+  }
+  u.serverBalance = u.balance;
+  saveDB();
+  res.json({ ok: true, username, before, after: u.balance });
+});
+
+app.get('/api/admin/tasks', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  res.json(DB.customTasks||[]);
+});
+
+app.post('/api/admin/tasks', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { type, reward, name, desc, isNew } = req.body;
+  if (!type || !reward || !name) return res.status(400).json({ error: 'Missing fields' });
+  const typeRaw = type.toLowerCase();
+  let check, channel, url, tag, tc;
+  if (typeRaw.startsWith('sub:')) { channel = typeRaw.split(':')[1]; check='sub'; tag='Канал'; tc='g'; url=`https://t.me/${channel}`; }
+  else if (typeRaw.startsWith('chat:')) { channel = typeRaw.split(':')[1]; check='chat'; tag='Чат'; tc='g'; url=`https://t.me/${channel}`; }
+  else if (typeRaw==='ref') { check='ref'; tag='Друзья'; tc='g'; }
+  else if (typeRaw==='case') { check='case'; tag='Задание'; tc='g'; }
+  else if (typeRaw==='wallet') { check='wallet'; tag='Кошелёк'; tc='g'; }
+  else return res.status(400).json({ error: 'Unknown type' });
+  const nextId = ++DB.customTaskCounter;
+  const task = { id: nextId, icoKey: check, tag, tc, name, desc: desc||name, rew: Number(reward), check, isNew: !!isNew };
+  if (channel) { task.channel = channel; task.url = url; }
+  if (!DB.customTasks) DB.customTasks = [];
+  DB.customTasks.push(task);
+  saveDB();
+  res.json({ ok: true, task });
+});
+
+app.delete('/api/admin/tasks/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (!DB.customTasks) return res.status(404).json({ error: 'No tasks' });
+  const idx = DB.customTasks.findIndex(t => t.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Task not found' });
+  const removed = DB.customTasks.splice(idx, 1)[0];
+  saveDB();
+  res.json({ ok: true, removed });
+});
+
+app.get('/api/admin/draws', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const active = Object.values(DB.draws).filter(d => !d.finished);
+  const finished = Object.values(DB.finished||{}).slice(-10).reverse();
+  res.json({ active, finished });
+});
+
+app.post('/api/admin/draws', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { prize, timeMs, winnersCount, requireTicket, imageUrl } = req.body;
+  if (!prize || !timeMs) return res.status(400).json({ error: 'Missing fields' });
+  const ms = Math.max(10000, Number(timeMs));
+  const id = ++DB.drawCounter;
+  DB.draws[id] = { id, prize, endsAt: Date.now()+ms, imageUrl: imageUrl||null, participants: [], finished: false, winnersCount: Number(winnersCount)||1, requireTicket: !!requireTicket, createdAt: Date.now() };
+  saveDB();
+  setTimeout(() => finishDraw(id), ms);
+  res.json({ ok: true, id, draw: DB.draws[id] });
+});
+
+app.patch('/api/admin/draws/:id/desc', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.draws[id];
+  if (!draw) return res.status(404).json({ error: 'Draw not found' });
+  draw.desc = req.body.desc||'';
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/draws/:id/conditions', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.draws[id];
+  if (!draw) return res.status(404).json({ error: 'Draw not found' });
+  const { type, channel, text, name } = req.body;
+  if (!draw.conditions) draw.conditions = [];
+  let cond;
+  if (type==='tg') { cond = { type:'tg', channel:(channel||'').replace('@',''), name: name||channel, url:`https://t.me/${(channel||'').replace('@','')}` }; }
+  else if (type==='custom') { cond = { type:'custom', text: text||'' }; }
+  else return res.status(400).json({ error: 'Unknown condition type' });
+  draw.conditions.push(cond);
+  saveDB();
+  res.json({ ok: true, conditions: draw.conditions });
+});
+
+app.delete('/api/admin/draws/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (!DB.draws[id]) return res.status(404).json({ error: 'Draw not found' });
+  delete DB.draws[id];
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.get('/api/admin/promos', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  res.json(Object.entries(DB.promos||{}).map(([code, p]) => ({ code, ...p })));
+});
+
+app.post('/api/admin/promos', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { code, reward, maxUses, vipOnly } = req.body;
+  if (!code || !reward || !maxUses) return res.status(400).json({ error: 'Missing fields' });
+  const c = code.toUpperCase();
+  if (!DB.promos) DB.promos = {};
+  DB.promos[c] = { reward: Number(reward), maxUses: Number(maxUses), usedCount: 0, vipOnly: !!vipOnly };
+  saveDB();
+  res.json({ ok: true, code: c });
+});
+
+app.delete('/api/admin/promos/:code', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const code = req.params.code.toUpperCase();
+  if (!DB.promos?.[code]) return res.status(404).json({ error: 'Promo not found' });
+  delete DB.promos[code];
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.get('/api/admin/notifications', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  res.json(DB.notifications||[]);
+});
+
+app.post('/api/admin/notifications', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { type, text } = req.body;
+  if (!text) return res.status(400).json({ error: 'Missing text' });
+  if (!DB.notifications) DB.notifications = [];
+  const notif = { id: Date.now(), type: type||'system', text, ts: Date.now() };
+  DB.notifications.unshift(notif);
+  if (DB.notifications.length > 100) DB.notifications = DB.notifications.slice(0, 100);
+  saveDB();
+  res.json({ ok: true, notif });
+});
+
+app.delete('/api/admin/notifications/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = Number(req.params.id);
+  const before = (DB.notifications||[]).length;
+  DB.notifications = (DB.notifications||[]).filter(n => n.id !== id);
+  if (DB.notifications.length < before) { saveDB(); res.json({ ok: true }); }
+  else res.status(404).json({ error: 'Not found' });
+});
+
+app.post('/api/admin/backup', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const result = await backupDBToGitHub();
+  res.json({ ok: result });
+});
+
+app.post('/api/admin/broadcast', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: 'Missing text' });
+  const userIds = Object.keys(DB.users);
+  let sent = 0, failed = 0;
+  for (const uid of userIds) {
+    try {
+      await bot.telegram.sendMessage(Number(uid), text, {
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+      });
+      sent++;
+    } catch { failed++; }
+    await new Promise(r => setTimeout(r, 50));
+  }
+  res.json({ ok: true, sent, failed, total: userIds.length });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', async () => {
   console.log(`✅ Server on port ${PORT}`);
+  // GitHub setup + DB restore on startup
+  await ensureDbBackupBranch();
+  await restoreDBFromGitHub();
   if (APP_URL) {
     try {
       await bot.telegram.setWebhook(`${APP_URL}/bot${BOT_TOKEN}`);
       console.log('✅ Webhook set');
     } catch (e) {
       console.log('Webhook error:', e.message);
-
-;
-
-
-
-bot.launch();
+      bot.launch();
     }
   } else {
     bot.launch();
