@@ -710,7 +710,9 @@ app.get('/api/draws', (req, res) => {
       id: d.id, prize: d.prize, endsAt: d.endsAt,
       imageUrl: d.imageUrl, participantsCount: d.participants.length,
       winnersCount: d.winnersCount || 1, isMoney: isMoney(d.prize),
-      requireTicket: d.requireTicket || false
+      requireTicket: d.requireTicket || false,
+      conditions: d.conditions || [],
+      description: d.description || ''
     }));
   res.json({ ok: true, draws: active });
 });
@@ -748,7 +750,24 @@ app.post('/api/draws/join', (req, res) => {
   }
 
   draw.participants.push({ uid: String(userId), name: username ? '@'+username : (firstName||'Аноним') });
+  saveDB();
   res.json({ ok: true, count: draw.participants.length });
+});
+
+app.post('/api/draws/check-tg-subs', async (req, res) => {
+  const { drawId, userId } = req.body;
+  if (!drawId || !userId) return res.json({ ok: false, error: 'missing params' });
+  const draw = DB.draws[drawId];
+  if (!draw) return res.json({ ok: false, error: 'Розыгрыш не найден' });
+  const tgConds = (draw.conditions || []).filter(c => c.type === 'tg');
+  if (!tgConds.length) return res.json({ ok: true, status: [] });
+  const status = [];
+  for (const c of tgConds) {
+    const ch = c.channel || '';
+    const subscribed = await checkSub(userId, ch);
+    status.push(subscribed);
+  }
+  res.json({ ok: true, status });
 });
 
 
@@ -1268,36 +1287,7 @@ bot.command('cpromo', (ctx) => {
   if (p.length < 4) return ctx.reply('Формат: /cpromo КОД СУММА КОЛ-ВО\nПример: /cpromo SUMMER500 500 100');
   const c = p[1].toUpperCase();
   DB.promos[c] = { reward: Number(p[2]), maxUses: Number(p[3]), usedCount: 0, vipOnly: false };
-  ctx.reply(
-    `✅ Промокод создан!\n📌 Код: ${c}\n💰 Награда: ${p[2]} монет\n🔢 Активаций: ${p[3]}`,
-    {
-      reply_markup: {
-        inline_keyboard: [[
-          { text: '📢 Опубликовать', callback_data: `pub_promo:${c}` }
-        ]]
-      }
-    }
-  );
-});
-
-bot.action(/^pub_promo:(.+)$/, async (ctx) => {
-  if (!isAdmin(ctx.from.id)) return ctx.answerCbQuery('⛔ Нет доступа');
-  const code = ctx.match[1];
-  try {
-    await bot.telegram.sendMessage('@satapp_news', `<code>${code}</code>`, {
-      parse_mode: 'HTML',
-      reply_markup: {
-        inline_keyboard: [[
-          { text: '🎮 Открыть приложение', url: `https://t.me/satapp_bot?startapp=1` }
-        ]]
-      }
-    });
-    await ctx.answerCbQuery('✅ Опубликовано!');
-    await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
-  } catch (e) {
-    await ctx.answerCbQuery('❌ Ошибка публикации');
-    console.error('pub_promo error:', e.message);
-  }
+  ctx.reply(`✅ Промокод создан!\n📌 Код: ${c}\n💰 Награда: ${p[2]} монет\n🔢 Активаций: ${p[3]}`);
 });
 
 bot.command('vpromo', (ctx) => {
@@ -1320,7 +1310,13 @@ async function handleCdraw(ctx, text, photo) {
     '/cdraw 1000 1 минута\n' +
     '/cdraw iPhone 2 часа\n' +
     '/cdraw 5000 1 день 3\n\n' +
-    '📎 Чтобы добавить картинку — прикрепи фото и напиши команду в подписи к фото (caption)'
+    '📎 Картинка — прикрепи фото, команда в подписи (caption)\n\n' +
+    'После создания:\n' +
+    '/addcond ID tg @channel Название — добавить TG условие\n' +
+    '/addcond ID kick channel Название — Kick условие\n' +
+    '/addcond ID custom Текст — пользоват. условие\n' +
+    '/cdesc ID Текст — добавить описание\n' +
+    '/drawinfo ID — инфо о розыгрыше'
   );
 
   const prize = parts[0];
@@ -1389,6 +1385,100 @@ async function handleCdraw(ctx, text, photo) {
 
 bot.command('cdraw', (ctx) => {
   handleCdraw(ctx, ctx.message.text, null);
+});
+
+/* /addcond DRAW_ID tg @channel Название
+   /addcond DRAW_ID kick channel Название URL
+   /addcond DRAW_ID custom Текст условия
+   /addcond DRAW_ID clear — удалить все условия */
+bot.command('addcond', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.split(' ');
+  const drawId = parseInt(parts[1]);
+  const type = (parts[2] || '').toLowerCase();
+  const draw = DB.draws[drawId];
+  if (!draw) return ctx.reply(`❌ Розыгрыш #${drawId} не найден`);
+  if (!draw.conditions) draw.conditions = [];
+
+  if (type === 'clear') {
+    draw.conditions = [];
+    saveDB();
+    return ctx.reply(`✅ Условия розыгрыша #${drawId} очищены`);
+  }
+
+  if (type === 'tg') {
+    const channel = parts[3] || '';
+    const name = parts.slice(4).join(' ') || channel.replace('@', '');
+    const url = `https://t.me/${channel.replace('@', '')}`;
+    draw.conditions.push({ type: 'tg', channel, name, url });
+    saveDB();
+    return ctx.reply(`✅ Условие добавлено к #${drawId}:\n📢 Telegram: ${name} (${channel})\nВсего условий: ${draw.conditions.length}`);
+  }
+
+  if (type === 'kick') {
+    const channel = parts[3] || '';
+    const lastArg = parts[parts.length - 1] || '';
+    const hasUrl = lastArg.startsWith('http');
+    const name = hasUrl ? parts.slice(4, -1).join(' ') || channel : parts.slice(4).join(' ') || channel;
+    const url = hasUrl ? lastArg : `https://kick.com/${channel}`;
+    draw.conditions.push({ type: 'kick', channel, name, url });
+    saveDB();
+    return ctx.reply(`✅ Условие добавлено к #${drawId}:\n🎮 Kick: ${name}\nВсего условий: ${draw.conditions.length}`);
+  }
+
+  if (type === 'custom') {
+    const text = parts.slice(3).join(' ');
+    if (!text) return ctx.reply('Укажи текст условия после "custom"');
+    draw.conditions.push({ type: 'custom', text });
+    saveDB();
+    return ctx.reply(`✅ Пользовательское условие добавлено к #${drawId}:\n📋 ${text}\nВсего условий: ${draw.conditions.length}`);
+  }
+
+  ctx.reply(
+    'Формат:\n' +
+    '/addcond ID tg @channel Название канала\n' +
+    '/addcond ID kick channel Название URL\n' +
+    '/addcond ID custom Текст условия\n' +
+    '/addcond ID clear — удалить все условия'
+  );
+});
+
+/* /cdesc DRAW_ID текст описания */
+bot.command('cdesc', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.split(' ');
+  const drawId = parseInt(parts[1]);
+  const desc = parts.slice(2).join(' ');
+  const draw = DB.draws[drawId];
+  if (!draw) return ctx.reply(`❌ Розыгрыш #${drawId} не найден`);
+  draw.description = desc;
+  saveDB();
+  ctx.reply(`✅ Описание розыгрыша #${drawId} обновлено:\n"${desc}"`);
+});
+
+/* /drawinfo DRAW_ID — информация о розыгрыше */
+bot.command('drawinfo', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.split(' ');
+  const drawId = parseInt(parts[1]);
+  const draw = DB.draws[drawId];
+  if (!draw) return ctx.reply(`❌ Розыгрыш #${drawId} не найден`);
+  const conds = (draw.conditions || []).map((c, i) => {
+    if (c.type === 'tg') return `  ${i+1}. TG: ${c.name} (${c.channel})`;
+    if (c.type === 'kick') return `  ${i+1}. Kick: ${c.name}`;
+    return `  ${i+1}. Custom: ${c.text}`;
+  }).join('\n') || '  Нет условий';
+  const timeLeft = Math.ceil((draw.endsAt - Date.now()) / 60000);
+  ctx.reply(
+    `📋 Розыгрыш #${drawId}\n` +
+    `🏆 Приз: ${draw.prize}\n` +
+    `⏱ Осталось: ${timeLeft} мин\n` +
+    `👥 Участников: ${draw.participants.length}\n` +
+    `👑 Победителей: ${draw.winnersCount || 1}\n` +
+    `🎟 Билет: ${draw.requireTicket ? 'Да' : 'Нет'}\n` +
+    `📝 Описание: ${draw.description || 'нет'}\n` +
+    `📌 Условия:\n${conds}`
+  );
 });
 
 bot.on('photo', async (ctx) => {
