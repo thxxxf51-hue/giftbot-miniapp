@@ -64,6 +64,7 @@ const DB = {
   bigWins:       _saved?.bigWins       || [], // {uid, firstName, photoUrl, amount, game, ts}
   notifyOpen:    _saved?.notifyOpen    ?? true, // уведомления о входе в приложение
   notifications: _saved?.notifications || [], // push уведомления от админа
+  customTasks:   _saved?.customTasks   || [], // задания, созданные админом через /ctask
 };
 
 // Автосохранение каждые 30 секунд
@@ -1135,6 +1136,11 @@ setInterval(async function() {
 
 
 
+/* ══ CUSTOM TASKS API ══ */
+app.get('/api/tasks/custom', (req, res) => {
+  res.json(DB.customTasks || []);
+});
+
 app.get('/api/repair-status', function(req, res) {
   res.json({ repairMode: DB.repairMode || false });
 });
@@ -1297,6 +1303,105 @@ bot.command('vpromo', (ctx) => {
   const c = p[1].toUpperCase();
   DB.promos[c] = { reward: Number(p[2]), maxUses: Number(p[3]), usedCount: 0, vipOnly: true };
   ctx.reply(`✅ VIP-промокод создан!\n📌 Код: ${c}\n💰 Награда: ${p[2]} монет\n👑 Только для VIP`);
+});
+
+/* ══ /ctask — создать задание ══ */
+bot.command('ctask', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const text = ctx.message.text.replace('/ctask', '').trim();
+  if (!text) return ctx.reply(
+    '📋 Формат: /ctask <тип> <монеты> <название> | <описание> [new]\n\n' +
+    'Типы:\n' +
+    '  sub:канал — подписка на канал\n' +
+    '  chat:канал — написать в чат\n' +
+    '  ref — пригласить друга\n' +
+    '  case — открыть кейс\n' +
+    '  wallet — подключить кошелёк\n\n' +
+    'Примеры:\n' +
+    '/ctask sub:mychannel 500 Подписаться на канал | Подпишись на @mychannel\n' +
+    '/ctask ref 1000 Пригласи друга | Пригласи по реф-ссылке new'
+  );
+
+  const parts = text.split(' ');
+  if (parts.length < 2) return ctx.reply('❌ Укажи тип и сумму монет');
+
+  const typeRaw = parts[0].toLowerCase();
+  const reward = parseInt(parts[1], 10);
+  if (isNaN(reward) || reward <= 0) return ctx.reply('❌ Сумма монет должна быть числом > 0');
+
+  const rest = parts.slice(2).join(' ');
+  if (!rest.includes('|')) return ctx.reply('❌ Разделяй название и описание символом |');
+
+  const [namePart, descPart] = rest.split('|').map(s => s.trim());
+  const name = namePart;
+  let desc = descPart;
+  let isNew = false;
+
+  if (desc.endsWith(' new') || desc === 'new') {
+    isNew = true;
+    desc = desc.replace(/ new$/, '').trim();
+  }
+
+  let check, channel, url, tag, tc;
+  if (typeRaw.startsWith('sub:')) {
+    channel = typeRaw.split(':')[1];
+    check = 'sub'; tag = 'Канал'; tc = 'g';
+    url = `https://t.me/${channel}`;
+  } else if (typeRaw.startsWith('chat:')) {
+    channel = typeRaw.split(':')[1];
+    check = 'chat'; tag = 'Чат'; tc = 'g';
+    url = `https://t.me/${channel}`;
+  } else if (typeRaw === 'ref') {
+    check = 'ref'; tag = 'Друзья'; tc = 'g';
+  } else if (typeRaw === 'case') {
+    check = 'case'; tag = 'Задание'; tc = 'g';
+  } else if (typeRaw === 'wallet') {
+    check = 'wallet'; tag = 'Кошелёк'; tc = 'g';
+  } else {
+    return ctx.reply('❌ Неизвестный тип. Используй: sub:канал, chat:канал, ref, case, wallet');
+  }
+
+  const nextId = 1000 + (DB.customTasks || []).length + 1;
+  const task = { id: nextId, icoKey: check, tag, tc, name, desc, rew: reward, check, isNew };
+  if (channel) { task.channel = channel; task.url = url; }
+
+  if (!DB.customTasks) DB.customTasks = [];
+  DB.customTasks.push(task);
+  saveDB();
+
+  ctx.reply(
+    `✅ Задание #${nextId} создано!\n\n` +
+    `📌 Название: ${name}\n` +
+    `📝 Описание: ${desc}\n` +
+    `🏷 Тип: ${tag} (${check})\n` +
+    `💰 Награда: ${reward} монет\n` +
+    (channel ? `📢 Канал/чат: @${channel}\n` : '') +
+    (isNew ? `🆕 Метка: NEW\n` : '') +
+    `\n🔢 ID задания: ${nextId}\n` +
+    `Удалить: /deltask ${nextId}`
+  );
+});
+
+bot.command('deltask', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.split(' ');
+  if (parts.length < 2) return ctx.reply('Формат: /deltask <ID>');
+  const id = parseInt(parts[1], 10);
+  if (!DB.customTasks) return ctx.reply('❌ Нет созданных заданий');
+  const idx = DB.customTasks.findIndex(t => t.id === id);
+  if (idx === -1) return ctx.reply(`❌ Задание #${id} не найдено`);
+  const removed = DB.customTasks.splice(idx, 1)[0];
+  saveDB();
+  ctx.reply(`✅ Задание #${id} "${removed.name}" удалено`);
+});
+
+bot.command('tasklist', (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  if (!DB.customTasks || DB.customTasks.length === 0) return ctx.reply('📋 Нет созданных заданий');
+  const list = DB.customTasks.map(t =>
+    `#${t.id} [${t.check}] ${t.name} — ${t.rew}🪙${t.isNew ? ' 🆕' : ''}`
+  ).join('\n');
+  ctx.reply(`📋 Список заданий (${DB.customTasks.length}):\n\n${list}`);
 });
 
 /* ══ /cdraw — поддержка фото ══ */
