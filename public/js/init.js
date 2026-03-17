@@ -146,6 +146,12 @@ async function init(){
   updateVipUI();
   updateEffectUI();
   syncB();
+  try {
+    const ct = await fetch('/api/tasks/custom').then(r=>r.json());
+    if(Array.isArray(ct) && ct.length){
+      ct.forEach(t=>{ if(!TASKS.find(x=>x.id===t.id)) TASKS.push(t); });
+    }
+  } catch{}
   renderTasks();
   rShopItems();
   rCases();
