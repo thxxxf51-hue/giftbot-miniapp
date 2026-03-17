@@ -7,21 +7,24 @@ function renderTasks(){
   TASKS.forEach(t=>{
     const done=S.doneTasks.has(t.id);
     const card=document.createElement('div');
-    card.className='tc'+( done?' tc--done':'')+(t.wip?' tc--wip':'');
+    card.className='tc'+(t.wip?' tc--wip':'');
     card.onclick=()=>openTask(t.id);
 
     let tags=`<div class="tc-tag tc-tag--${t.tc}">${t.tag}</div>`;
+    if(done)    tags+=`<div class="tc-tag tc-tag--done">✓ Выполнено</div>`;
+    if(t.wip)   tags+=`<div class="tc-tag tc-tag--wip">В разработке</div>`;
     if(t.isNew) tags+=`<div class="tc-tag tc-tag--new">NEW</div>`;
-    if(done)    tags+=`<div class="tc-tag tc-tag--done">Выполнено</div>`;
 
     const rew=done?'':`<div class="tc-rew">${COIN_ICO} ${t.rew.toLocaleString('ru')}</div>`;
 
-    let progress='';
-    if(!done && t.prog!=null){
-      const pct=Math.min(100,Math.round((t.prog.cur/t.prog.max)*100));
-      progress=`<div class="tc-prog-bar"><div class="tc-prog-fill" style="width:${pct}%"></div></div>
-                <div class="tc-prog-txt">${t.prog.cur} / ${t.prog.max}${t.prog.unit?' '+t.prog.unit:''}</div>`;
-    }
+    let pct=0;
+    if(done){ pct=100; }
+    else if(t.prog!=null){ pct=Math.min(100,Math.round((t.prog.cur/t.prog.max)*100)); }
+
+    const progTxt=(t.prog&&!done)
+      ?`<div class="tc-prog-txt">${t.prog.cur} / ${t.prog.max}${t.prog.unit?' '+t.prog.unit:''}</div>`
+      :'';
+    const progress=`<div class="tc-prog-bar"><div class="tc-prog-fill" style="width:${pct}%"></div></div>${progTxt}`;
 
     card.innerHTML=`
       <div class="tc-top">${tags}${rew}</div>
