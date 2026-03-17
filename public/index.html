@@ -282,6 +282,20 @@
   </div>
 </div>
 
+<!-- DRAW DETAIL BOTTOM SHEET (active draws) -->
+<div class="draw-detail-mo" id="draw-detail-mo" onclick="if(event.target===this)closeDrawDetail()">
+  <div class="draw-detail-box" id="draw-detail-box">
+    <div class="dp-drag-wrap" id="draw-detail-drag">
+      <div class="dp-drag"></div>
+    </div>
+    <div class="draw-detail-hdr">
+      <div class="draw-detail-title" id="draw-detail-title">Розыгрыш</div>
+      <button class="dp-close" onclick="closeDrawDetail()">✕</button>
+    </div>
+    <div class="draw-detail-body" id="draw-detail-body"></div>
+  </div>
+</div>
+
 <!-- DRAW PARTICIPANTS BOTTOM SHEET -->
 <div class="dp-mo" id="dp-mo" onclick="if(event.target===this)closeDpMo()">
   <div class="dp-box" id="dp-box">
