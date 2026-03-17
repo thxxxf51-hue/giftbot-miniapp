@@ -92,6 +92,23 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .pbtn{background:var(--green);color:#000;border:none;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:transform .1s;flex-shrink:0}
 .pbtn:active{transform:scale(.95)}
 
+/* ══ TASKS V2 ══ */
+.task-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0}
+.task-card{background:var(--glass);border:1px solid var(--gb);border-radius:14px;padding:16px 13px 12px;display:flex;flex-direction:column;align-items:center;text-align:center;cursor:pointer;transition:transform .12s,opacity .12s;position:relative}
+.task-card:active{transform:scale(.96);opacity:.9}
+.task-icon{font-size:32px;margin-bottom:10px;flex-shrink:0}
+.task-tag{display:inline-block;border-radius:5px;padding:2px 8px;font-size:8px;font-weight:800;margin-bottom:5px;letter-spacing:.4px;text-transform:uppercase}
+.task-tag.r{background:var(--rdim);color:var(--red)}
+.task-tag.g{background:var(--gdim);color:var(--green)}
+.task-tag.b{background:rgba(0,136,255,.12);color:#0088ff}
+.task-name{font-size:12px;font-weight:700;margin-bottom:3px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.task-desc{font-size:10px;color:var(--muted2);margin-bottom:10px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.task-badge{display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:700;padding:6px 9px;border-radius:9px;white-space:nowrap;margin-top:auto}
+.task-badge--reward{background:rgba(46,204,113,.15);color:var(--green);border:1px solid rgba(46,204,113,.3)}
+.task-badge--done{background:rgba(46,204,113,.2);color:var(--green);border:1px solid rgba(46,204,113,.4)}
+.task-badge--wip{background:rgba(255,200,0,.12);color:#f4c430;border:1px solid rgba(255,200,0,.25)}
+
+/* LEGACY — keep for home page quick access */
 .ti{padding:12px 13px;display:flex;align-items:center;gap:11px;margin-bottom:7px;cursor:pointer;transition:transform .1s,opacity .1s}
 .ti:active{transform:scale(.97);opacity:.8}
 .tico{width:40px;height:40px;border-radius:11px;background:var(--gdim);border:1px solid var(--gbor);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;position:relative;z-index:1}
