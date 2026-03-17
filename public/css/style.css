@@ -166,8 +166,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .draw-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0}
 .draw-card-v2{border-radius:15px;overflow:hidden;background:var(--glass);border:1px solid var(--gb);cursor:pointer;transition:transform .12s,opacity .12s;position:relative}
 .draw-card-v2:active{transform:scale(.96);opacity:.9}
-.draw-card-img{position:relative;width:100%;padding-top:100%;overflow:hidden}
-.draw-card-img>*{position:absolute;inset:0}
+.draw-card-img{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden}
 .draw-card-badge{position:absolute;top:7px;right:7px;background:rgba(46,204,113,.9);color:#000;font-size:9px;font-weight:800;padding:3px 7px;border-radius:20px;white-space:nowrap;z-index:2;letter-spacing:.2px}
 .draw-card-ticket{position:absolute;top:7px;left:7px;font-size:13px;z-index:2}
 .draw-card-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 100%);padding:22px 9px 8px;z-index:1}
