@@ -396,15 +396,16 @@ function _showNotifToast(n) {
   toast.style.background  = s.bg;
   toast.style.borderColor = s.border;
   if (progress) {
-    progress.style.background    = s.color;
-    progress.style.animationName = 'none';
+    progress.style.background = s.color;
+    progress.style.animation  = 'none';
+    void progress.offsetHeight;
   }
 
   toast.classList.remove('show');
   void toast.offsetWidth;
   toast.classList.add('show');
 
-  if (progress) { void progress.offsetWidth; progress.style.animationName = ''; }
+  if (progress) { void progress.offsetHeight; progress.style.animation = ''; }
 
   if (_notifToastTimer) clearTimeout(_notifToastTimer);
   _notifToastTimer = setTimeout(function(){ toast.classList.remove('show'); }, 4500);
