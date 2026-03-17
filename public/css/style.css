@@ -74,6 +74,27 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .nc-cyan span{background:linear-gradient(135deg,#00e5ff 0%,#00b4d8 50%,#0077b6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .uname{font-size:19px;font-weight:800;display:flex;align-items:center}
 
+/* ══ HOME V2 ══ */
+.home-balance{display:flex;align-items:center;gap:6px;background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.3);border-radius:12px;padding:8px 12px;font-weight:700;color:var(--green)}
+.home-balance-val{font-size:16px;font-weight:800}
+.home-balance-ico{font-size:14px}
+
+.home-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:20px}
+.home-menu-item{background:var(--glass);border:1px solid var(--gb);border-radius:14px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;cursor:pointer;transition:transform .12s,opacity .12s}
+.home-menu-item:active{transform:scale(.96);opacity:.9}
+.hmi-icon{font-size:32px;min-height:32px}
+.hmi-title{font-size:12px;font-weight:700;line-height:1.2}
+.hmi-desc{font-size:9px;color:var(--muted2)}
+
+.home-promo{display:flex;gap:8px;background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:12px;padding:10px;margin-bottom:16px;align-items:center}
+.promo-icon{font-size:18px;flex-shrink:0}
+.promo-input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:12px;font-family:inherit;min-width:0}
+.promo-input::placeholder{color:var(--muted2)}
+.promo-btn{background:var(--green);color:#000;border:none;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;flex-shrink:0;transition:transform .1s}
+.promo-btn:active{transform:scale(.95)}
+
+.home-section-title{font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text)}
+
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .mc{background:var(--glass);backdrop-filter:blur(16px) saturate(130%);-webkit-backdrop-filter:blur(16px) saturate(130%);border:1px solid var(--gb);border-radius:16px;padding:18px 10px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform .12s,opacity .12s;position:relative;overflow:hidden}
 .mc::after{content:'';position:absolute;inset:0;background:linear-gradient(155deg,rgba(255,255,255,.03),transparent 55%);pointer-events:none}
