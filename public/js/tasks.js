@@ -1,6 +1,9 @@
 /* ══ TASKS ══ */
 const COIN_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
 
+const DONE_TOAST_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="#00FFA3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+const WIP_TOAST_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="#f4c430" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+
 function renderTasks(){
   const wrap=document.createElement('div');
   wrap.className='tlist';
@@ -27,7 +30,7 @@ function renderTasks(){
     const progress=`<div class="tc-prog-bar"><div class="tc-prog-fill" style="width:${pct}%"></div></div>${progTxt}`;
 
     card.innerHTML=`
-      <div class="tc-top">${tags}${rew}</div>
+      <div class="tc-top"><div class="tc-tags">${tags}</div>${rew}</div>
       <div class="tc-name">${t.name}</div>
       <div class="tc-desc">${t.desc}</div>
       ${progress}`;
@@ -39,8 +42,8 @@ function renderTasks(){
 
 function openTask(id){
   const t=TASKS.find(x=>x.id===id);if(!t)return;
-  if(t.wip){toast('⏳ Задание в разработке','g');return;}
-  if(S.doneTasks.has(id)){toast('✅ Уже выполнено','g');return;}
+  if(t.wip){toast('Задание в разработке','s',WIP_TOAST_ICO);return;}
+  if(S.doneTasks.has(id)){toast('Уже выполнено','g',DONE_TOAST_ICO);return;}
   if(t.check==='ref'){
     if(S.refs.length>0){completeTask(id);}
     else{openGenMo('Пригласи друга',`Пригласи друга по реф-ссылке и получи +${t.rew} монет`,'👥 К рефералам',()=>{closeGenMo();go('friends');});}
