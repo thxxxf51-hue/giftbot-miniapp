@@ -36,9 +36,11 @@ const AICO = {
 
 function admApi(path, method, body) {
   const sep = path.includes('?') ? '&' : '?';
-  const url = (method === 'GET' || !method) ? `/api/admin${path}${sep}userId=${UID}` : `/api/admin${path}`;
+  const url = `/api/admin${path}${sep}userId=${UID}`;
   const opts = { method: method || 'GET', headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify({ ...body, userId: UID });
+  if (body !== undefined && body !== null && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
+    opts.body = JSON.stringify({ ...body, userId: UID });
+  }
   return fetch(url, opts)
     .then(r => r.json())
     .catch(e => ({ error: String(e.message || e) }));
