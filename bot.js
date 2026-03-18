@@ -632,6 +632,7 @@ app.post('/api/promo', (req, res) => {
   u.usedPromos.push(c);
   u.balance += p.reward;
   p.usedCount++;
+  if (p.usedCount >= p.maxUses && !p.soldOutAt) p.soldOutAt = Date.now();
   addTx(userId, 'promo_code', '+'+p.reward, 'Промокод ' + c);
   saveDB();
   res.json({ ok: true, reward: p.reward, balance: u.balance });
@@ -3050,6 +3051,41 @@ app.delete('/api/admin/draws/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+app.patch('/api/admin/draws/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.draws[id];
+  if (!draw) return res.status(404).json({ error: 'Draw not found' });
+  const { prize, desc, imageUrl, requireTicket } = req.body;
+  if (prize !== undefined) draw.prize = prize;
+  if (desc !== undefined) draw.desc = desc;
+  if (imageUrl !== undefined) draw.imageUrl = imageUrl || null;
+  if (requireTicket !== undefined) draw.requireTicket = !!requireTicket;
+  saveDB();
+  res.json({ ok: true, draw });
+});
+
+app.post('/api/admin/draws/:id/image', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.draws[id];
+  if (!draw) return res.status(404).json({ error: 'Draw not found' });
+  const { imageBase64, mimeType } = req.body;
+  if (!imageBase64) return res.status(400).json({ error: 'No image data' });
+  try {
+    const ext = (mimeType || 'image/jpeg').includes('png') ? 'png' : 'jpg';
+    const filename = `draw_${id}_${Date.now()}.${ext}`;
+    const uploadsDir = path.join(__dirname, 'public', 'uploads');
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    fs.writeFileSync(path.join(uploadsDir, filename), Buffer.from(imageBase64, 'base64'));
+    draw.imageUrl = `/uploads/${filename}`;
+    saveDB();
+    res.json({ ok: true, imageUrl: draw.imageUrl });
+  } catch (e) {
+    res.status(500).json({ error: 'Upload failed: ' + e.message });
+  }
+});
+
 app.get('/api/admin/promos', (req, res) => {
   if (!adminCheck(req, res)) return;
   res.json(Object.entries(DB.promos||{}).map(([code, p]) => ({ code, ...p })));
@@ -3061,7 +3097,7 @@ app.post('/api/admin/promos', (req, res) => {
   if (!code || !reward || !maxUses) return res.status(400).json({ error: 'Missing fields' });
   const c = code.toUpperCase();
   if (!DB.promos) DB.promos = {};
-  DB.promos[c] = { reward: Number(reward), maxUses: Number(maxUses), usedCount: 0, vipOnly: !!vipOnly };
+  DB.promos[c] = { reward: Number(reward), maxUses: Number(maxUses), usedCount: 0, vipOnly: !!vipOnly, createdAt: Date.now() };
   saveDB();
   res.json({ ok: true, code: c });
 });

@@ -1907,3 +1907,44 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 /* Admin: nav icon */
 #nb-admin .nb-icon svg{stroke:currentColor;width:22px;height:22px}
 
+
+/* ── Draw cards in admin ── */
+.adm-draw-card{background:var(--glass);border:1px solid var(--gb);border-radius:14px;padding:12px 14px;margin-bottom:8px}
+.adm-draw-header{display:flex;align-items:flex-start;gap:10px}
+.adm-draw-thumb{width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.08)}
+.adm-draw-info{flex:1;min-width:0}
+.adm-draw-prize{font-size:14px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-draw-meta{font-size:10px;color:rgba(255,255,255,.4);display:flex;flex-wrap:wrap;gap:2px;align-items:center}
+.adm-draw-meta svg{opacity:.5}
+.adm-draw-id{font-size:10px;color:rgba(255,255,255,.25);margin-top:2px}
+.adm-draw-btns{display:flex;gap:4px;flex-shrink:0}
+.adm-draw-edit{overflow:hidden}
+.adm-ticket-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(255,200,0,.12);color:#ffc800;border-radius:6px;padding:1px 5px;font-size:9px;font-weight:700}
+.adm-ticket-badge svg{stroke:#ffc800}
+
+/* ── Promo items ── */
+.adm-promo-item{background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.adm-promo-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.adm-promo-code-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.adm-promo-code{font-size:15px;font-weight:900;letter-spacing:1px;font-family:monospace}
+.adm-promo-vip{display:inline-flex;align-items:center;gap:3px;background:rgba(255,215,0,.15);color:#ffd700;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700}
+.adm-promo-vip svg{stroke:#ffd700}
+.adm-promo-done{display:inline-flex;align-items:center;gap:3px;background:rgba(0,255,163,.12);color:#00FFA3;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700}
+.adm-promo-done svg{stroke:#00FFA3}
+.adm-promo-reward{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;display:flex;align-items:center;gap:4px}
+.adm-promo-reward svg{opacity:.6}
+.adm-promo-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.adm-promo-bar{flex:1;height:5px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.adm-promo-bar-fill{height:100%;background:linear-gradient(90deg,#ff416c,#ff4b2b);border-radius:4px;transition:width .3s}
+.adm-promo-bar-fill.full{background:#00FFA3}
+.adm-promo-count{font-size:11px;font-weight:700;color:rgba(255,255,255,.7);flex-shrink:0}
+.adm-promo-soldout{display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(0,255,163,.7);margin-top:4px}
+.adm-promo-soldout svg{stroke:rgba(0,255,163,.7)}
+.adm-promo-date{font-size:10px;color:rgba(255,255,255,.25);margin-top:3px;display:flex;align-items:center;gap:4px}
+
+/* ── File upload ── */
+.adm-file-label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(255,255,255,.07);border:1px dashed rgba(255,255,255,.2);border-radius:10px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer;transition:background .15s}
+.adm-file-label:active{background:rgba(255,255,255,.12)}
+.adm-file-label svg{opacity:.7}
+.adm-img-status{font-size:11px;margin-top:6px;min-height:16px;display:flex;align-items:center;gap:4px}
+
