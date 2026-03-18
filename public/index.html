@@ -423,12 +423,12 @@
 
   <div class="hm-promo">
     <div class="hm-promo-label">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00FFA3" stroke-width="1.91" stroke-miterlimit="10" style="filter:drop-shadow(0 0 4px rgba(0,255,163,0.55));flex-shrink:0"><path stroke-linecap="square" d="M22.5,4.36V19.64H1.5V14.86a2.86,2.86,0,0,0,0-5.72V4.36Z"/><line x1="8.18" y1="8.18" x2="10.09" y2="8.18"/><line x1="8.18" y1="12" x2="10.09" y2="12"/><line x1="8.18" y1="15.82" x2="10.09" y2="15.82"/></svg>
-      <span>Промокод</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.91" stroke-miterlimit="10" class="hm-promo-ico"><path stroke-linecap="square" d="M22.5,4.36V19.64H1.5V14.86a2.86,2.86,0,0,0,0-5.72V4.36Z"/><line x1="8.18" y1="8.18" x2="10.09" y2="8.18"/><line x1="8.18" y1="12" x2="10.09" y2="12"/><line x1="8.18" y1="15.82" x2="10.09" y2="15.82"/></svg>
+      <span data-i18n="promo-lbl">Промокод</span>
     </div>
     <div class="hm-promo-row">
-      <input class="hm-promo-input" id="pi-h" placeholder="Введите промокод" autocapitalize="characters">
-      <button class="hm-promo-btn" onclick="usePromo('pi-h')">Применить</button>
+      <input class="hm-promo-input" id="pi-h" data-i18n-ph="promo-ph" placeholder="Введите промокод" autocapitalize="characters">
+      <button class="hm-promo-btn" onclick="usePromo('pi-h')" data-i18n="promo-btn">Применить</button>
     </div>
   </div>
 
@@ -650,10 +650,10 @@
 
   <!-- PROMO -->
   <div class="gc prn-promo">
-    <div class="prn-plbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>Промокод</div>
+    <div class="prn-plbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 12v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><span data-i18n="pro-promo-lbl">Промокод</span></div>
     <div class="prn-pfield">
-      <input class="prn-pin" id="pi-p" placeholder="Введите промокод" autocapitalize="characters">
-      <button class="prn-pbtn" onclick="usePromo('pi-p')">Применить</button>
+      <input class="prn-pin" id="pi-p" data-i18n-ph="promo-ph" placeholder="Введите промокод" autocapitalize="characters">
+      <button class="prn-pbtn" onclick="usePromo('pi-p')" data-i18n="promo-btn">Применить</button>
     </div>
   </div>
 

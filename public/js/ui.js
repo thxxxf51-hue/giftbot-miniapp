@@ -12,22 +12,23 @@ function go(name){
   const nw=document.getElementById('page-'+name);
   old.classList.add('exit');
   old.addEventListener('animationend',()=>{old.classList.remove('active','exit');old.style.display='none';},{once:true});
+  // Failsafe: always release navLk after 600ms in case animationend doesn't fire
+  const _navLkTimer = setTimeout(()=>{ navLk=false; }, 600);
   setTimeout(()=>{
     nw.style.display='block';
     nw.classList.add('active');
-    nw.addEventListener('animationend',()=>{navLk=false;},{once:true});
+    nw.addEventListener('animationend',()=>{clearTimeout(_navLkTimer);navLk=false;},{once:true});
+    // Page enter hooks (inside setTimeout so page is visible)
+    if(name==='inventory')renderInv();
+    if(name==='pvp')onPvpPageEnter?.();
+    if(name==='admin')loadAdminSection(admTab);
+    if(name==='profile')loadTxList();
   },60);
   PAGES.forEach(p=>document.getElementById('nb-'+p)?.classList.remove('active'));
   document.getElementById('nb-'+name)?.classList.add('active');
   // slide nav pill
   if(typeof _navPillUpdate==='function') _navPillUpdate(name);
   curPage=name;syncB();
-
-  // Page enter hooks
-  if(name==='inventory')renderInv();
-  if(name==='pvp')onPvpPageEnter?.();
-  if(name==='admin')loadAdminSection(admTab);
-  if(name==='profile')loadTxList();
 }
 
 /* ══ TOAST ══ */
