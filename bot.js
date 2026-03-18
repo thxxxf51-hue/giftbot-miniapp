@@ -3126,23 +3126,23 @@ app.post('/api/admin/broadcast', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', async () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server on port ${PORT}`);
-  // GitHub setup + DB restore on startup
-  await ensureDbBackupBranch();
-  await restoreDBFromGitHub();
+
+  // Запускаем бот сразу — не ждём GitHub
   if (APP_URL) {
-    try {
-      await bot.telegram.setWebhook(`${APP_URL}/bot${BOT_TOKEN}`);
-      console.log('✅ Webhook set');
-    } catch (e) {
-      console.log('Webhook error:', e.message);
-      bot.launch();
-    }
+    bot.telegram.setWebhook(`${APP_URL}/bot${BOT_TOKEN}`)
+      .then(() => console.log('✅ Webhook set'))
+      .catch(e => { console.log('Webhook error:', e.message); bot.launch(); });
   } else {
     bot.launch();
     console.log('✅ Bot polling');
   }
+
+  // GitHub backup/restore — в фоне, не блокируем старт
+  ensureDbBackupBranch()
+    .then(() => restoreDBFromGitHub())
+    .catch(e => console.log('GitHub init error:', e.message));
 });
 
 app.post(`/bot${BOT_TOKEN}`, (req, res) => { bot.handleUpdate(req.body, res); });
