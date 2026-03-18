@@ -5,6 +5,9 @@ let curPage='home',navLk=false;
 function go(name){
   if(name===curPage||navLk)return;
   navLk=true;
+  // Если сплэш ещё виден — убираем немедленно
+  const _sp=document.getElementById('splash-screen');
+  if(_sp){_sp.style.display='none';if(_sp.parentNode)_sp.parentNode.removeChild(_sp);}
   // Page leave hooks
   if(curPage==='pvp') onPvpPageLeave?.();
 
