@@ -35,14 +35,21 @@ const AICO = {
 };
 
 function admApi(path, method, body) {
+  const m = method || 'GET';
   const sep = path.includes('?') ? '&' : '?';
-  const url = `/api/admin${path}${sep}userId=${UID}`;
-  const opts = { method: method || 'GET', headers: { 'Content-Type': 'application/json' } };
-  if (body !== undefined && body !== null && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
-    opts.body = JSON.stringify({ ...body, userId: UID });
+  const base = window.location.origin;
+  const url = `${base}/api/admin${path}${sep}userId=${UID}`;
+  const opts = { method: m, headers: {} };
+  if (m !== 'GET' && m !== 'HEAD') {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(Object.assign({}, body || {}, { userId: UID }));
   }
   return fetch(url, opts)
-    .then(r => r.json())
+    .then(async r => {
+      const text = await r.text();
+      try { return JSON.parse(text); }
+      catch { return { error: text || ('HTTP ' + r.status) }; }
+    })
     .catch(e => ({ error: String(e.message || e) }));
 }
 
