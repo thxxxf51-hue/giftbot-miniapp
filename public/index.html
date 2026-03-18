@@ -423,7 +423,7 @@
 
   <div class="hm-promo">
     <div class="hm-promo-label">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00FFA3" stroke-width="1.91" stroke-miterlimit="10" style="filter:drop-shadow(0 0 4px rgba(0,255,163,0.55));flex-shrink:0"><path stroke-linecap="square" d="M22.5,4.36V19.64H1.5V14.86a2.86,2.86,0,0,0,0-5.72V4.36Z"/><circle cx="19.64" cy="8.18" r=".1" stroke-width="2.5"/><circle cx="19.64" cy="12" r=".1" stroke-width="2.5"/><line x1="8.18" y1="8.18" x2="10.09" y2="8.18"/><line x1="8.18" y1="12" x2="10.09" y2="12"/><line x1="8.18" y1="15.82" x2="10.09" y2="15.82"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00FFA3" stroke-width="1.91" stroke-miterlimit="10" style="filter:drop-shadow(0 0 4px rgba(0,255,163,0.55));flex-shrink:0"><path stroke-linecap="square" d="M22.5,4.36V19.64H1.5V14.86a2.86,2.86,0,0,0,0-5.72V4.36Z"/><line x1="8.18" y1="8.18" x2="10.09" y2="8.18"/><line x1="8.18" y1="12" x2="10.09" y2="12"/><line x1="8.18" y1="15.82" x2="10.09" y2="15.82"/></svg>
       <span>Промокод</span>
     </div>
     <div class="hm-promo-row">
@@ -1075,6 +1075,17 @@
   </div>
 </div>
 <!-- /ADMIN PAGE -->
+
+<!-- Admin User Profile Modal -->
+<div id="adm-user-mo" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:flex-end;justify-content:center" onclick="if(event.target===this)admCloseUserMo()">
+  <div style="background:#13131a;border-radius:24px 24px 0 0;width:100%;max-height:85vh;overflow-y:auto;padding:20px 16px 40px;border-top:1px solid rgba(255,255,255,.1)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:800">👤 Профиль пользователя</div>
+      <button onclick="admCloseUserMo()" style="background:rgba(255,255,255,.08);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="adm-user-mo-body"></div>
+  </div>
+</div>
 
 </div><!-- /pages -->
 

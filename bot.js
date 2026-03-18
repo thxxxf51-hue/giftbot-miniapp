@@ -2399,12 +2399,33 @@ bot.command('bans', (ctx) => {
 });
 
 bot.command('repair', async (ctx) => {
+  if (ctx.chat.type !== 'private') return;
+  if (!isAdmin(ctx.from.id)) return;
   DB.repairMode = !DB.repairMode;
   saveDB();
   const status = DB.repairMode
     ? '🔧 Режим тех. работ ВКЛЮЧЁН. Приложение недоступно для пользователей.'
     : '✅ Тех. работы ВЫКЛЮЧЕНЫ. Приложение снова доступно.';
-  ctx.reply(status);
+  ctx.reply(status, {
+    reply_markup: {
+      inline_keyboard: [[{ text: DB.repairMode ? '✅ Выключить тех. работы' : '🔧 Включить тех. работы', callback_data: 'toggle_repair' }]]
+    }
+  });
+});
+
+bot.action('toggle_repair', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return ctx.answerCbQuery('Нет доступа');
+  DB.repairMode = !DB.repairMode;
+  saveDB();
+  const status = DB.repairMode
+    ? '🔧 Режим тех. работ ВКЛЮЧЁН. Приложение недоступно для пользователей.'
+    : '✅ Тех. работы ВЫКЛЮЧЕНЫ. Приложение снова доступно.';
+  await ctx.editMessageText(status, {
+    reply_markup: {
+      inline_keyboard: [[{ text: DB.repairMode ? '✅ Выключить тех. работы' : '🔧 Включить тех. работы', callback_data: 'toggle_repair' }]]
+    }
+  });
+  ctx.answerCbQuery();
 });
 
 
@@ -2926,6 +2947,39 @@ app.get('/api/admin/users', (req, res) => {
   res.json(users.slice(0, 100));
 });
 
+app.get('/api/admin/users/:uid', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const uid = req.params.uid;
+  const u = DB.users[uid];
+  if (!u) return res.status(404).json({ error: 'User not found' });
+  const now = Date.now();
+  const vipActive = u.vipExpiry && u.vipExpiry > now;
+  const legendActive = u.legendExpiry && u.legendExpiry > now;
+  res.json({
+    uid,
+    username: u.username || '',
+    firstName: u.firstName || '',
+    balance: u.balance || 0,
+    starsBalance: u.starsBalance || 0,
+    regDate: u.regDate || '',
+    refs: (u.refs || []).length,
+    refEarned: u.refEarned || 0,
+    refBy: u.refBy || null,
+    vipActive: !!vipActive,
+    vipExpiry: u.vipExpiry || null,
+    hasCrown: !!u.hasCrown,
+    legendActive: !!legendActive,
+    legendColor: u.legendColor || null,
+    nickColor: u.nickColor || null,
+    doneTasks: (u.doneTasks || []).length,
+    usedPromos: (u.usedPromos || []).length,
+    inventory: u.inventory || {},
+    walletAddress: u.walletAddress || null,
+    banned: !!(DB.bans?.[u.username] || DB.bansByUid?.[uid]),
+    transactions: (u.transactions || []).slice(0, 10),
+  });
+});
+
 app.post('/api/admin/balance', async (req, res) => {
   if (!adminCheck(req, res)) return;
   const { targetUsername, amount, action } = req.body;
@@ -3162,24 +3216,36 @@ app.post('/api/admin/broadcast', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server on port ${PORT}`);
 
-  // Запускаем бот сразу — не ждём GitHub
-  if (APP_URL) {
-    bot.telegram.setWebhook(`${APP_URL}/bot${BOT_TOKEN}`)
-      .then(() => console.log('✅ Webhook set'))
-      .catch(e => { console.log('Webhook error:', e.message); bot.launch(); });
+async function startServer() {
+  // Сначала восстанавливаем БД из GitHub (до старта сервера)
+  if (GITHUB_TOKEN) {
+    try {
+      await ensureDbBackupBranch();
+      const restored = await restoreDBFromGitHub();
+      if (!restored) console.log('ℹ️ GitHub restore: нет данных для восстановления или локальная БД актуальна');
+    } catch (e) {
+      console.log('⚠️ GitHub restore error:', e.message);
+    }
   } else {
-    bot.launch();
-    console.log('✅ Bot polling');
+    console.log('ℹ️ GITHUB_PERSONAL_ACCESS_TOKEN не задан — резервное копирование отключено');
   }
 
-  // GitHub backup/restore — в фоне, не блокируем старт
-  ensureDbBackupBranch()
-    .then(() => restoreDBFromGitHub())
-    .catch(e => console.log('GitHub init error:', e.message));
-});
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✅ Server on port ${PORT}`);
+
+    if (APP_URL) {
+      bot.telegram.setWebhook(`${APP_URL}/bot${BOT_TOKEN}`)
+        .then(() => console.log('✅ Webhook set'))
+        .catch(e => { console.log('Webhook error:', e.message); bot.launch(); });
+    } else {
+      bot.launch();
+      console.log('✅ Bot polling');
+    }
+  });
+}
+
+startServer();
 
 app.post(`/bot${BOT_TOKEN}`, (req, res) => { bot.handleUpdate(req.body, res); });
 process.once('SIGINT', () => bot.stop('SIGINT'));

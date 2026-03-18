@@ -49,10 +49,20 @@ function fmtDur(ms) {
   const s = Math.floor(ms / 1000);
   if (s < 60) return s + 'с';
   const m = Math.floor(s / 60);
-  if (m < 60) return m + 'мин';
+  if (m < 60) return m + 'мин ' + (s % 60) + 'с';
   const h = Math.floor(m / 60);
   if (h < 24) return h + 'ч ' + (m % 60) + 'мин';
   return Math.floor(h / 24) + 'д ' + (h % 24) + 'ч';
+}
+
+function fmtSoldOut(ms) {
+  if (!ms || ms < 0) return '';
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return s + ' сек.';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + ' мин. ' + (s % 60) + ' сек. (' + s + 'с)';
+  const h = Math.floor(m / 60);
+  return h + ' ч. ' + (m % 60) + ' мин. (' + s + 'с)';
 }
 
 function fmtDate(ts) {
@@ -147,10 +157,10 @@ async function admBackupNow(btn) {
 ════════════════════════════════════════════ */
 async function loadAdmUsers() {
   document.getElementById('adm-users').innerHTML = `
-    <div class="adm-search">${AICO.search}<input id="adm-user-search" placeholder="Поиск по юзернейму..." oninput="admFilterUsers()" autocomplete="off"></div>
+    <div class="adm-search">${AICO.search}<input id="adm-user-search" placeholder="Поиск по юзернейму или имени..." oninput="admFilterUsers()" autocomplete="off"></div>
     <div id="adm-user-list"><div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div></div>`;
   const data = await admApi('/users', 'GET');
-  if (data.error) { document.getElementById('adm-user-list').innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}</div>`; return; }
+  if (data.error) { document.getElementById('adm-user-list').innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}<br><small style="opacity:.6">UID: ${UID}</small></div>`; return; }
   admUsers = data;
   admRenderUsers(admUsers);
 }
@@ -164,22 +174,73 @@ function admRenderUsers(list) {
   const el = document.getElementById('adm-user-list');
   if (!el) return;
   if (!list || !list.length) { el.innerHTML = `<div class="adm-empty">${AICO.users} Пусто</div>`; return; }
-  el.innerHTML = list.slice(0, 60).map(u => {
+  el.innerHTML = list.slice(0, 100).map(u => {
     const initials = (u.firstName || u.username || '?')[0].toUpperCase();
     const name = u.username ? '@'+u.username : (u.firstName||'—');
-    const sub = `${(u.balance||0).toLocaleString('ru')} монет · ${u.refs||0} реф.${u.banned?' · Забанен':''}`;
-    return `<div class="adm-user-item">
+    const sub = `${(u.balance||0).toLocaleString('ru')} монет · ${u.refs||0} реф.${u.banned?' · 🚫':''}`;
+    return `<div class="adm-user-item" onclick="admViewUser('${u.uid}')" style="cursor:pointer">
       <div class="adm-user-avatar">${initials}</div>
       <div class="adm-user-info">
         <div class="adm-user-name">${name}${u.firstName&&u.username?' ('+u.firstName+')':''}</div>
         <div class="adm-user-sub">${sub}</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px">
+      <div style="display:flex;flex-direction:column;gap:4px" onclick="event.stopPropagation()">
         <button class="adm-btn adm-btn-sm adm-btn-green" onclick="admOpenBalance('${u.username||u.uid}','add')" title="Начислить">${AICO.plus}</button>
         <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admOpenBalance('${u.username||u.uid}','remove')" title="Снять">&minus;</button>
       </div>
     </div>`;
   }).join('');
+}
+
+async function admViewUser(uid) {
+  const mo = document.getElementById('adm-user-mo');
+  const body = document.getElementById('adm-user-mo-body');
+  if (!mo || !body) return;
+  body.innerHTML = `<div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>`;
+  mo.style.display = 'flex';
+  const d = await admApi(`/users/${uid}`, 'GET');
+  if (d.error) { body.innerHTML = `<div class="adm-err">${AICO.alert} ${d.error}</div>`; return; }
+
+  const name = d.username ? '@'+d.username : (d.firstName||'—');
+  const fullName = d.firstName ? d.firstName + (d.username ? ' (@'+d.username+')' : '') : (d.username ? '@'+d.username : '—');
+  const vipStr = d.vipActive ? `✅ Активна до ${fmtDate(d.vipExpiry)}` : '—';
+  const invItems = Object.entries(d.inventory||{}).filter(([,v])=>v>0).map(([k,v])=>`${k}: ${v}`).join(', ') || '—';
+  const txHtml = (d.transactions||[]).length
+    ? (d.transactions||[]).map(t=>`<div class="adm-up-row"><span style="opacity:.5">${t.date}</span><span>${t.details||t.type}</span><span style="color:${String(t.amount).startsWith('+')?'#00FFA3':'#ff6b6b'};font-weight:700">${t.amount}</span></div>`).join('')
+    : '<div style="opacity:.4;font-size:11px">Транзакций нет</div>';
+
+  body.innerHTML = `
+    <div class="adm-up-avatar">${(d.firstName||d.username||'?')[0].toUpperCase()}</div>
+    <div class="adm-up-name">${fullName}</div>
+    <div class="adm-up-uid">ID: ${d.uid}${d.banned?' · <span style="color:#ff6b6b">🚫 Забанен</span>':''}</div>
+    <div class="adm-up-grid">
+      <div class="adm-up-cell"><div class="adm-up-cell-label">💰 Монеты</div><div class="adm-up-cell-val">${(d.balance||0).toLocaleString('ru')}</div></div>
+      <div class="adm-up-cell"><div class="adm-up-cell-label">⭐ Звёзды</div><div class="adm-up-cell-val">${d.starsBalance||0}</div></div>
+      <div class="adm-up-cell"><div class="adm-up-cell-label">👥 Рефералы</div><div class="adm-up-cell-val">${d.refs||0}</div></div>
+      <div class="adm-up-cell"><div class="adm-up-cell-label">🎁 Реф. заработок</div><div class="adm-up-cell-val">${(d.refEarned||0).toLocaleString('ru')}</div></div>
+      <div class="adm-up-cell"><div class="adm-up-cell-label">✅ Задания</div><div class="adm-up-cell-val">${d.doneTasks||0}</div></div>
+      <div class="adm-up-cell"><div class="adm-up-cell-label">🎫 Промокоды</div><div class="adm-up-cell-val">${d.usedPromos||0}</div></div>
+    </div>
+    <div class="adm-up-row"><span>👑 VIP</span><span>${vipStr}</span></div>
+    <div class="adm-up-row"><span>💎 Корона</span><span>${d.hasCrown?'✅ Есть':'—'}</span></div>
+    <div class="adm-up-row"><span>🎨 Цвет ника</span><span>${d.nickColor?`<span style="color:${d.nickColor}">${d.nickColor}</span>`:'—'}</span></div>
+    <div class="adm-up-row"><span>🌟 Легенда</span><span>${d.legendActive?`✅ (${d.legendColor})`:'—'}</span></div>
+    <div class="adm-up-row"><span>💼 Кошелёк</span><span style="font-size:9px;word-break:break-all">${d.walletAddress||'—'}</span></div>
+    <div class="adm-up-row"><span>📦 Инвентарь</span><span style="font-size:10px">${invItems}</span></div>
+    <div class="adm-up-row"><span>📅 Регистрация</span><span>${d.regDate||'—'}</span></div>
+    <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:10px;margin-top:4px">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);margin-bottom:8px">Последние транзакции</div>
+      ${txHtml}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="adm-btn adm-btn-green" style="flex:1" onclick="admCloseUserMo();admOpenBalance('${d.username||d.uid}','add')">${AICO.plus} Начислить</button>
+      <button class="adm-btn adm-btn-danger" style="flex:1" onclick="admCloseUserMo();admOpenBalance('${d.username||d.uid}','remove')">&minus; Снять</button>
+    </div>`;
+}
+
+function admCloseUserMo() {
+  const mo = document.getElementById('adm-user-mo');
+  if (mo) mo.style.display = 'none';
 }
 
 function admOpenBalance(username, action) {
@@ -438,7 +499,7 @@ async function loadAdmPromos() {
       const pct = p.maxUses ? Math.round(p.usedCount / p.maxUses * 100) : 0;
       let soldOutStr = '';
       if (p.soldOutAt && p.createdAt) {
-        soldOutStr = `<span class="adm-promo-soldout">${AICO.timer} Разобрали за ${fmtDur(p.soldOutAt - p.createdAt)}</span>`;
+        soldOutStr = `<span class="adm-promo-soldout">${AICO.timer} Разобрали за ${fmtSoldOut(p.soldOutAt - p.createdAt)}</span>`;
       }
       return `<div class="adm-promo-item">
         <div class="adm-promo-top">
