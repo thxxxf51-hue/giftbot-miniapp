@@ -10,7 +10,7 @@
 html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF Pro Display','Helvetica Neue',sans-serif;height:100%;overflow:hidden;overscroll-behavior:none}
 .app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 .pages{flex:1;overflow:hidden;position:relative}
-.page{display:none;position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px calc(78px + env(safe-area-inset-bottom));overscroll-behavior-y:contain}
+.page{display:none;position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 14px calc(78px + env(safe-area-inset-bottom));overscroll-behavior-y:contain;background:var(--bg)}
 .page::-webkit-scrollbar{display:none}
 .page.active{display:block;animation:pIn .3s cubic-bezier(.25,.46,.45,.94) forwards}
 .page.exit{display:block;animation:pOut .22s cubic-bezier(.25,.46,.45,.94) forwards;pointer-events:none}

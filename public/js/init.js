@@ -255,6 +255,7 @@ async function init(){
       splash.classList.add('splash-hide');
       setTimeout(function() {
         splash.style.display = 'none';
+        if (splash.parentNode) splash.parentNode.removeChild(splash);
         // Show swipe screen
         const sw = document.getElementById('swipe-screen');
         let swiped=false;try{swiped=!!localStorage.getItem('gb4_swiped');}catch(e){}
