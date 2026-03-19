@@ -280,14 +280,8 @@ function applyAccent(id, persist) {
 }
 
 function _accentForceGlows(r, g, b) {
-  const glow1 = `drop-shadow(0 0 6px rgba(${r},${g},${b},0.75)) drop-shadow(0 0 12px rgba(${r},${g},${b},0.35))`;
-  const glowSm = `drop-shadow(0 0 4px rgba(${r},${g},${b},0.6))`;
-  const glowStat = `drop-shadow(0 0 7px rgba(${r},${g},${b},.65))`;
-  document.querySelectorAll('.hm-ico svg').forEach(el => { el.style.filter = glow1; });
-  document.querySelectorAll('.hm-promo-ico svg').forEach(el => { el.style.filter = glowSm; });
-  document.querySelectorAll('.hm-stat-ico svg').forEach(el => {
-    if (!el.closest('.hm-stat-ico--gold')) el.style.filter = glowStat;
-  });
+  const bgColor = `rgb(${r},${g},${b})`;
+  document.querySelectorAll('.hm-ico-bg').forEach(el => { el.style.backgroundColor = bgColor; });
 }
 
 function _accentLoadSaved() {
