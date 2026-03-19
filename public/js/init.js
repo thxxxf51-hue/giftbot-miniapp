@@ -192,6 +192,7 @@ async function init(){
 
   loadDraws();
   setInterval(loadDraws,5000);
+  loadGlobalStats();
 
   // Launch entry effect if active
   launchEntryEffect();
@@ -206,14 +207,106 @@ async function init(){
   },30000);
 }
 
-/* ══ SWIPE SCREEN ══ */
-(function() {
+/* ══ SPLASH SCREEN ══ */
+function _removeSplashAndSwipe() {
+  const splash = document.getElementById('splash-screen');
+  if (splash) { splash.style.display = 'none'; if (splash.parentNode) splash.parentNode.removeChild(splash); }
   const sw = document.getElementById('swipe-screen');
-  let swiped = false;
-  try { swiped = !!localStorage.getItem('gb4_swiped'); } catch(e) {}
-  if (sw && !swiped) { sw.classList.add('show'); initSwipe(); }
-  else if (sw) { sw.style.display = 'none'; }
+  if (sw) { sw.classList.remove('show'); sw.style.display = 'none'; }
+}
+
+(function() {
+  // Spawn floating particles
+  const container = document.getElementById('splash-particles');
+  if (container) {
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'splash-particle';
+      const size = 2 + Math.random() * 3;
+      p.style.cssText = [
+        'width:' + size + 'px',
+        'height:' + size + 'px',
+        'left:' + (15 + Math.random() * 70) + '%',
+        'top:' + (30 + Math.random() * 40) + '%',
+        'animation-duration:' + (2.5 + Math.random() * 2.5) + 's',
+        'animation-delay:' + (Math.random() * 2) + 's',
+        'opacity:0'
+      ].join(';');
+      container.appendChild(p);
+    }
+  }
+
+  // Animate progress bar
+  const bar = document.getElementById('splash-bar');
+  const pct = document.getElementById('splash-pct');
+  const steps = [
+    { w: 18,  t: 'Инициализация...', delay: 350 },
+    { w: 40,  t: 'Загрузка данных...', delay: 600 },
+    { w: 65,  t: 'Подключение...', delay: 550 },
+    { w: 85,  t: 'Почти готово...', delay: 500 },
+    { w: 100, t: 'Готово!', delay: 400 },
+  ];
+  let i = 0;
+  function nextStep() {
+    if (i >= steps.length) return;
+    const s = steps[i++];
+    if (bar) bar.style.width = s.w + '%';
+    if (pct) pct.textContent = s.t;
+    setTimeout(nextStep, s.delay);
+  }
+  setTimeout(nextStep, 400);
+
+  // Hide splash after ~3s → show swipe screen
+  setTimeout(function() {
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+      splash.classList.add('splash-hide');
+      setTimeout(function() {
+        splash.style.display = 'none';
+        // Полностью удаляем из DOM чтобы никогда не перекрывал контент
+        if (splash.parentNode) splash.parentNode.removeChild(splash);
+        // Show swipe screen
+        const sw = document.getElementById('swipe-screen');
+        let swiped=false;try{swiped=!!localStorage.getItem('gb4_swiped');}catch(e){}
+        if (sw && !swiped) { sw.classList.add('show'); initSwipe(); }
+        else if (sw) { sw.style.display='none'; }
+      }, 550);
+    }
+  }, 3000);
 })();
 
 init();
 if(typeof initAdmin==='function') initAdmin();
+
+/* ══ GLOBAL STATS с анимацией счётчика ══ */
+function loadGlobalStats() {
+  fetch('/api/global-stats')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok) return;
+      _animateCount('gs-users', d.users);
+      _animateCount('gs-earned', d.totalEarned);
+    })
+    .catch(() => {});
+}
+
+function _animateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const duration = 1400;
+  const steps = 60;
+  const interval = duration / steps;
+  let step = 0;
+  // easeOutExpo
+  function ease(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
+  const timer = setInterval(() => {
+    step++;
+    const progress = ease(step / steps);
+    const current = Math.round(progress * target);
+    el.textContent = current.toLocaleString('ru');
+    if (step >= steps) {
+      clearInterval(timer);
+      el.textContent = target.toLocaleString('ru');
+    }
+  }, interval);
+}
