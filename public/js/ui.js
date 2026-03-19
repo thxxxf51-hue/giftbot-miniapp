@@ -28,6 +28,12 @@ function go(name){
   document.getElementById('nb-'+name)?.classList.add('active');
   // slide nav pill
   if(typeof _navPillUpdate==='function') _navPillUpdate(name);
+  // force update glow on newly active nav icon
+  (function(){
+    const saved = localStorage.getItem('gb_accent') || 'green';
+    const t = (typeof ACCENT_THEMES!=='undefined') ? (ACCENT_THEMES.find(x=>x.id===saved)||ACCENT_THEMES[0]) : {r:46,g:204,b:113};
+    if(typeof _accentForceGlows==='function') _accentForceGlows(t.r, t.g, t.b);
+  })();
   curPage=name;syncB();
 }
 
@@ -272,10 +278,24 @@ function applyAccent(id, persist) {
   root.style.setProperty('--ar', t.r);
   root.style.setProperty('--ag', t.g);
   root.style.setProperty('--ab', t.b);
+  _accentForceGlows(t.r, t.g, t.b);
   if (persist) localStorage.setItem('gb_accent', t.id);
   const lbl = document.getElementById('p-accent-val');
   if (lbl) { lbl.textContent = t.name; lbl.style.color = t.color; }
   _accentUpdatePpu(t.id);
+}
+
+function _accentForceGlows(r, g, b) {
+  const glow1 = `drop-shadow(0 0 6px rgba(${r},${g},${b},0.75)) drop-shadow(0 0 12px rgba(${r},${g},${b},0.35))`;
+  const glowSm = `drop-shadow(0 0 4px rgba(${r},${g},${b},0.6))`;
+  const glowStat = `drop-shadow(0 0 7px rgba(${r},${g},${b},.65))`;
+  const glowNav = `drop-shadow(0 0 5px rgba(${r},${g},${b},0.8)) drop-shadow(0 0 10px rgba(${r},${g},${b},0.4))`;
+  document.querySelectorAll('.hm-ico svg').forEach(el => { el.style.filter = glow1; });
+  document.querySelectorAll('.hm-promo-ico svg').forEach(el => { el.style.filter = glowSm; });
+  document.querySelectorAll('.hm-stat-ico svg').forEach(el => {
+    if (!el.closest('.hm-stat-ico--gold')) el.style.filter = glowStat;
+  });
+  document.querySelectorAll('.nb.active .nb-icon svg').forEach(el => { el.style.filter = glowNav; });
 }
 
 function _accentLoadSaved() {
