@@ -1784,14 +1784,21 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 /* ══ HOME GLOBAL STATS CARDS ══ */
 .hm-stats-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
 .hm-stat-card{
-  background:var(--glass);border:1px solid var(--gb);border-radius:16px;
-  padding:14px 16px;display:flex;flex-direction:row;align-items:center;gap:12px;
-  position:relative;overflow:hidden;
+  background:rgba(22,24,26,0.95);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  padding:14px 14px 12px;
+  display:flex;
+  flex-direction:row;
+  align-items:flex-end;
+  justify-content:space-between;
+  position:relative;
+  overflow:hidden;
+  min-height:76px;
 }
-.hm-stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(var(--ar),var(--ag),var(--ab),.06) 0%,transparent 55%);pointer-events:none}
-.hm-stat-ico{width:36px;height:36px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.hm-stat-ico svg{width:28px;height:28px;stroke:var(--green);filter:drop-shadow(0 0 6px rgba(var(--ar),var(--ag),var(--ab),.6))}
-.hm-stat-ico--gold svg{stroke:#ffd700;filter:drop-shadow(0 0 6px rgba(255,215,0,.5))}
-.hm-stat-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
-.hm-stat-lbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
-.hm-stat-val{font-size:18px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1.1;white-space:nowrap}
+.hm-stat-body{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.hm-stat-lbl{font-size:11px;font-weight:500;color:rgba(255,255,255,.4);white-space:nowrap}
+.hm-stat-val{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1}
+.hm-stat-ico{flex-shrink:0;display:flex;align-items:flex-end;padding-bottom:2px}
+.hm-stat-ico svg{width:32px;height:32px;stroke:var(--green);filter:drop-shadow(0 0 8px rgba(var(--ar),var(--ag),var(--ab),.7))}
+.hm-stat-ico--gold svg{stroke:#c8a84b;filter:drop-shadow(0 0 8px rgba(200,168,75,.6))}
