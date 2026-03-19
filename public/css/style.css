@@ -1781,7 +1781,7 @@ body:not(.theme-light) .ppu-accent-sep{background:rgba(255,255,255,.07)}
 body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:0 0 0 2px rgba(0,0,0,.1)}
 
 
-/* ══ HOME GLOBAL STATS ══ */
+/* ══ HOME GLOBAL STATS CARDS ══ */
 .hm-stats-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
 .hm-stat-card{background:var(--glass);border:1px solid var(--gb);border-radius:16px;padding:16px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;position:relative;overflow:hidden}
 .hm-stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(var(--ar),var(--ag),var(--ab),.05) 0%,transparent 60%);pointer-events:none}
@@ -1789,5 +1789,5 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .hm-stat-ico svg{width:16px;height:16px;stroke:var(--green)}
 .hm-stat-ico--gold{background:rgba(255,215,0,.12)}
 .hm-stat-ico--gold svg{stroke:#ffd700}
-.hm-stat-val{font-size:20px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1}
+.hm-stat-val{font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1}
 .hm-stat-lbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px}
