@@ -280,8 +280,10 @@ function applyAccent(id, persist) {
 }
 
 function _accentForceGlows(r, g, b) {
-  const bgColor = `rgb(${r},${g},${b})`;
-  document.querySelectorAll('.hm-ico-bg').forEach(el => { el.style.backgroundColor = bgColor; });
+  const glowColor = `rgba(${r},${g},${b},0.26)`;
+  document.querySelectorAll('.hm-card').forEach(el => {
+    el.style.setProperty('--card-glow', glowColor);
+  });
 }
 
 function _accentLoadSaved() {
