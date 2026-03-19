@@ -84,7 +84,7 @@ const bot = new Telegraf(BOT_TOKEN);
 const app = express();
 app.use(express.json());
 app.use((req, res, next) => {
-  if (req.path.endsWith('.html') || req.path === '/') {
+  if (req.path.endsWith('.html') || req.path === '/' || req.path.endsWith('.js') || req.path.endsWith('.css')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
@@ -1228,6 +1228,29 @@ app.get('/api/tasks/custom', (req, res) => {
 
 app.get('/api/repair-status', function(req, res) {
   res.json({ repairMode: DB.repairMode || false });
+});
+
+app.get('/api/global-stats', (req, res) => {
+  const users = Object.keys(DB.users).length;
+  // Count only positive earnings: tasks, promo, stars_exchange, draws wins, game wins
+  const earnTypes = new Set(['task','promo_code','stars_exchange','draw_win','ref_bonus','case_win','solo_win','duel_win','mines_win','pvp_win','raffle_win']);
+  let totalEarned = 0;
+  for (const u of Object.values(DB.users)) {
+    for (const tx of (u.transactions || [])) {
+      const amt = String(tx.amount || '');
+      if (!amt.startsWith('+')) continue;
+      const n = parseInt(amt.replace('+','').replace(/\s/g,''));
+      if (!isNaN(n) && n > 0) {
+        // Only count genuine earning types, skip admin adjustments
+        if (tx.type && earnTypes.has(tx.type)) {
+          totalEarned += n;
+        } else if (!tx.type || tx.type === 'win' || tx.type === 'reward') {
+          totalEarned += n;
+        }
+      }
+    }
+  }
+  res.json({ ok: true, users, totalEarned });
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true, users: Object.keys(DB.users).length }));
@@ -3195,6 +3218,45 @@ app.post('/api/admin/backup', async (req, res) => {
   if (!adminCheck(req, res)) return;
   const result = await backupDBToGitHub();
   res.json({ ok: result });
+});
+
+app.post('/api/admin/ban', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { username, duration } = req.body;
+  if (!username) return res.status(400).json({ error: 'Missing username' });
+  const un = String(username).replace('@','').toLowerCase();
+  const until = (duration === 0 || duration === '0') ? 0 : Date.now() + Number(duration || 0);
+  const banData = { until, bannedAt: Date.now() };
+  DB.bans[un] = banData;
+  for (const [uid, u] of Object.entries(DB.users)) {
+    if ((u.username||'').toLowerCase() === un) {
+      DB.bansByUid[uid] = banData;
+      const durStr = until === 0 ? 'навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
+      bot.telegram.sendMessage(Number(uid), `🚫 Вы заблокированы в GiftBot.\n\n⏱ Срок: ${durStr}`).catch(()=>{});
+      break;
+    }
+  }
+  saveDB();
+  res.json({ ok: true, username: un, until });
+});
+
+app.post('/api/admin/unban', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'Missing username' });
+  const un = String(username).replace('@','').toLowerCase();
+  delete DB.bans[un];
+  for (const [uid, u] of Object.entries(DB.users)) {
+    if ((u.username||'').toLowerCase() === un) {
+      delete DB.bansByUid[uid];
+      bot.telegram.sendMessage(Number(uid), `✅ Ваша блокировка снята. Добро пожаловать обратно!`, {
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+      }).catch(()=>{});
+      break;
+    }
+  }
+  saveDB();
+  res.json({ ok: true, username: un });
 });
 
 app.post('/api/admin/broadcast', async (req, res) => {
