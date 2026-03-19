@@ -206,7 +206,11 @@ function soloSpin(){
     else{
       _soloCountdown=0;
       _soloSpinning=false;
-      if(win){S.balance+=prize;syncB();}
+      if(win){S.balance+=prize;syncB();
+        // Записываем чистую прибыль (prize - cost) в глобальную статистику
+        const _net=prize-cost;
+        if(_net>0)fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:_net})}).catch(()=>{});
+      }
       soloRenderUI();
       const ico=win
         ?'<img src="/icons/check-circle.svg" width="16" height="16" style="display:block;flex-shrink:0">'

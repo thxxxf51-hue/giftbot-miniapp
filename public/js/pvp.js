@@ -450,6 +450,10 @@ function _showResult(g) {
       if (d.ok && d.balance !== undefined) {
         S.balance = d.balance;
         syncB();
+        // Чистая прибыль = выигрыш - своя ставка
+        const _myPlayer = g.players.find(p => p.uid === String(UID));
+        const _net = (d.prize || 0) - (_myPlayer ? _myPlayer.bet : 0);
+        if(_net>0)fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:_net})}).catch(()=>{});
       }
     }).catch(() => {
       S.balance += g.totalBet;

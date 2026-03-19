@@ -196,6 +196,8 @@ function minesOpenCell(idx) {
       const win = Math.round(_minesBet * _minesMult);
       S.balance += win; syncB();
       _recordBigWin(win);
+      const _minesNet = win - _minesBet;
+      if(_minesNet>0)fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:_minesNet})}).catch(()=>{});
       setTimeout(() => _minesShowResult(true, win, true), 300);
     }
   }
@@ -207,6 +209,8 @@ function minesCashOut() {
   const win = Math.round(_minesBet * _minesMult);
   S.balance += win; syncB();
   _recordBigWin(win);
+  const _net = win - _minesBet;
+  if(_net>0)fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:_net})}).catch(()=>{});
   // reveal mines
   _minesMinePos.forEach(mi => {
     const mc = document.querySelector(`.mines-cell[data-idx="${mi}"]`);
