@@ -304,8 +304,8 @@ function _countUp(id, target) {
   const el = document.getElementById(id);
   if (!el) return;
   if (!target) { el.textContent = '0'; return; }
-  const duration = 1400;
-  const steps = 55;
+  const duration = 800;
+  const steps = 40;
   let step = 0;
   const timer = setInterval(() => {
     step++;
