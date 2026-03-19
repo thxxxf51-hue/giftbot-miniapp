@@ -100,11 +100,11 @@ const ITEM_ICONS={
 };
 
 const ITEMS=[
-  {id:3,icoKey:'vip7',  name:'VIP на 7 дней', price:500, wip:false,vipDays:7},
-  {id:7,icoKey:'vip30', name:'VIP на 30 дней',price:1500,wip:false,vipDays:30},
-  {id:9,icoKey:'crown3',name:'Корона на 3 дня',price:777, wip:false,crownDays:3},
-  {id:5,icoKey:'color', name:'Цветной ник',   price:250, wip:false,special:'color'},
-  {id:8,icoKey:'effect',name:'Эффект входа',  price:2500,wip:false,special:'effect'},
+  {id:3,icoKey:'vip7',  name:'VIP на 7 дней', price:3333, wip:false,vipDays:7},
+  {id:7,icoKey:'vip30', name:'VIP на 30 дней',price:9999, wip:false,vipDays:30},
+  {id:9,icoKey:'crown3',name:'Корона на 3 дня',price:1199, wip:false,crownDays:3},
+  {id:5,icoKey:'color', name:'Цветной ник',   price:999,  wip:false,special:'color'},
+  {id:8,icoKey:'effect',name:'Эффект входа',  price:5000, wip:false,special:'effect'},
 ];
 
 /* ══ TASKS ══ */
@@ -118,7 +118,6 @@ const TASK_ICONS = {
 
 const TASKS=[
   {id:1, icoKey:'sub',    tag:'Канал',   tc:'g', name:'Подписаться на канал',     desc:'Подпишись на @broketalking',          rew:100,  url:'https://t.me/broketalking', check:'sub',    channel:'broketalking'},
-  {id:2, icoKey:'chat',   tag:'Задание', tc:'g', name:'Написать в чат',           desc:'Напиши любое слово в @drainself',     rew:50,   url:'https://t.me/drainself',    check:'chat',   channel:'drainself', wip:true},
   {id:4, icoKey:'ref',    tag:'Друзья',  tc:'g', name:'Пригласить первого друга', desc:'Пригласи по реф-ссылке',              rew:1000,                                  check:'ref'},
   {id:6, icoKey:'case',   tag:'Задание', tc:'g', name:'Открыть первый кейс',      desc:'Открой любой кейс в Магазине',        rew:200,                                   check:'case'},
   {id:7, icoKey:'wallet', tag:'Кошелёк', tc:'g', name:'Подключить TON кошелёк',   desc:'Подключи TonKeeper или Telegram Wallet', rew:2000,                               check:'wallet'},

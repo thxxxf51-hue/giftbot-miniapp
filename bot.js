@@ -3287,6 +3287,10 @@ async function startServer() {
     console.log('ℹ️ GITHUB_PERSONAL_ACCESS_TOKEN не задан — резервное копирование отключено');
   }
 
+  // Авто-сброс режима тех. работ при каждом деплое/рестарте
+  DB.repairMode = false;
+  saveDB();
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server on port ${PORT}`);
 

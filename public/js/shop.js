@@ -16,14 +16,24 @@ function rShopItems(){
   document.getElementById('shop-items').innerHTML=ITEMS.map(x=>{
     const ok=S.balance>=x.price;
     let btn,price=x.price;
-    if(x.id===3&&S.vipDiscount)price=250;
-    if(x.special==='effect'&&vipStatus()==='active')price=1500;
+    if(x.id===3&&S.vipDiscount)price=Math.floor(x.price*0.5);
+    if(x.special==='effect'&&vipStatus()==='active')price=3000;
     const ok2=S.balance>=price;
     if(x.wip)btn=`<button class="sbuy wip" disabled>В разработке</button>`;
     else if(x.special==='color')btn=`<button class="sbuy" onclick="openColorPicker(false)">Выбрать цвет</button>`;
     else if(x.special==='effect')btn=`<button class="sbuy" onclick="openEffectPicker()">Выбрать эффект</button>`;
     else btn=`<button class="sbuy${ok2?'':' nomoney'}"${ok2?'':' disabled'} onclick="buyItem(${x.id})">${ok2?'Купить':'Мало монет'}</button>`;
-    const priceLabel=x.id===3&&S.vipDiscount?`<span style="text-decoration:line-through;opacity:.5">${x.price}</span> <span style="color:var(--green)">${price} 🪙</span>`:`${price} 🪙`;
+    let priceLabel;
+    if(x.id===3&&S.vipDiscount){
+      const disc=Math.floor(x.price*0.5);
+      priceLabel=`<span style="text-decoration:line-through;opacity:.5">${x.price}</span> <span style="color:var(--green)">${disc} 🪙</span>`;
+    } else if(x.special==='effect'){
+      const vipPr=Math.floor(x.price*0.6);
+      const isVip=vipStatus()==='active';
+      priceLabel=isVip?`<span style="text-decoration:line-through;opacity:.5">${x.price}</span> <span style="color:var(--green)">${vipPr} 🪙 VIP</span>`:`${price} 🪙`;
+    } else {
+      priceLabel=`${price} 🪙`;
+    }
     return`<div class="gc sitem">
       <div class="sico">${ITEM_ICONS[x.icoKey]||''}</div>
       <div class="sname">${x.name}</div>
@@ -36,7 +46,7 @@ function rShopItems(){
 function buyItem(id){
   const x=ITEMS.find(i=>i.id===id);if(!x)return;
   let price=x.price;
-  if(id===3&&S.vipDiscount)price=250;
+  if(id===3&&S.vipDiscount)price=Math.floor(x.price*0.5);
   if(S.balance<price)return;
   openGenMo(`Купить ${x.name}?`,`Спишется ${price} монет`,`🛒 Купить — ${price} 🪙`,()=>{
     S.balance-=price;
@@ -53,14 +63,18 @@ function buyItem(id){
 let selColor='',freeColor=false;
 function openColorPicker(free=false){
   freeColor=free;selColor=S.nickColor;
+  const colorItem=ITEMS.find(i=>i.special==='color');
+  const colorPrice=colorItem?colorItem.price:999;
   document.getElementById('cp-grid').innerHTML=COLORS.map(c=>`
     <div class="cpitem${selColor===c.id?' sel':''}" style="background:${c.grad};color:#000" onclick="selColor='${c.id}';document.querySelectorAll('.cpitem').forEach(e=>e.classList.remove('sel'));this.classList.add('sel')">${c.label}</div>`).join('');
-  document.getElementById('cp-btn').textContent=free?'✨ Применить бесплатно':'Купить — 250 🪙';
+  document.getElementById('cp-btn').textContent=free?'✨ Применить бесплатно':`Купить — ${colorPrice} 🪙`;
   document.getElementById('cpmo').classList.add('show');
 }
 function buyColor(){
-  if(!freeColor&&S.balance<250){toast('Недостаточно монет','r');return;}
-  if(!freeColor){S.balance-=250;syncB();addServerTx('color_buy','-250','Покупка цветного ника');}
+  const colorItem=ITEMS.find(i=>i.special==='color');
+  const colorPrice=colorItem?colorItem.price:999;
+  if(!freeColor&&S.balance<colorPrice){toast('Недостаточно монет','r');return;}
+  if(!freeColor){S.balance-=colorPrice;syncB();addServerTx('color_buy','-'+colorPrice,'Покупка цветного ника');}
   applyNick(selColor);
   document.getElementById('cpmo').classList.remove('show');
   toast('🌈 Цвет ника изменён!','g');

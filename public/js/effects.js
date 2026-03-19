@@ -7,8 +7,8 @@ const ENTRY_EFFECTS = [
   { id:'galaxy',   ico:'🌌', name:'Галактика' },
 ];
 
-const EFFECT_PRICE_NORMAL    = 2500;
-const EFFECT_PRICE_VIP       = 1500;
+const EFFECT_PRICE_NORMAL    = 5000;
+const EFFECT_PRICE_VIP       = 3000;
 const EFFECT_DURATION_NORMAL = 24 * 3600 * 1000;
 const EFFECT_DURATION_VIP    = 48 * 3600 * 1000;
 
@@ -302,6 +302,33 @@ function confirmBuyEffect(effectId) {
       }
     );
   }, 220);
+}
+
+/* ══ PROFILE EFFECT TOGGLE ══ */
+function openEffectProfileAction() {
+  const expiries = S.effectExpiries || {};
+  const exp = expiries[S.entryEffect];
+  const isActive = S.entryEffect && !(exp && Date.now() > exp);
+  const hasOwned = (S.ownedEffects || []).length > 0;
+
+  if (isActive) {
+    const ef = ENTRY_EFFECTS.find(e => e.id === S.entryEffect);
+    const hoursLeft = exp ? Math.ceil((exp - Date.now()) / 3600000) : '∞';
+    openGenMo(
+      `${ef ? ef.ico : '✨'} Эффект входа`,
+      `Активен: ${ef ? ef.name : ''} (ещё ${hoursLeft}ч).\nОтключить? Покупка не отменяется — сможешь включить заново.`,
+      '🚫 Отключить эффект',
+      () => {
+        S.entryEffect = null;
+        save();
+        closeGenMo();
+        updateEffectUI();
+        toast('Эффект отключён', 'g');
+      }
+    );
+  } else {
+    openEffectPicker();
+  }
 }
 
 /* ══ PROFILE ROW UPDATE ══ */
