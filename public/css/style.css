@@ -100,8 +100,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 }
 .hm-card:active{transform:scale(.94);box-shadow:0 1px 6px rgba(0,0,0,0.3);border-color:rgba(var(--ar),var(--ag),var(--ab),.25)}
 .hm-card--full{grid-column:span 2}
-.hm-ico{width:22px;height:22px;stroke:var(--green);fill:none;flex-shrink:0;position:relative;z-index:1}
-.hm-card::after{content:'';position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:90px;height:90px;border-radius:50%;background:var(--card-glow,rgba(46,204,113,0.26));filter:blur(22px);pointer-events:none;z-index:0}
+.hm-ico{width:22px;height:22px;stroke:var(--green);fill:none;flex-shrink:0}
 .hm-t{font-size:12px;font-weight:700;color:rgba(255,255,255,.92)}
 .hm-s{font-size:9.5px;color:rgba(255,255,255,.45)}
 
