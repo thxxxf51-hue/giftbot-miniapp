@@ -281,7 +281,15 @@ function applyAccent(id, persist) {
 
 function _accentForceGlows(r, g, b) {
   const f = `drop-shadow(0 0 4px rgba(${r},${g},${b},0.9)) drop-shadow(0 0 8px rgba(${r},${g},${b},0.5))`;
-  document.querySelectorAll('.hm-ico').forEach(el => { el.style.filter = f; });
+  const icons = document.querySelectorAll('.hm-ico');
+  // Сначала убираем фильтр — сбрасываем кэш WebKit
+  icons.forEach(el => { el.style.filter = 'none'; });
+  // Принудительно сбрасываем compositing слой через reflow
+  icons.forEach(el => { void el.getBoundingClientRect(); });
+  // На следующем кадре ставим новый цвет — гарантирует чистый рендер
+  requestAnimationFrame(() => {
+    icons.forEach(el => { el.style.filter = f; });
+  });
 }
 
 function _accentLoadSaved() {
