@@ -27,7 +27,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .nb-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
 .nb.active .nb-icon{transform:scale(1.1)}
 .nb-icon svg{width:18px;height:18px;stroke:rgba(255,255,255,.35);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .25s ease}
-.nb.active .nb-icon svg{stroke:var(--green);filter:drop-shadow(0 0 5px rgba(var(--ar),var(--ag),var(--ab),0.8)) drop-shadow(0 0 10px rgba(var(--ar),var(--ag),var(--ab),0.4))}
+.nb.active .nb-icon svg{stroke:var(--green)}
 .nb-label{font-size:9.5px;font-weight:600;color:rgba(255,255,255,.35);transition:color .25s ease;letter-spacing:.1px;white-space:nowrap}
 .nb.active .nb-label{color:var(--green)}
 .nb>*{position:relative;z-index:1}
