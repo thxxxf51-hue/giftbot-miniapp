@@ -4,31 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>GiftBot</title>
-
-<!-- ═══ ADMIN BOTTOM SHEET ═══ -->
-  </div>
-  <!-- header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 12px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.07);">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#ff416c,#ff4b2b);display:flex;align-items:center;justify-content:center;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </div>
-      <div style="font-size:15px;font-weight:800;color:#fff;">Админ-панель</div>
-    </div>
-    <button onclick="admSheet.close()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 10px;color:rgba(255,255,255,.6);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">✕</button>
-  </div>
-  <!-- tabs -->
-  <div id="adm-tabs" style="display:flex;gap:6px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06);">
-    <button class="adm-t active" data-tab="dash" onclick="admSheet.tab('dash')">📊 Главная</button>
-    <button class="adm-t" data-tab="users" onclick="admSheet.tab('users')">👥 Юзеры</button>
-    <button class="adm-t" data-tab="draws" onclick="admSheet.tab('draws')">🎁 Розыгрыши</button>
-    <button class="adm-t" data-tab="promos" onclick="admSheet.tab('promos')">🏷 Промокоды</button>
-    <button class="adm-t" data-tab="notifs" onclick="admSheet.tab('notifs')">📣 Рассылка</button>
-  </div>
-  <!-- content -->
-  <div id="adm-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 40px;"></div>
-</div>
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <link rel="stylesheet" href="css/style.css">
@@ -421,16 +396,12 @@
   <!-- GLOBAL STATS CARDS -->
   <div class="hm-stats-row">
     <div class="hm-stat-card">
-      <div class="hm-stat-ico">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      </div>
+      <div class="hm-stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div>
       <div class="hm-stat-val" id="gs-users">—</div>
       <div class="hm-stat-lbl">Участников</div>
     </div>
     <div class="hm-stat-card">
-      <div class="hm-stat-ico hm-stat-ico--gold">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="18" rx="10" ry="4"/><ellipse cx="12" cy="14" rx="10" ry="4"/><ellipse cx="12" cy="10" rx="10" ry="4"/><ellipse cx="12" cy="6" rx="10" ry="4"/></svg>
-      </div>
+      <div class="hm-stat-ico hm-stat-ico--gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="18" rx="10" ry="4"/><ellipse cx="12" cy="14" rx="10" ry="4"/><ellipse cx="12" cy="10" rx="10" ry="4"/><ellipse cx="12" cy="6" rx="10" ry="4"/></svg></div>
       <div class="hm-stat-val" id="gs-earned">—</div>
       <div class="hm-stat-lbl">Монет заработано</div>
     </div>
@@ -689,13 +660,6 @@
       <span class="prn-arr">›</span>
     </div>
 
-  </div>
-      <div class="prn-row-body">
-        <div class="prn-row-l" style="color:#ff416c;font-weight:800">Админ-панель</div>
-        <div class="prn-row-v" style="color:rgba(255,65,108,.6)">Управление ботом</div>
-      </div>
-      <span class="prn-arr" style="color:#ff416c">›</span>
-    </div>
   </div>
 
   <!-- PROMO -->
@@ -1097,6 +1061,9 @@
   </div>
 
 </div>
+
+
+<!-- Admin User Profile Modal -->
 
 </div><!-- /pages -->
 
