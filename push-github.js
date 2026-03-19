@@ -31,5 +31,10 @@ try {
   }
 } catch(e) {}
 
-run('git push origin main');
+try {
+  execSync('git pull --rebase origin main', { encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
+} catch(e) {
+  // Если pull не получился — всё равно пробуем force push
+}
+run('git push origin main --force');
 console.log('✅ Pushed to GitHub successfully!');
