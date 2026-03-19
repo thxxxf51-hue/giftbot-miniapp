@@ -255,8 +255,6 @@ async function init(){
       splash.classList.add('splash-hide');
       setTimeout(function() {
         splash.style.display = 'none';
-        // Полностью удаляем из DOM чтобы никогда не перекрывал контент
-        if (splash.parentNode) splash.parentNode.removeChild(splash);
         // Show swipe screen
         const sw = document.getElementById('swipe-screen');
         let swiped=false;try{swiped=!!localStorage.getItem('gb4_swiped');}catch(e){}
