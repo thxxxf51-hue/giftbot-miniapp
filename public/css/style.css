@@ -1351,6 +1351,7 @@ body:not(.theme-light) .ppu-ni-del { color: rgba(255,255,255,.2); }
   gap: 0;
   overflow: hidden;
   transition: opacity .5s ease, transform .5s ease;
+  pointer-events: none;
 }
 #splash-screen.splash-hide {
   opacity: 0;
@@ -1779,186 +1780,14 @@ body:not(.theme-light) .ppu-accent-sep{background:rgba(255,255,255,.07)}
 .ppu-ac-dot.ppu-ac-sel{border-color:rgba(255,255,255,.5);box-shadow:0 0 0 2px rgba(255,255,255,.2)}
 body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:0 0 0 2px rgba(0,0,0,.1)}
 
-/* ══════════════════════════════════════
-   ADMIN PANEL STYLES
-   ══════════════════════════════════════ */
-.adm-page{padding:0 0 80px}
-.adm-hdr{padding:14px 16px 10px;display:flex;align-items:center;gap:10px}
-.adm-title{font-size:20px;font-weight:800;background:linear-gradient(135deg,#ff416c,#ff4b2b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.adm-badge{background:linear-gradient(135deg,#ff416c,#ff4b2b);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:20px;letter-spacing:.5px}
-.adm-tabs{display:flex;gap:0;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none}
-.adm-tabs::-webkit-scrollbar{display:none}
-.adm-tab{flex-shrink:0;padding:7px 13px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.4);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
-.adm-tab.active{background:linear-gradient(135deg,rgba(255,65,108,.2),rgba(255,75,43,.2));border-color:rgba(255,65,108,.5);color:#ff416c}
-.adm-section{display:none;padding:0 16px}
-.adm-section.active{display:block}
 
-/* Stats cards */
-.adm-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.adm-stat{background:var(--glass);border:1px solid var(--gb);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
-.adm-stat-val{font-size:24px;font-weight:800;color:#fff}
-.adm-stat-label{font-size:10px;color:rgba(255,255,255,.4);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.adm-stat-icon{font-size:18px;margin-bottom:2px}
-
-/* Cards */
-.adm-card{background:var(--glass);border:1px solid var(--gb);border-radius:14px;padding:12px 14px;margin-bottom:8px}
-.adm-card-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.adm-card-title{font-size:13px;font-weight:700}
-.adm-card-sub{font-size:11px;color:rgba(255,255,255,.4)}
-
-/* Form elements */
-.adm-form{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
-.adm-input-group{display:flex;flex-direction:column;gap:4px}
-.adm-label{font-size:10px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px}
-.adm-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;color:#fff;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;outline:none;transition:border-color .15s}
-.adm-input:focus{border-color:rgba(255,65,108,.5)}
-.adm-select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;color:#fff;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;outline:none;appearance:none}
-.adm-input-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.adm-input-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.adm-textarea{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:9px 12px;color:#fff;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;outline:none;resize:none;min-height:70px;transition:border-color .15s}
-.adm-textarea:focus{border-color:rgba(255,65,108,.5)}
-
-/* Buttons */
-.adm-btn{border:none;border-radius:10px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .1s,opacity .1s;white-space:nowrap}
-.adm-btn:active{transform:scale(.96)}
-.adm-btn-primary{background:linear-gradient(135deg,#ff416c,#ff4b2b);color:#fff;width:100%}
-.adm-btn-green{background:linear-gradient(135deg,#00FFA3,#00D4FF);color:#000;width:100%}
-.adm-btn-sm{padding:6px 10px;font-size:11px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1)}
-.adm-btn-danger{background:rgba(255,59,48,.15);color:#ff3b30;border:1px solid rgba(255,59,48,.3)}
-.adm-btn-blue{background:rgba(90,200,250,.15);color:#5ac8fa;border:1px solid rgba(90,200,250,.3)}
-.adm-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-
-/* User list */
-.adm-user-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-.adm-user-item:last-child{border-bottom:none}
-.adm-user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#ff416c,#ff4b2b);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0}
-.adm-user-info{flex:1;min-width:0}
-.adm-user-name{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.adm-user-sub{font-size:10px;color:rgba(255,255,255,.4)}
-.adm-user-bal{font-size:12px;font-weight:700;color:var(--green);text-align:right;white-space:nowrap}
-.adm-search{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;margin-bottom:12px}
-.adm-search svg{flex-shrink:0;opacity:.4}
-.adm-search input{background:none;border:none;color:#fff;font-size:13px;font-family:inherit;outline:none;flex:1;width:100%}
-
-/* Task/draw/promo items */
-.adm-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:12px;margin-bottom:7px}
-.adm-item-icon{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:rgba(255,255,255,.08)}
-.adm-item-body{flex:1;min-width:0}
-.adm-item-name{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.adm-item-sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px}
-.adm-item-actions{display:flex;gap:5px;flex-shrink:0}
-
-/* Section headers */
-.adm-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.adm-sec-label{font-size:12px;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px}
-
-/* Top users */
-.adm-top-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-.adm-top-rank{width:20px;font-size:11px;font-weight:800;color:rgba(255,255,255,.3);text-align:center;flex-shrink:0}
-.adm-top-rank:first-child{color:#f4c430}
-.adm-top-name{flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.adm-top-bal{font-size:12px;font-weight:700;color:var(--green)}
-
-/* Broadcast */
-.adm-notif-type{display:flex;gap:6px;flex-wrap:wrap}
-.adm-notif-type-btn{padding:5px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.1);background:transparent;color:rgba(255,255,255,.5);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
-.adm-notif-type-btn.sel{background:rgba(0,255,163,.15);border-color:rgba(0,255,163,.4);color:#00FFA3}
-
-/* Backup button */
-.adm-backup-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border-radius:12px;padding:10px 12px;margin-bottom:8px}
-.adm-backup-info{flex:1}
-.adm-backup-title{font-size:12px;font-weight:700}
-.adm-backup-sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:2px}
-
-/* Checkbox toggle */
-.adm-check-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
-.adm-check-label{font-size:12px;color:rgba(255,255,255,.7)}
-.adm-toggle{width:36px;height:20px;border-radius:20px;background:rgba(255,255,255,.15);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
-.adm-toggle.on{background:var(--green)}
-.adm-toggle::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s}
-.adm-toggle.on::after{transform:translateX(16px)}
-
-/* Nav red dot for admin */
-#nb-admin .nb-icon{position:relative}
-#nb-admin .nb-red{position:absolute;top:-3px;right:-3px;width:7px;height:7px;background:#ff416c;border-radius:50%}
-
-/* Admin: spinner & states */
-@keyframes adm-rotate{to{transform:rotate(360deg)}}
-.adm-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.15);border-top-color:rgba(255,255,255,.7);border-radius:50%;animation:adm-rotate .7s linear infinite;flex-shrink:0}
-.adm-loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:24px 0;font-size:12px;color:rgba(255,255,255,.35)}
-.adm-err{display:flex;align-items:center;gap:6px;padding:16px;font-size:12px;color:#ff6b6b;background:rgba(255,65,108,.1);border-radius:10px;margin-bottom:8px}
-.adm-empty{display:flex;align-items:center;justify-content:center;gap:6px;padding:18px 0;font-size:12px;color:rgba(255,255,255,.3);margin-bottom:10px}
-.adm-err svg,.adm-empty svg{flex-shrink:0;opacity:.7}
-
-/* Admin: item icon svg */
-.adm-item-icon-svg{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.adm-item-icon-svg svg{width:14px;height:14px;stroke:rgba(255,255,255,.6)}
-
-/* Admin: broadcast button */
-.adm-btn-broadcast{width:100%;margin-top:8px;border-radius:10px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;background:rgba(0,255,163,.12);color:#00FFA3;border:1px solid rgba(0,255,163,.25);display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
-.adm-btn-broadcast:active{background:rgba(0,255,163,.22)}
-.adm-btn-broadcast svg{stroke:#00FFA3}
-
-/* Admin: svg in tabs, labels, buttons */
-.adm-tab svg,.adm-sec-label svg,.adm-card-title svg,.adm-label svg,.adm-backup-title svg{vertical-align:middle;margin-right:4px;position:relative;top:-1px}
-.adm-btn svg{vertical-align:middle}
-.adm-top-bal svg{vertical-align:middle;stroke:rgba(255,255,255,.5)}
-.adm-item-sub svg{vertical-align:middle;opacity:.5;margin-right:2px}
-
-/* Admin: nav icon */
-#nb-admin .nb-icon svg{stroke:currentColor;width:22px;height:22px}
-
-
-/* ── Draw cards in admin ── */
-.adm-draw-card{background:var(--glass);border:1px solid var(--gb);border-radius:14px;padding:12px 14px;margin-bottom:8px}
-.adm-draw-header{display:flex;align-items:flex-start;gap:10px}
-.adm-draw-thumb{width:44px;height:44px;border-radius:8px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.08)}
-.adm-draw-info{flex:1;min-width:0}
-.adm-draw-prize{font-size:14px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.adm-draw-meta{font-size:10px;color:rgba(255,255,255,.4);display:flex;flex-wrap:wrap;gap:2px;align-items:center}
-.adm-draw-meta svg{opacity:.5}
-.adm-draw-id{font-size:10px;color:rgba(255,255,255,.25);margin-top:2px}
-.adm-draw-btns{display:flex;gap:4px;flex-shrink:0}
-.adm-draw-edit{overflow:hidden}
-.adm-ticket-badge{display:inline-flex;align-items:center;gap:3px;background:rgba(255,200,0,.12);color:#ffc800;border-radius:6px;padding:1px 5px;font-size:9px;font-weight:700}
-.adm-ticket-badge svg{stroke:#ffc800}
-
-/* ── Promo items ── */
-.adm-promo-item{background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:12px 14px;margin-bottom:8px}
-.adm-promo-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.adm-promo-code-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.adm-promo-code{font-size:15px;font-weight:900;letter-spacing:1px;font-family:monospace}
-.adm-promo-vip{display:inline-flex;align-items:center;gap:3px;background:rgba(255,215,0,.15);color:#ffd700;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700}
-.adm-promo-vip svg{stroke:#ffd700}
-.adm-promo-done{display:inline-flex;align-items:center;gap:3px;background:rgba(0,255,163,.12);color:#00FFA3;border-radius:6px;padding:2px 6px;font-size:9px;font-weight:700}
-.adm-promo-done svg{stroke:#00FFA3}
-.adm-promo-reward{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;display:flex;align-items:center;gap:4px}
-.adm-promo-reward svg{opacity:.6}
-.adm-promo-bar-wrap{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-.adm-promo-bar{flex:1;height:5px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
-.adm-promo-bar-fill{height:100%;background:linear-gradient(90deg,#ff416c,#ff4b2b);border-radius:4px;transition:width .3s}
-.adm-promo-bar-fill.full{background:#00FFA3}
-.adm-promo-count{font-size:11px;font-weight:700;color:rgba(255,255,255,.7);flex-shrink:0}
-.adm-promo-soldout{display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(0,255,163,.7);margin-top:4px}
-.adm-promo-soldout svg{stroke:rgba(0,255,163,.7)}
-.adm-promo-date{font-size:10px;color:rgba(255,255,255,.25);margin-top:3px;display:flex;align-items:center;gap:4px}
-
-/* ── File upload ── */
-.adm-file-label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(255,255,255,.07);border:1px dashed rgba(255,255,255,.2);border-radius:10px;font-size:12px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer;transition:background .15s}
-.adm-file-label:active{background:rgba(255,255,255,.12)}
-.adm-file-label svg{opacity:.7}
-.adm-img-status{font-size:11px;margin-top:6px;min-height:16px;display:flex;align-items:center;gap:4px}
-
-/* ── User Profile Modal ── */
-.adm-up-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#5b8def,#ff416c);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;margin:0 auto 8px}
-.adm-up-name{text-align:center;font-size:15px;font-weight:800;margin-bottom:2px}
-.adm-up-uid{text-align:center;font-size:10px;color:rgba(255,255,255,.35);margin-bottom:14px}
-.adm-up-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-.adm-up-cell{background:rgba(255,255,255,.05);border-radius:10px;padding:10px 8px;text-align:center}
-.adm-up-cell-label{font-size:9px;color:rgba(255,255,255,.4);margin-bottom:4px}
-.adm-up-cell-val{font-size:14px;font-weight:800;color:#00FFA3}
-.adm-up-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;gap:8px}
-.adm-up-row:last-of-type{border-bottom:none}
-.adm-up-row span:first-child{color:rgba(255,255,255,.5);flex-shrink:0}
-.adm-up-row span:last-child{font-weight:600;text-align:right}
-
+/* ══ HOME GLOBAL STATS ══ */
+.hm-stats-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+.hm-stat-card{background:var(--glass);border:1px solid var(--gb);border-radius:16px;padding:16px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;position:relative;overflow:hidden}
+.hm-stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(var(--ar),var(--ag),var(--ab),.05) 0%,transparent 60%);pointer-events:none}
+.hm-stat-ico{width:32px;height:32px;background:rgba(var(--ar),var(--ag),var(--ab),.12);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.hm-stat-ico svg{width:16px;height:16px;stroke:var(--green)}
+.hm-stat-ico--gold{background:rgba(255,215,0,.12)}
+.hm-stat-ico--gold svg{stroke:#ffd700}
+.hm-stat-val{font-size:20px;font-weight:900;color:#fff;letter-spacing:-.5px;line-height:1}
+.hm-stat-lbl{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px}
