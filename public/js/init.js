@@ -278,35 +278,33 @@ function _removeSplashAndSwipe() {
 init();
 if(typeof initAdmin==='function') initAdmin();
 
-/* ══ GLOBAL STATS с анимацией счётчика ══ */
+/* ══ GLOBAL STATS + COUNT ANIMATION ══ */
 function loadGlobalStats() {
   fetch('/api/global-stats')
     .then(r => r.json())
     .then(d => {
       if (!d.ok) return;
-      _animateCount('gs-users', d.users);
-      _animateCount('gs-earned', d.totalEarned);
+      _countUp('gs-users', d.users);
+      _countUp('gs-earned', d.totalEarned);
     })
     .catch(() => {});
 }
 
-function _animateCount(id, target) {
+function _countUp(id, target) {
   const el = document.getElementById(id);
   if (!el) return;
+  if (!target) { el.textContent = '0'; return; }
   const duration = 1400;
-  const steps = 60;
-  const interval = duration / steps;
+  const steps = 55;
   let step = 0;
-  // easeOutExpo
-  function ease(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); }
   const timer = setInterval(() => {
     step++;
-    const progress = ease(step / steps);
-    const current = Math.round(progress * target);
-    el.textContent = current.toLocaleString('ru');
+    const t = step / steps;
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(ease * target).toLocaleString('ru');
     if (step >= steps) {
       clearInterval(timer);
       el.textContent = target.toLocaleString('ru');
     }
-  }, interval);
+  }, duration / steps);
 }
