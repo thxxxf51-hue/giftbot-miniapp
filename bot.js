@@ -131,6 +131,7 @@ const DB = {
   bans:          _saved?.bans          || {},
   bansByUid:     _saved?.bansByUid     || {},
   bigWins:       _saved?.bigWins       || [], // {uid, firstName, photoUrl, amount, game, ts}
+  globalEarned:  _saved?.globalEarned  || 0,  // сумма чистых выигрышей всех игроков
   notifyOpen:    _saved?.notifyOpen    ?? true, // уведомления о входе в приложение
   notifications: _saved?.notifications || [], // push уведомления от админа
   customTasks:      _saved?.customTasks      || [], // задания, созданные админом через /ctask
@@ -1230,27 +1231,20 @@ app.get('/api/repair-status', function(req, res) {
   res.json({ repairMode: DB.repairMode || false });
 });
 
+// Добавить чистый заработок (solo/mines/pvp/tasks)
+app.post('/api/global-earned/add', (req, res) => {
+  const { amount } = req.body;
+  const n = parseInt(amount);
+  if (!n || n <= 0) return res.json({ ok: false });
+  if (!DB.globalEarned) DB.globalEarned = 0;
+  DB.globalEarned += n;
+  saveDB();
+  res.json({ ok: true, globalEarned: DB.globalEarned });
+});
+
 app.get('/api/global-stats', (req, res) => {
   const users = Object.keys(DB.users).length;
-  // Count only positive earnings: tasks, promo, stars_exchange, draws wins, game wins
-  const earnTypes = new Set(['task','promo_code','stars_exchange','draw_win','ref_bonus','case_win','solo_win','duel_win','mines_win','pvp_win','raffle_win']);
-  let totalEarned = 0;
-  for (const u of Object.values(DB.users)) {
-    for (const tx of (u.transactions || [])) {
-      const amt = String(tx.amount || '');
-      if (!amt.startsWith('+')) continue;
-      const n = parseInt(amt.replace('+','').replace(/\s/g,''));
-      if (!isNaN(n) && n > 0) {
-        // Only count genuine earning types, skip admin adjustments
-        if (tx.type && earnTypes.has(tx.type)) {
-          totalEarned += n;
-        } else if (!tx.type || tx.type === 'win' || tx.type === 'reward') {
-          totalEarned += n;
-        }
-      }
-    }
-  }
-  res.json({ ok: true, users, totalEarned });
+  res.json({ ok: true, users, totalEarned: DB.globalEarned || 0 });
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true, users: Object.keys(DB.users).length }));
