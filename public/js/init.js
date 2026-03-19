@@ -21,6 +21,7 @@ function initSwipe(){
     setTimeout(function(){
       const sw=document.getElementById('swipe-screen');
       if(sw){sw.classList.add('hide');setTimeout(function(){sw.style.display='none';},500);}
+      if(typeof window._swipeDoneCallback==='function') window._swipeDoneCallback();
     },400);
   }
   function reset(){
@@ -192,7 +193,6 @@ async function init(){
 
   loadDraws();
   setInterval(loadDraws,5000);
-  loadGlobalStats();
 
   // Launch entry effect if active
   launchEntryEffect();
@@ -263,13 +263,23 @@ function _removeSplashAndSwipe() {
       splash.classList.add('splash-hide');
       setTimeout(function() {
         splash.style.display = 'none';
-        // Полностью удаляем из DOM чтобы никогда не перекрывал контент
         if (splash.parentNode) splash.parentNode.removeChild(splash);
-        // Show swipe screen
         const sw = document.getElementById('swipe-screen');
         let swiped=false;try{swiped=!!localStorage.getItem('gb4_swiped');}catch(e){}
-        if (sw && !swiped) { sw.classList.add('show'); initSwipe(); }
-        else if (sw) { sw.style.display='none'; }
+        if (sw && !swiped) {
+          sw.classList.add('show');
+          initSwipe();
+          // После свайпа — запустим анимацию
+          const _origDone = window._swipeDoneCallback;
+          window._swipeDoneCallback = function() {
+            if(_origDone) _origDone();
+            setTimeout(function(){ if(typeof loadGlobalStats==='function') loadGlobalStats(); }, 200);
+          };
+        } else {
+          if (sw) sw.style.display='none';
+          // Если уже свайпали раньше — запускаем сразу
+          setTimeout(function(){ if(typeof loadGlobalStats==='function') loadGlobalStats(); }, 200);
+        }
       }, 550);
     }
   }, 3000);
