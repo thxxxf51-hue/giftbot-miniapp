@@ -195,6 +195,9 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .stab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
 .stab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;vertical-align:middle}
 .stab.active{background:var(--glass);color:var(--text)}
+#shop-stabs .stab.active{background:#3cb87a;color:#fff}
+#shop-stabs .stab.active .stab-text{background:linear-gradient(135deg,#ffffff 0%,#c2f5e0 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#shop-stabs .stab.active svg{stroke:#fff}
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .sitem{padding:13px 9px 11px;text-align:center;cursor:pointer;transition:transform .1s;border:1px solid rgba(91,141,239,0.28) !important;border-radius:16px}
 .sitem:active{transform:scale(.96)}
@@ -447,6 +450,11 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .pvtitle{font-size:15px;font-weight:800}
 .pvclose{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--muted2);border:none}
 .pvgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:0 12px 12px}
+.cprev-body{padding:12px 0 4px}
+.cprev-img{width:calc(100% - 24px);height:140px;margin:0 12px 10px;border-radius:14px;overflow:hidden;background:rgba(255,255,255,.05)}
+.cprev-img img{width:100%;height:100%;object-fit:cover}
+.cprev-desc{font-size:12px;color:var(--muted2);text-align:center;padding:0 16px;margin-bottom:10px;line-height:1.5}
+.cprev-priceline{text-align:center;font-size:13px;color:var(--muted2);margin-bottom:10px}
 .pvitem{background:rgba(255,255,255,.04);border-radius:9px;padding:9px 5px;text-align:center}
 .pvico{width:28px;height:28px;margin:0 auto 4px;display:flex;align-items:center;justify-content:center}
 .pvico svg{width:22px;height:22px;stroke:rgba(255,255,255,.75);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
