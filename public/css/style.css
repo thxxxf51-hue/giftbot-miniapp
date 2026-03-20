@@ -169,17 +169,17 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tm-title{font-size:18px;font-weight:800;color:#fff;flex:1;line-height:1.3}
 .tm-x{background:rgba(255,255,255,.1);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;padding:0}
 .tm-x svg{width:16px;height:16px;stroke:#fff}
-.tm-sep{height:1px;background:rgba(255,255,255,.07);margin:0}
-.tm-body{padding:18px 18px calc(20px + env(safe-area-inset-bottom))}
-.tm-desc{font-size:14px;color:rgba(255,255,255,.42);line-height:1.55;margin-bottom:18px}
-.tm-rew-box{display:flex;align-items:center;gap:10px;background:rgba(16,32,20,.95);border-radius:14px;padding:18px 20px;margin-bottom:10px;font-size:22px;font-weight:800;color:#2ecc71}
+.tm-sep{height:1px;background:rgba(255,255,255,.11);margin:0}
+.tm-body{padding:20px 18px calc(22px + env(safe-area-inset-bottom))}
+.tm-desc{font-size:14px;color:rgba(255,255,255,.45);line-height:1.55;margin-bottom:20px}
+.tm-rew-box{display:flex;align-items:center;gap:12px;background:rgba(10,26,16,.98);border:1px solid rgba(46,204,113,.28);border-radius:14px;padding:18px 20px;margin-bottom:10px;font-size:22px;font-weight:800;color:#2ecc71}
 .tm-rew-box svg{width:22px;height:22px;stroke:#2ecc71;flex-shrink:0}
 .tm-act{width:100%;border:none;border-radius:14px;padding:17px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:0}
 .tm-act--go{background:#2ecc71;color:#000}
 .tm-act--go:active{opacity:.85}
-.tm-act--done{background:rgba(16,32,20,.95);color:#2ecc71;cursor:default}
-.tm-act--done svg{width:16px;height:16px;stroke:#2ecc71}
-.tm-cancel{width:100%;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);margin-top:8px}
+.tm-act--done{background:rgba(8,28,16,.98);border:none;color:#3ddc84;cursor:default}
+.tm-act--done svg{width:16px;height:16px;stroke:#3ddc84}
+.tm-cancel{width:100%;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.06);color:rgba(255,255,255,.38);margin-top:8px}
 
 /* ══ TASKS V2 (legacy grid) ══ */
 .task-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0}
