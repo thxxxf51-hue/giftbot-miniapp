@@ -1,42 +1,96 @@
 /* ══ CASES ══ */
 const _COIN_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
-const _STAR_OPEN_SVG=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
 
-let _caseStats={};
-(async()=>{try{const r=await fetch('/api/case/stats');const d=await r.json();if(d.ok)_caseStats=d.caseOpens||{};}catch(e){}})();
-
-const _COIN_ICON_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v2M12 16v2M8.5 9.5A3.5 3.5 0 0112 8h.5a2.5 2.5 0 010 5h-1a2.5 2.5 0 000 5H12a3.5 3.5 0 003.5-3.5"/></svg>`;
+function _getCaseDesc(c){
+  const coinDrops=c.drops.filter(d=>d.coins&&d.coins>0);
+  const minCoins=coinDrops.length?Math.min(...coinDrops.map(d=>d.coins)):0;
+  let bestLabel=null;
+  for(const d of c.drops){if(d.inv==='legend'){bestLabel='✨ Легенда';break;}}
+  if(!bestLabel)for(const d of c.drops){if(d.inv==='crown'){bestLabel='👑 Корона';break;}}
+  if(!bestLabel)for(const d of c.drops){if(d.inv==='megagift'){bestLabel='🎁 Мега-подарок';break;}}
+  if(!bestLabel)for(const d of c.drops){if(d.vipDays>=30){bestLabel='VIP на 30 дней';break;}}
+  if(!bestLabel)for(const d of c.drops){if(d.vipDays){bestLabel=`VIP на ${d.vipDays} дней`;break;}}
+  if(!bestLabel)for(const d of c.drops){if(d.inv==='super'){bestLabel='🌟 Супер';break;}}
+  const maxCoins=coinDrops.length?Math.max(...coinDrops.map(d=>d.coins)):0;
+  if(!bestLabel)bestLabel=maxCoins.toLocaleString('ru')+' монет';
+  if(minCoins>0)return`Может выпасть от ${minCoins.toLocaleString('ru')} монет до ${bestLabel}!`;
+  return`Может выпасть ${bestLabel} и другие призы!`;
+}
 
 function rCases(){
   document.getElementById('shop-cases').innerHTML=CASES.map(c=>{
+    let priceHtml='';
     let wrapClass='gc ccard';
-    let btnHtml='';
     if(c.wip){
+      priceHtml=`<div class="ccprice star-price">⭐ ${c.starsPrice} Stars</div>`;
       wrapClass='gc ccard ccard-wip';
-      btnHtml=`<div class="ccbtn ccbtn-star">⭐ ${c.starsPrice} Stars</div>`;
     } else {
-      btnHtml=`<div class="ccbtn">${_COIN_ICON_SVG} Открыть за ${c.price.toLocaleString('ru')}</div>`;
+      priceHtml=`<div class="ccprice">${_COIN_SVG}${c.price.toLocaleString('ru')}</div>`;
     }
     const photoHtml=c.photo?`<img src="${c.photo}" alt="${c.name}" loading="lazy" style="object-position:${c.photoPos||'center center'}">`:`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
-    const badge=(!c.wip&&c.drops.length)?`<div class="ccbadge">${c.drops.length} наград</div>`:'';
-    return`<div class="${wrapClass}" ${c.wip?'':'onclick="openCaseMo('+c.id+')"'}>
-      <div class="ccimg">${photoHtml}${badge}</div>
-      <div class="ccinfo"><div class="ccname">${c.name}</div></div>
-      ${btnHtml}
+    return`<div class="${wrapClass}" ${c.wip?'':'onclick="openCasePreview('+c.id+')"'}>
+      <div class="ccimg">${photoHtml}</div>
+      <div class="ccinfo">
+        <div class="ccname">${c.name}</div>
+        ${priceHtml}
+      </div>
     </div>`;
   }).join('');
+}
+
+/* ══ CASE PREVIEW MODAL ══ */
+function openCasePreview(id){
+  const c=CASES.find(x=>x.id===id);if(!c||c.wip)return;
+  document.getElementById('cprev-name').textContent=c.name;
+  // Image
+  const imgWrap=document.getElementById('cprev-img');
+  if(c.photo){
+    imgWrap.innerHTML=`<img src="${c.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${c.photoPos||'center'}">`;
+  } else {
+    imgWrap.innerHTML='';
+    imgWrap.style.background=c.bg;
+  }
+  // Description
+  document.getElementById('cprev-desc').textContent=_getCaseDesc(c);
+  // Price
+  document.getElementById('cprev-price').textContent=c.price.toLocaleString('ru');
+  // Balance check
+  const lack=c.price-S.balance;
+  const insuf=document.getElementById('cprev-insuf');
+  const btn=document.getElementById('cprev-btn');
+  if(lack>0){
+    insuf.style.display='block';
+    insuf.textContent=`Недостаточно монет. Нужно ещё ${lack.toLocaleString('ru')}`;
+    btn.disabled=true;
+  } else {
+    insuf.style.display='none';
+    btn.disabled=false;
+  }
+  btn.textContent='';
+  const btnIco=document.createElement('span');
+  btnIco.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;display:block"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>`;
+  btn.appendChild(btnIco);
+  btn.appendChild(document.createTextNode(` Открыть за ${c.price.toLocaleString('ru')} монет`));
+  btn.onclick=()=>{closeCasePreview();openCaseMo(id);};
+  // Rewards grid
+  document.getElementById('cprev-grid').innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${DROP_ICONS[d.icoKey]||''}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
+  document.getElementById('cprev-mo').classList.add('show');
+}
+
+function closeCasePreview(){
+  document.getElementById('cprev-mo').classList.remove('show');
+}
+
+function showPrizePrev(id){
+  const c=CASES.find(x=>x.id===id);if(!c)return;
+  document.getElementById('pv-t').textContent=`📦 ${c.name}`;
+  document.getElementById('pv-grid').innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${DROP_ICONS[d.icoKey]||''}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
+  document.getElementById('pvmo').classList.add('show');
 }
 
 /* ══ CASE ROULETTE ══ */
 let curC=null,spinning=false,curSpinCount=1;
 const IW=89;
-
-function _fillCasePrizes(c){
-  const grid=document.getElementById('cm-prizes-grid');
-  if(grid)grid.innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${DROP_ICONS[d.icoKey]||''}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
-  const cnt=document.getElementById('cm-opened');
-  if(cnt)cnt.textContent='Всего открыто: '+(_caseStats[c.id]||0).toLocaleString('ru');
-}
 
 function openCaseMo(id){
   curC=CASES.find(c=>c.id===id);if(!curC||curC.wip)return;
@@ -48,7 +102,6 @@ function openCaseMo(id){
   document.querySelectorAll('.spin-cnt-btn').forEach(b=>{
     b.classList.toggle('sel',parseInt(b.dataset.cnt)===1);
   });
-  _fillCasePrizes(curC);
   buildReel('rtrack',curC.drops);
   buildReel('rtrack2',curC.drops);
   buildReel('rtrack3',curC.drops);
@@ -179,7 +232,6 @@ function spinCase(){
       document.getElementById('cr-s').innerHTML=`<span>${coins>0?'+'+coins.toLocaleString('ru')+' монет':winner.v}</span>`;
       toast('🎉 '+winner.n+'!','g');
       if(!S.doneTasks.has(6))completeTask(6);
-      fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caseId:curC.id,count:1})}).then(r=>r.json()).then(d=>{if(d.ok){_caseStats[curC.id]=d.opens;const el=document.getElementById('cm-opened');if(el)el.textContent='Всего открыто: '+d.opens.toLocaleString('ru');}}).catch(()=>{});
       rShopItems();
     });
   } else {
@@ -228,7 +280,6 @@ function spinCase(){
       document.getElementById('cr-s').innerHTML=html;
       toast(`🎉 Открыто ×${curSpinCount}!`,'g');
       if(!S.doneTasks.has(6))completeTask(6);
-      fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caseId:curC.id,count:curSpinCount})}).then(r=>r.json()).then(d=>{if(d.ok){_caseStats[curC.id]=d.opens;const el=document.getElementById('cm-opened');if(el)el.textContent='Всего открыто: '+d.opens.toLocaleString('ru');}}).catch(()=>{});
       rShopItems();
     }
 
