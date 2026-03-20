@@ -117,10 +117,10 @@ const TASK_ICONS = {
 };
 
 const TASKS=[
-  {id:1, icoKey:'sub',    tag:'Канал',   tc:'g', name:'Подписаться на канал',     desc:'Подпишись на @broketalking',          rew:100,  url:'https://t.me/broketalking', check:'sub',    channel:'broketalking'},
-  {id:4, icoKey:'ref',    tag:'Друзья',  tc:'g', name:'Пригласить первого друга', desc:'Пригласи по реф-ссылке',              rew:1000,                                  check:'ref'},
-  {id:6, icoKey:'case',   tag:'Задание', tc:'g', name:'Открыть первый кейс',      desc:'Открой любой кейс в Магазине',        rew:200,                                   check:'case'},
-  {id:7, icoKey:'wallet', tag:'Кошелёк', tc:'g', name:'Подключить TON кошелёк',   desc:'Подключи TonKeeper или Telegram Wallet', rew:2000,                               check:'wallet'},
+  {id:1, icoKey:'sub',    tag:'Подписка', tc:'g',  name:'Подписаться на канал',     desc:'Подпишись на @broketalking и включи уведомления! (В случае отписки с баланса будет списан штраф)',  rew:100,  url:'https://t.me/broketalking', check:'sub', channel:'broketalking'},
+  {id:4, icoKey:'ref',    tag:'Друзья',   tc:'fr', name:'Пригласить первого друга', desc:'Пригласи друга по своей реф-ссылке и получи монеты за каждого реферала!',                            rew:1000,                                 check:'ref'},
+  {id:6, icoKey:'case',   tag:'Задание',  tc:'o',  name:'Открыть первый кейс',      desc:'Открой любой кейс в разделе Магазин → Кейсы и получи награду!',                                      rew:200,                                  check:'case'},
+  {id:7, icoKey:'wallet', tag:'Кошелёк',  tc:'b',  name:'Подключить TON кошелёк',   desc:'Подключи TonKeeper или Telegram Wallet в разделе Профиль и получи монеты!',                           rew:2000,                                 check:'wallet'},
 ];
 
 /* ══ NICK COLORS ══ */
