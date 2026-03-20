@@ -19,21 +19,24 @@ function _getCaseDesc(c){
 
 function rCases(){
   document.getElementById('shop-cases').innerHTML=CASES.map(c=>{
-    let priceHtml='';
-    let wrapClass='gc ccard';
-    if(c.wip){
-      priceHtml=`<div class="ccprice star-price">⭐ ${c.starsPrice} Stars</div>`;
-      wrapClass='gc ccard ccard-wip';
-    } else {
-      priceHtml=`<div class="ccprice">${_COIN_SVG}${c.price.toLocaleString('ru')}</div>`;
-    }
-    const photoHtml=c.photo?`<img src="${c.photo}" alt="${c.name}" loading="lazy" style="object-position:${c.photoPos||'center center'}">`:`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
-    return`<div class="${wrapClass}" ${c.wip?'':'onclick="openCasePreview('+c.id+')"'}>
-      <div class="ccimg">${photoHtml}</div>
-      <div class="ccinfo">
-        <div class="ccname">${c.name}</div>
-        ${priceHtml}
+    const cnt=c.drops?c.drops.length:0;
+    const coinDrops=c.drops?c.drops.filter(d=>d.coins&&d.coins>0):[];
+    const maxCoins=coinDrops.length?Math.max(...coinDrops.map(d=>d.coins)):0;
+    const overlayText=maxCoins>0?`До ${maxCoins.toLocaleString('ru')} монет`:'';
+    const photoHtml=c.photo
+      ?`<img src="${c.photo}" alt="${c.name}" loading="lazy" style="object-position:${c.photoPos||'center center'}">`
+      :`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
+    const openBtn=c.wip
+      ?`<div class="cc-open-btn cc-open-wip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg> Скоро — ⭐ ${c.starsPrice}</div>`
+      :`<div class="cc-open-btn" onclick="openCasePreview(${c.id})">${_COIN_SVG} Открыть за ${c.price.toLocaleString('ru')}</div>`;
+    return`<div class="gc ccard${c.wip?' ccard-wip':''}">
+      <div class="ccimg">
+        ${photoHtml}
+        ${!c.wip&&cnt?`<div class="cc-badge">${cnt} наград</div>`:''}
+        ${!c.wip&&overlayText?`<div class="cc-overlay">${overlayText}</div>`:''}
       </div>
+      <div class="ccinfo"><div class="ccname">${c.name}</div></div>
+      ${openBtn}
     </div>`;
   }).join('');
 }
@@ -42,38 +45,33 @@ function rCases(){
 function openCasePreview(id){
   const c=CASES.find(x=>x.id===id);if(!c||c.wip)return;
   document.getElementById('cprev-name').textContent=c.name;
-  // Image
   const imgWrap=document.getElementById('cprev-img');
   if(c.photo){
     imgWrap.innerHTML=`<img src="${c.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${c.photoPos||'center'}">`;
   } else {
-    imgWrap.innerHTML='';
-    imgWrap.style.background=c.bg;
+    imgWrap.innerHTML='';imgWrap.style.background=c.bg;
   }
-  // Description
   document.getElementById('cprev-desc').textContent=_getCaseDesc(c);
-  // Price
   document.getElementById('cprev-price').textContent=c.price.toLocaleString('ru');
-  // Balance check
   const lack=c.price-S.balance;
   const insuf=document.getElementById('cprev-insuf');
   const btn=document.getElementById('cprev-btn');
   if(lack>0){
-    insuf.style.display='block';
+    insuf.style.display='flex';
     insuf.textContent=`Недостаточно монет. Нужно ещё ${lack.toLocaleString('ru')}`;
     btn.disabled=true;
   } else {
     insuf.style.display='none';
     btn.disabled=false;
   }
-  btn.textContent='';
-  const btnIco=document.createElement('span');
-  btnIco.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;display:block"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>`;
-  btn.appendChild(btnIco);
-  btn.appendChild(document.createTextNode(` Открыть за ${c.price.toLocaleString('ru')} монет`));
+  btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg> Открыть за ${c.price.toLocaleString('ru')} монет`;
   btn.onclick=()=>{closeCasePreview();openCaseMo(id);};
-  // Rewards grid
-  document.getElementById('cprev-grid').innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${DROP_ICONS[d.icoKey]||''}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
+  document.getElementById('cprev-grid').innerHTML=c.drops.map(d=>`
+    <div class="cprev-ri">
+      <div class="cprev-ri-ico">${DROP_ICONS[d.icoKey]||''}</div>
+      <div class="cprev-ri-name">${d.n}</div>
+      <div class="cprev-ri-val">${d.v}</div>
+    </div>`).join('');
   document.getElementById('cprev-mo').classList.add('show');
 }
 

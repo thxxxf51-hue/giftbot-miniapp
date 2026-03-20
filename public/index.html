@@ -165,15 +165,22 @@
 
 <!-- CASE PREVIEW MODAL -->
 <div class="cmo" id="cprev-mo">
-  <div class="cmbox">
+  <div class="cmbox cprev-cmbox">
     <div class="cmhdr"><div class="cmtitle" id="cprev-name">Кейс</div><button class="cmclose" onclick="closeCasePreview()">✕</button></div>
-    <div class="cprev-body">
-      <div class="cprev-img" id="cprev-img"></div>
+    <div class="cprev-scroll">
+      <div class="cprev-img-wrap"><div class="cprev-img" id="cprev-img"></div></div>
       <div class="cprev-desc" id="cprev-desc"></div>
-      <div class="cprev-priceline">Цена: <span id="cprev-price" style="color:var(--green);font-weight:700"></span> 🪙</div>
-      <div class="pvgrid" id="cprev-grid"></div>
-      <div id="cprev-insuf" style="display:none;color:#e74c3c;font-size:12px;text-align:center;margin:6px 12px 0"></div>
+      <div class="cprev-price-big">
+        <svg class="cprev-coin" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>
+        <span id="cprev-price"></span>
+      </div>
+      <div id="cprev-insuf"></div>
       <div class="cmfoot"><button class="cmspin" id="cprev-btn">Открыть</button></div>
+      <div class="cprev-rwhdr">
+        <span class="cprev-rwtitle">Возможные награды</span>
+        <span class="cprev-rwcount" id="cprev-opened">Всего открыто: 0</span>
+      </div>
+      <div class="cprev-rgrid" id="cprev-grid"></div>
     </div>
   </div>
 </div>
