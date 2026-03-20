@@ -1,6 +1,9 @@
 /* ══ CASES ══ */
 const _COIN_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
-const _EYE_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const _STAR_OPEN_SVG=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+
+let _caseStats={};
+(async()=>{try{const r=await fetch('/api/case/stats');const d=await r.json();if(d.ok)_caseStats=d.caseOpens||{};}catch(e){}})();
 
 function rCases(){
   document.getElementById('shop-cases').innerHTML=CASES.map(c=>{
@@ -10,30 +13,30 @@ function rCases(){
       priceHtml=`<div class="ccprice star-price">⭐ ${c.starsPrice} Stars</div>`;
       wrapClass='gc ccard ccard-wip';
     } else {
-      priceHtml=`<div class="ccprice">${_COIN_SVG}${c.price}</div>`;
+      priceHtml=`<div class="ccprice cc-open-price">${_STAR_OPEN_SVG} Открыть за ${c.price.toLocaleString('ru')} 🪙</div>`;
     }
     const photoHtml=c.photo?`<img src="${c.photo}" alt="${c.name}" loading="lazy" style="object-position:${c.photoPos||'center center'}">`:`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
+    const badge=(!c.wip&&c.drops.length)?`<div class="ccbadge">${c.drops.length} призов</div>`:'';
     return`<div class="${wrapClass}" ${c.wip?'':'onclick="openCaseMo('+c.id+')"'}>
-      <div class="ccimg">${photoHtml}</div>
+      <div class="ccimg">${photoHtml}${badge}</div>
       <div class="ccinfo">
         <div class="ccname">${c.name}</div>
         ${priceHtml}
-        ${c.wip?'':` <button class="ccpvbtn" onclick="event.stopPropagation();showPrizePrev(${c.id})">${_EYE_SVG} Возможные призы</button>`}
       </div>
     </div>`;
   }).join('');
 }
 
-function showPrizePrev(id){
-  const c=CASES.find(x=>x.id===id);if(!c)return;
-  document.getElementById('pv-t').textContent=`📦 ${c.name}`;
-  document.getElementById('pv-grid').innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${DROP_ICONS[d.icoKey]||''}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
-  document.getElementById('pvmo').classList.add('show');
-}
-
 /* ══ CASE ROULETTE ══ */
 let curC=null,spinning=false,curSpinCount=1;
 const IW=89;
+
+function _fillCasePrizes(c){
+  const grid=document.getElementById('cm-prizes-grid');
+  if(grid)grid.innerHTML=c.drops.map(d=>`<div class="pvitem"><div class="pvico">${DROP_ICONS[d.icoKey]||''}</div><div class="pvname">${d.n}</div><div class="pvval">${d.v}</div></div>`).join('');
+  const cnt=document.getElementById('cm-opened');
+  if(cnt)cnt.textContent='Всего открыто: '+(_caseStats[c.id]||0).toLocaleString('ru');
+}
 
 function openCaseMo(id){
   curC=CASES.find(c=>c.id===id);if(!curC||curC.wip)return;
@@ -45,6 +48,7 @@ function openCaseMo(id){
   document.querySelectorAll('.spin-cnt-btn').forEach(b=>{
     b.classList.toggle('sel',parseInt(b.dataset.cnt)===1);
   });
+  _fillCasePrizes(curC);
   buildReel('rtrack',curC.drops);
   buildReel('rtrack2',curC.drops);
   buildReel('rtrack3',curC.drops);
@@ -175,6 +179,7 @@ function spinCase(){
       document.getElementById('cr-s').innerHTML=`<span>${coins>0?'+'+coins.toLocaleString('ru')+' монет':winner.v}</span>`;
       toast('🎉 '+winner.n+'!','g');
       if(!S.doneTasks.has(6))completeTask(6);
+      fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caseId:curC.id,count:1})}).then(r=>r.json()).then(d=>{if(d.ok){_caseStats[curC.id]=d.opens;const el=document.getElementById('cm-opened');if(el)el.textContent='Всего открыто: '+d.opens.toLocaleString('ru');}}).catch(()=>{});
       rShopItems();
     });
   } else {
@@ -223,6 +228,7 @@ function spinCase(){
       document.getElementById('cr-s').innerHTML=html;
       toast(`🎉 Открыто ×${curSpinCount}!`,'g');
       if(!S.doneTasks.has(6))completeTask(6);
+      fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({caseId:curC.id,count:curSpinCount})}).then(r=>r.json()).then(d=>{if(d.ok){_caseStats[curC.id]=d.opens;const el=document.getElementById('cm-opened');if(el)el.textContent='Всего открыто: '+d.opens.toLocaleString('ru');}}).catch(()=>{});
       rShopItems();
     }
 

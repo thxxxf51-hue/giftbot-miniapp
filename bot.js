@@ -136,6 +136,7 @@ const DB = {
   notifications: _saved?.notifications || [], // push уведомления от админа
   customTasks:      _saved?.customTasks      || [], // задания, созданные админом через /ctask
   customTaskCounter:_saved?.customTaskCounter|| 0,
+  caseOpens:        _saved?.caseOpens        || {}, // счётчик открытий по каждому кейсу {caseId: N}
 };
 
 // Init task counter from existing tasks if not set
@@ -1245,6 +1246,19 @@ app.post('/api/global-earned/add', (req, res) => {
 app.get('/api/global-stats', (req, res) => {
   const users = Object.keys(DB.users).length;
   res.json({ ok: true, users, totalEarned: DB.globalEarned || 0 });
+});
+
+app.post('/api/case/open', (req, res) => {
+  const { caseId, count } = req.body;
+  if (!caseId) return res.json({ ok: false });
+  if (!DB.caseOpens) DB.caseOpens = {};
+  DB.caseOpens[caseId] = (DB.caseOpens[caseId] || 0) + (parseInt(count) || 1);
+  saveDB();
+  res.json({ ok: true, opens: DB.caseOpens[caseId] });
+});
+
+app.get('/api/case/stats', (req, res) => {
+  res.json({ ok: true, caseOpens: DB.caseOpens || {} });
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true, users: Object.keys(DB.users).length }));
