@@ -44,20 +44,49 @@ function renderTasks(){
   document.getElementById('tasks-list').appendChild(wrap);
 }
 
+const _CHECK_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const _X_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+
+function closeTaskMo(){
+  const mo=document.getElementById('genmo');
+  mo.classList.remove('show');
+  mo.onclick=(e)=>{if(e.target===mo)closeGenMo();};
+  const box=mo.querySelector('.modal-box');
+  setTimeout(()=>{if(box._origHTML){box.innerHTML=box._origHTML;box._origHTML=null;}},280);
+}
+
 function _openTaskModal(t, btnText, action){
   const done=S.doneTasks.has(t.id);
-  openGenMo(t.name, t.desc, done?'✓ Награда получена':btnText, done?closeGenMo:action);
-  const extra=document.getElementById('gm-extra');
-  extra.innerHTML=`<div class="tm-rew-box">${COIN_ICO} <span>${t.rew.toLocaleString('ru')}</span></div>`;
-  if(done){
-    const btn=document.getElementById('gm-a');
-    btn.classList.add('mbtn--done');
-    btn.onclick=closeGenMo;
-    document.querySelector('#genmo .mbtn.gray').style.display='none';
+  const mo=document.getElementById('genmo');
+  const box=mo.querySelector('.modal-box');
+  if(!box._origHTML) box._origHTML=box.innerHTML;
+
+  const cancelRow=done?'':
+    `<button class="tm-cancel" onclick="closeTaskMo()">Отмена</button>`;
+  const actClass=done?'tm-act tm-act--done':'tm-act tm-act--go';
+  const actContent=done?`${_CHECK_SVG} Награда получена`:btnText;
+
+  box.innerHTML=`
+    <div class="tm-hdr">
+      <div class="tm-title">${t.name}</div>
+      <button class="tm-x" onclick="closeTaskMo()">${_X_SVG}</button>
+    </div>
+    <div class="tm-sep"></div>
+    <div class="tm-body">
+      <div class="tm-desc">${t.desc}</div>
+      <div class="tm-rew-box">${COIN_ICO} <span>${t.rew.toLocaleString('ru')}</span></div>
+      <button class="${actClass}" id="tm-main-btn">${actContent}</button>
+      ${cancelRow}
+    </div>`;
+
+  if(!done && action){
+    box.querySelector('#tm-main-btn').onclick=action;
   } else {
-    document.querySelector('#genmo .mbtn.gray').style.display='';
-    document.querySelector('#genmo .mbtn.gray').textContent='Отмена';
+    box.querySelector('#tm-main-btn').onclick=closeTaskMo;
   }
+
+  mo.onclick=(e)=>{if(e.target===mo)closeTaskMo();};
+  mo.classList.add('show');
 }
 
 function openTask(id){
