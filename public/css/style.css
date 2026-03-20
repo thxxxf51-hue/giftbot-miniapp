@@ -209,22 +209,26 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .sbuy.star-btn{background:linear-gradient(135deg,#FFD700,#FFA500);color:#000}
 
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ccard{cursor:pointer;transition:transform .12s;overflow:hidden;border-radius:15px;border:1px solid var(--gb)}
+.ccard{cursor:pointer;transition:transform .12s;overflow:hidden;border-radius:16px;border:1px solid var(--gb);display:flex;flex-direction:column}
 .ccard:active{transform:scale(.96)}
-.ccimg{height:110px;overflow:hidden;position:relative;display:block}
+.ccimg{height:130px;overflow:hidden;position:relative;display:block;flex-shrink:0}
 .ccimg img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
 .ccard:active .ccimg img{transform:scale(1.04)}
-.ccimg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55) 0%,transparent 55%);pointer-events:none}
+.ccimg::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.52) 0%,transparent 50%);pointer-events:none}
 .ccimg-placeholder{width:100%;height:100%;background:rgba(255,255,255,.03)}
-.ccinfo{padding:7px 9px 9px;background:var(--glass)}
-.ccname{font-size:12px;font-weight:700;margin-bottom:2px}
-.ccprice{color:var(--green);font-weight:700;font-size:10px;display:flex;align-items:center;gap:3px;margin-bottom:5px}
+.ccinfo{padding:8px 10px 6px;background:var(--glass);flex:1}
+.ccname{font-size:12px;font-weight:700;line-height:1.3}
+.ccprice{color:var(--green);font-weight:700;font-size:10px;display:flex;align-items:center;gap:3px}
 .ccprice svg{width:10px;height:10px;stroke:var(--green);fill:none;stroke-width:2}
 .ccprice.star-price{color:var(--star)}
+.ccbtn{width:100%;background:var(--green);border:none;border-radius:0;padding:10px 8px;font-size:12px;font-weight:800;color:#000;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .12s;flex-shrink:0}
+.ccbtn:active{opacity:.8}
+.ccbtn svg{width:16px;height:16px;stroke:#000;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ccbtn-star{background:linear-gradient(135deg,#FFD700,#FFA500);color:#000}
 .ccpvbtn{width:100%;background:rgba(255,255,255,.05);border:none;border-radius:6px;padding:4px;font-size:9px;color:var(--muted2);cursor:pointer;font-family:inherit;position:relative;z-index:1;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:3px}
 .ccpvbtn svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
 .ccpvbtn:active{background:rgba(255,255,255,.1)}
-.ccbadge{position:absolute;top:7px;right:7px;background:rgba(0,0,0,.68);backdrop-filter:blur(4px);color:#fff;font-size:9px;font-weight:700;padding:3px 7px;border-radius:20px;border:1px solid rgba(255,255,255,.12);z-index:3;pointer-events:none;line-height:1.3}
+.ccbadge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);color:#fff;font-size:9.5px;font-weight:700;padding:4px 8px;border-radius:20px;border:1px solid rgba(255,255,255,.14);z-index:3;pointer-events:none;line-height:1.3;letter-spacing:0.01em}
 .cc-open-price{display:flex;align-items:center;gap:4px;color:var(--green);font-weight:700;font-size:10px}
 .cc-open-price svg{color:#f4c430;fill:#f4c430;flex-shrink:0}
 .cm-prizes-section{border-top:1px solid rgba(255,255,255,.06);padding:9px 0 0}
@@ -506,7 +510,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .stars-check-btn:active{opacity:.8}
 
 .ccard-wip{position:relative}
-.ccard-wip::after{content:'В разработке';position:absolute;inset:0;background:rgba(10,10,10,.75);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--star);border-radius:15px;backdrop-filter:blur(2px)}
+.ccard-wip::after{content:'В разработке';position:absolute;inset:0;background:rgba(10,10,10,.75);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--star);border-radius:16px;backdrop-filter:blur(2px)}
 
 .dp-mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:550;align-items:flex-end}
 .dp-mo.show{display:flex}

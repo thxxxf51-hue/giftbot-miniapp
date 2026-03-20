@@ -5,24 +5,24 @@ const _STAR_OPEN_SVG=`<svg viewBox="0 0 24 24" fill="currentColor" width="13" he
 let _caseStats={};
 (async()=>{try{const r=await fetch('/api/case/stats');const d=await r.json();if(d.ok)_caseStats=d.caseOpens||{};}catch(e){}})();
 
+const _COIN_ICON_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v2M12 16v2M8.5 9.5A3.5 3.5 0 0112 8h.5a2.5 2.5 0 010 5h-1a2.5 2.5 0 000 5H12a3.5 3.5 0 003.5-3.5"/></svg>`;
+
 function rCases(){
   document.getElementById('shop-cases').innerHTML=CASES.map(c=>{
-    let priceHtml='';
     let wrapClass='gc ccard';
+    let btnHtml='';
     if(c.wip){
-      priceHtml=`<div class="ccprice star-price">⭐ ${c.starsPrice} Stars</div>`;
       wrapClass='gc ccard ccard-wip';
+      btnHtml=`<div class="ccbtn ccbtn-star">⭐ ${c.starsPrice} Stars</div>`;
     } else {
-      priceHtml=`<div class="ccprice cc-open-price">${_STAR_OPEN_SVG} Открыть за ${c.price.toLocaleString('ru')} 🪙</div>`;
+      btnHtml=`<div class="ccbtn">${_COIN_ICON_SVG} Открыть за ${c.price.toLocaleString('ru')}</div>`;
     }
     const photoHtml=c.photo?`<img src="${c.photo}" alt="${c.name}" loading="lazy" style="object-position:${c.photoPos||'center center'}">`:`<div class="ccimg-placeholder" style="background:${c.bg}"></div>`;
-    const badge=(!c.wip&&c.drops.length)?`<div class="ccbadge">${c.drops.length} призов</div>`:'';
+    const badge=(!c.wip&&c.drops.length)?`<div class="ccbadge">${c.drops.length} наград</div>`:'';
     return`<div class="${wrapClass}" ${c.wip?'':'onclick="openCaseMo('+c.id+')"'}>
       <div class="ccimg">${photoHtml}${badge}</div>
-      <div class="ccinfo">
-        <div class="ccname">${c.name}</div>
-        ${priceHtml}
-      </div>
+      <div class="ccinfo"><div class="ccname">${c.name}</div></div>
+      ${btnHtml}
     </div>`;
   }).join('');
 }
