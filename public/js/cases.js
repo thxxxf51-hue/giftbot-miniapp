@@ -42,7 +42,7 @@ function rCases(){
 }
 
 /* ══ CASE PREVIEW MODAL ══ */
-function openCasePreview(id){
+async function openCasePreview(id){
   const c=CASES.find(x=>x.id===id);if(!c||c.wip)return;
   document.getElementById('cprev-name').textContent=c.name;
   const imgWrap=document.getElementById('cprev-img');
@@ -73,6 +73,13 @@ function openCasePreview(id){
       <div class="cprev-ri-val">${d.v}</div>
     </div>`).join('');
   document.getElementById('cprev-mo').classList.add('show');
+  try {
+    const r = await fetch('/api/case/stats');
+    const d = await r.json();
+    const cnt = (d.caseOpens || {})[id] || 0;
+    const el = document.getElementById('cprev-opened');
+    if(el) el.textContent = 'Всего открыто: ' + cnt.toLocaleString('ru');
+  } catch{}
 }
 
 function closeCasePreview(){
@@ -210,6 +217,7 @@ function spinCase(){
   spinning=true;
   S.balance-=total;
   syncB();
+  try{fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:curSpinCount})});}catch{}
   document.getElementById('cm-btn').disabled=true;
   document.querySelectorAll('.spin-cnt-btn').forEach(b=>b.disabled=true);
 
