@@ -37,7 +37,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 
 .phdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .ptitle{font-size:22px;font-weight:800;letter-spacing:-.4px}
-.bpill{display:flex;align-items:center;gap:5px;background:var(--gdim);border:1px solid var(--gbor);border-radius:20px;padding:6px 11px;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.bpill{display:flex;align-items:center;gap:5px;background:var(--gdim);border:1px solid var(--gbor);border-radius:20px;padding:6px 11px;font-size:14px;font-weight:700;color:var(--green);flex-shrink:0}
 .bpill svg{width:14px;height:14px;stroke:var(--green);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
 .sec{font-size:15px;font-weight:700;margin-bottom:10px}
 
