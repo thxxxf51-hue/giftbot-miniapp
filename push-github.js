@@ -29,6 +29,9 @@ run('git config user.email "bot@giftbot.app"');
 run('git config user.name "GiftBot Deploy"');
 run(`git remote set-url origin https://${TOKEN}@github.com/${REPO}.git`);
 
+// Убираем attached_assets из трекинга если ещё отслеживается
+try { execSync('git rm --cached -r attached_assets/ --ignore-unmatch 2>/dev/null', { encoding: 'utf8', stdio: ['pipe','pipe','pipe'] }); } catch{}
+
 try {
   const diff = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
   if (!diff) {
