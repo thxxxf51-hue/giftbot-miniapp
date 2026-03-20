@@ -165,21 +165,21 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tc-prog-fill{height:100%;background:linear-gradient(90deg,#2ecc71,#00e5ff);border-radius:4px;transition:width .4s}
 .tc-prog-txt{font-size:10px;color:rgba(255,255,255,.32);text-align:right}
 /* ══ TASK MODAL ══ */
-.tm-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 18px 18px;gap:12px}
+.tm-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 16px 16px;gap:12px;background:rgba(46,204,113,.04);border-radius:22px 22px 0 0}
 .tm-title{font-size:18px;font-weight:800;color:#fff;flex:1;line-height:1.3}
-.tm-x{background:rgba(255,255,255,.1);border:none;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;padding:0}
-.tm-x svg{width:16px;height:16px;stroke:#fff}
-.tm-sep{height:1px;background:rgba(255,255,255,.11);margin:0}
-.tm-body{padding:20px 18px calc(22px + env(safe-area-inset-bottom))}
-.tm-desc{font-size:14px;color:rgba(255,255,255,.45);line-height:1.55;margin-bottom:20px}
-.tm-rew-box{display:flex;align-items:center;gap:12px;background:rgba(10,26,16,.98);border:1px solid rgba(46,204,113,.28);border-radius:14px;padding:18px 20px;margin-bottom:10px;font-size:22px;font-weight:800;color:#2ecc71}
-.tm-rew-box svg{width:22px;height:22px;stroke:#2ecc71;flex-shrink:0}
-.tm-act{width:100%;border:none;border-radius:14px;padding:17px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:0}
+.tm-x{background:rgba(255,255,255,.1);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;padding:0}
+.tm-x svg{width:15px;height:15px;stroke:#fff}
+.tm-sep{height:1px;background:rgba(46,204,113,.12);margin:0}
+.tm-body{padding:16px 16px calc(18px + env(safe-area-inset-bottom))}
+.tm-desc{font-size:13px;color:rgba(255,255,255,.45);line-height:1.55;margin-bottom:14px}
+.tm-rew-box{display:flex;align-items:center;gap:10px;background:rgba(10,26,16,.98);border:1px solid rgba(46,204,113,.28);border-radius:14px;padding:13px 16px;margin-bottom:8px;font-size:20px;font-weight:800;color:#2ecc71}
+.tm-rew-box svg{width:20px;height:20px;stroke:#2ecc71;flex-shrink:0}
+.tm-act{width:100%;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:0}
 .tm-act--go{background:#2ecc71;color:#000}
 .tm-act--go:active{opacity:.85}
 .tm-act--done{background:rgba(8,28,16,.98);border:none;color:#3ddc84;cursor:default}
-.tm-act--done svg{width:16px;height:16px;stroke:#3ddc84}
-.tm-cancel{width:100%;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.06);color:rgba(255,255,255,.38);margin-top:8px}
+.tm-act--done svg{width:15px;height:15px;stroke:#3ddc84}
+.tm-cancel{width:100%;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:rgba(255,255,255,.06);color:rgba(255,255,255,.38);margin-top:7px}
 
 /* ══ TASKS V2 (legacy grid) ══ */
 .task-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0}
@@ -404,6 +404,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);z-index:500;align-items:flex-end}
 .modal-ov.show{display:flex}
 .modal-box{background:#161819;border-radius:22px 22px 0 0;width:100%;padding:0 0 calc(20px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.08);animation:shup .24s cubic-bezier(.4,0,.2,1);max-height:88vh;overflow-y:auto}
+.modal-box.tm-modal-box{margin:0 10px;width:calc(100% - 20px);border-left:1px solid rgba(46,204,113,.18);border-right:1px solid rgba(46,204,113,.18);border-top:1px solid rgba(46,204,113,.18);border-bottom:none;border-radius:22px 22px 0 0;background:#14181a}
 .modal-box::-webkit-scrollbar{display:none}
 @keyframes shup{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .mh{width:34px;height:4px;background:rgba(255,255,255,.1);border-radius:4px;margin:11px auto 0}

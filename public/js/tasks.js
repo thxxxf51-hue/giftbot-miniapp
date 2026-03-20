@@ -52,7 +52,10 @@ function closeTaskMo(){
   mo.classList.remove('show');
   mo.onclick=(e)=>{if(e.target===mo)closeGenMo();};
   const box=mo.querySelector('.modal-box');
-  setTimeout(()=>{if(box._origHTML){box.innerHTML=box._origHTML;box._origHTML=null;}},280);
+  setTimeout(()=>{
+    box.classList.remove('tm-modal-box');
+    if(box._origHTML){box.innerHTML=box._origHTML;box._origHTML=null;}
+  },280);
 }
 
 function _openTaskModal(t, btnText, action){
@@ -60,6 +63,7 @@ function _openTaskModal(t, btnText, action){
   const mo=document.getElementById('genmo');
   const box=mo.querySelector('.modal-box');
   if(!box._origHTML) box._origHTML=box.innerHTML;
+  box.classList.add('tm-modal-box');
 
   const cancelRow=done?'':
     `<button class="tm-cancel" onclick="closeTaskMo()">Отмена</button>`;
