@@ -1,10 +1,18 @@
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 
 const TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
 const REPO  = 'thxxxf51-hue/giftbot-miniapp';
 const MSG   = process.argv[2] || 'Auto-deploy: update from Replit';
 
 if (!TOKEN) { console.error('GITHUB_PERSONAL_ACCESS_TOKEN not set'); process.exit(1); }
+
+// Удаляем lock-файлы если есть
+['config.lock','index.lock','HEAD.lock'].forEach(f=>{
+  const p=path.join(__dirname,'.git',f);
+  try{if(fs.existsSync(p)){fs.unlinkSync(p);console.log('Removed lock:',f);}}catch{}
+});
 
 function run(cmd) {
   try {
