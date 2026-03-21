@@ -84,6 +84,13 @@ const bot = new Telegraf(BOT_TOKEN);
 const app = express();
 app.use(express.json());
 app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
+app.use((req, res, next) => {
   if (req.path.endsWith('.html') || req.path === '/' || req.path.endsWith('.js') || req.path.endsWith('.css')) {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
@@ -2956,24 +2963,27 @@ function adminCheck(req, res) {
   return false;
 }
 
-
 app.get('/api/admin/stats', (req, res) => {
   if (!adminCheck(req, res)) return;
+  const now = Date.now();
   const topUsers = Object.entries(DB.users)
     .map(([uid, u]) => ({ uid, username: u.username||'?', firstName: u.firstName||'', balance: u.balance||0 }))
-    .sort((a, b) => b.balance - a.balance).slice(0, 5);
+    .sort((a, b) => b.balance - a.balance).slice(0, 10);
   const totalCoins = Object.values(DB.users).reduce((s, u) => s + (u.balance||0), 0);
+  const vipCount = Object.values(DB.users).filter(u => u.vipExpiry && u.vipExpiry > now).length;
+  const totalUsers = Object.keys(DB.users).length;
+  const activeDraws = Object.values(DB.draws).filter(d => !d.finished && d.endsAt > now).length;
   res.json({
-    users: Object.keys(DB.users).length,
-    draws: Object.keys(DB.draws).length,
+    totalUsers, users: totalUsers, draws: activeDraws, activeDraws,
     tasks: (DB.customTasks||[]).length,
     promos: Object.keys(DB.promos||{}).length,
     notifications: (DB.notifications||[]).length,
     shop: (DB.customShopItems||[]).length,
-    totalCoins,
-    topUsers
+    totalCoins, vipCount,
+    repairMode: DB.repairMode || false,
+    topUsers, caseOpens: DB.caseOpens || {}
   });
-});
+});;
 
 app.get('/api/admin/users', (req, res) => {
   if (!adminCheck(req, res)) return;
@@ -3027,37 +3037,43 @@ app.get('/api/admin/users/:uid', (req, res) => {
 
 app.post('/api/admin/balance', async (req, res) => {
   if (!adminCheck(req, res)) return;
-  const { targetUsername, amount, action } = req.body;
-  if (!targetUsername || !amount || !action) return res.status(400).json({ error: 'Missing fields' });
-  const username = targetUsername.replace('@','').toLowerCase();
-  let targetUID = null;
-  for (const [uid, u] of Object.entries(DB.users)) {
-    if ((u.username||'').toLowerCase() === username) { targetUID = uid; break; }
+  const { targetUid, targetUsername, amount, action, reason } = req.body;
+  if ((!targetUid && !targetUsername) || !amount || !action)
+    return res.status(400).json({ error: 'Missing fields' });
+  let targetUID = targetUid ? String(targetUid) : null;
+  if (!targetUID && targetUsername) {
+    const username = targetUsername.replace('@','').toLowerCase();
+    for (const [uid, u] of Object.entries(DB.users)) {
+      if ((u.username||'').toLowerCase() === username) { targetUID = uid; break; }
+    }
+    if (!targetUID) {
+      try {
+        const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=@${username}`);
+        const d = await r.json();
+        if (d.ok && d.result?.id) {
+          targetUID = String(d.result.id);
+          const u = getUser(targetUID); u.username = username; u.firstName = d.result.first_name || '';
+        }
+      } catch {}
+    }
   }
-  if (!targetUID) {
-    try {
-      const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChat?chat_id=@${username}`);
-      const d = await r.json();
-      if (d.ok && d.result?.id) { targetUID = String(d.result.id); const u = getUser(targetUID); u.username = username; u.firstName = d.result.first_name||''; }
-    } catch {}
-  }
-  if (!targetUID) return res.status(404).json({ error: `User @${username} not found` });
+  if (!targetUID || !DB.users[targetUID])
+    return res.status(404).json({ error: 'User not found' });
   const u = getUser(targetUID);
   const before = u.balance;
   const amt = Number(amount);
   if (action === 'add') {
-    u.balance += amt;
-    addTx(targetUID, 'adjustment', `+${amt}`, 'Начислено администратором');
+    u.balance += amt; u.serverBalance = u.balance;
+    addTx(targetUID, 'adjustment', `+${amt}`, reason || 'Начислено администратором');
     try { await bot.telegram.sendMessage(Number(targetUID), `💰 Администратор начислил тебе ${amt.toLocaleString('ru')} монет!\n💼 Баланс: ${u.balance.toLocaleString('ru')}`); } catch {}
   } else {
-    u.balance = Math.max(0, u.balance - amt);
-    addTx(targetUID, 'adjustment', `-${amt}`, 'Снято администратором');
-    try { await bot.telegram.sendMessage(Number(targetUID), `⚠️ Администратор снял ${amt.toLocaleString('ru')} монет.\n💼 Баланс: ${u.balance.toLocaleString('ru')}`); } catch {}
+    u.balance = Math.max(0, u.balance - amt); u.serverBalance = u.balance;
+    addTx(targetUID, 'adjustment', `-${amt}`, reason || 'Снято администратором');
+    try { await bot.telegram.sendMessage(Number(targetUID), `⚠️ Администратор снял ${amt.toLocaleString('ru')} монет.\nПричина: ${reason||'—'}\n💼 Баланс: ${u.balance.toLocaleString('ru')}`); } catch {}
   }
-  u.serverBalance = u.balance;
   saveDB();
-  res.json({ ok: true, username, before, after: u.balance });
-});
+  res.json({ ok: true, before, after: u.balance });
+});;
 
 app.get('/api/admin/tasks', (req, res) => {
   if (!adminCheck(req, res)) return;
@@ -3242,44 +3258,9 @@ app.post('/api/admin/backup', async (req, res) => {
   res.json({ ok: result });
 });
 
-app.post('/api/admin/ban', (req, res) => {
-  if (!adminCheck(req, res)) return;
-  const { username, duration } = req.body;
-  if (!username) return res.status(400).json({ error: 'Missing username' });
-  const un = String(username).replace('@','').toLowerCase();
-  const until = (duration === 0 || duration === '0') ? 0 : Date.now() + Number(duration || 0);
-  const banData = { until, bannedAt: Date.now() };
-  DB.bans[un] = banData;
-  for (const [uid, u] of Object.entries(DB.users)) {
-    if ((u.username||'').toLowerCase() === un) {
-      DB.bansByUid[uid] = banData;
-      const durStr = until === 0 ? 'навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
-      bot.telegram.sendMessage(Number(uid), `🚫 Вы заблокированы в GiftBot.\n\n⏱ Срок: ${durStr}`).catch(()=>{});
-      break;
-    }
-  }
-  saveDB();
-  res.json({ ok: true, username: un, until });
-});
 
-app.post('/api/admin/unban', (req, res) => {
-  if (!adminCheck(req, res)) return;
-  const { username } = req.body;
-  if (!username) return res.status(400).json({ error: 'Missing username' });
-  const un = String(username).replace('@','').toLowerCase();
-  delete DB.bans[un];
-  for (const [uid, u] of Object.entries(DB.users)) {
-    if ((u.username||'').toLowerCase() === un) {
-      delete DB.bansByUid[uid];
-      bot.telegram.sendMessage(Number(uid), `✅ Ваша блокировка снята. Добро пожаловать обратно!`, {
-        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
-      }).catch(()=>{});
-      break;
-    }
-  }
-  saveDB();
-  res.json({ ok: true, username: un });
-});
+
+
 
 app.post('/api/admin/broadcast', async (req, res) => {
   if (!adminCheck(req, res)) return;
@@ -3364,6 +3345,106 @@ app.post('/api/admin/shop/:id/image', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+
+/* ══ ADMIN PANEL API — новые эндпоинты для мини-апп панели ══ */
+
+app.post('/api/admin/repair', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  DB.repairMode = !DB.repairMode;
+  saveDB();
+  res.json({ ok: true, repairMode: DB.repairMode });
+});
+
+app.post('/api/admin/vip', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { targetUid, days } = req.body;
+  if (!targetUid) return res.status(400).json({ error: 'targetUid required' });
+  const u = DB.users[String(targetUid)];
+  if (!u) return res.status(404).json({ error: 'User not found' });
+  const now = Date.now();
+  if (!days || Number(days) === 0) {
+    u.vipExpiry = null;
+  } else {
+    const base = (u.vipExpiry && u.vipExpiry > now) ? u.vipExpiry : now;
+    u.vipExpiry = base + (Number(days) * 86400000);
+  }
+  saveDB();
+  try {
+    const msg = u.vipExpiry ? `👑 Вам выдан VIP на ${days} дней!` : `❌ Ваш VIP убран администратором.`;
+    await bot.telegram.sendMessage(Number(targetUid), msg);
+  } catch {}
+  res.json({ ok: true, vipExpiry: u.vipExpiry });
+});
+
+app.post('/api/admin/ban', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { targetUid, username, duration } = req.body;
+  const until = (!duration || duration === '0' || Number(duration) === 0) ? 0 : Date.now() + Number(duration);
+  const banData = { until, bannedAt: Date.now() };
+  const un = (username||'').replace('@','').toLowerCase();
+  if (un) DB.bans[un] = banData;
+  if (targetUid) DB.bansByUid[String(targetUid)] = banData;
+  saveDB();
+  const uid = targetUid || findUidByUsername(un);
+  if (uid) {
+    const durStr = until === 0 ? 'навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
+    try { await bot.telegram.sendMessage(Number(uid), `🚫 Вы заблокированы в GiftBot.\n⏱ Срок: ${durStr}`); } catch {}
+  }
+  res.json({ ok: true, until });
+});
+
+app.post('/api/admin/unban', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { targetUid, username } = req.body;
+  const un = (username||'').replace('@','').toLowerCase();
+  if (un) delete DB.bans[un];
+  if (targetUid) delete DB.bansByUid[String(targetUid)];
+  saveDB();
+  const uid = targetUid || findUidByUsername(un);
+  if (uid) {
+    try { await bot.telegram.sendMessage(Number(uid), '✅ Ваша блокировка снята. Добро пожаловать обратно!'); } catch {}
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/broadcast/vip', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { text } = req.body;
+  if (!text) return res.status(400).json({ error: 'Missing text' });
+  const now = Date.now();
+  const vipIds = Object.entries(DB.users).filter(([,u]) => u.vipExpiry && u.vipExpiry > now).map(([uid]) => uid);
+  let sent = 0, failed = 0;
+  for (const uid of vipIds) {
+    try {
+      await bot.telegram.sendMessage(Number(uid), '👑 ' + text, {
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+      });
+      sent++;
+    } catch { failed++; }
+    await new Promise(r => setTimeout(r, 50));
+  }
+  res.json({ ok: true, sent, failed, total: vipIds.length });
+});
+
+app.post('/api/admin/notify', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { type, text } = req.body;
+  if (!text) return res.status(400).json({ error: 'Missing text' });
+  if (!DB.notifications) DB.notifications = [];
+  const notif = { id: Date.now(), type: type || 'system', text, ts: Date.now() };
+  DB.notifications.unshift(notif);
+  if (DB.notifications.length > 100) DB.notifications = DB.notifications.slice(0, 100);
+  saveDB();
+  res.json({ ok: true, notif });
+});
+
+app.post('/api/admin/notifications/clear', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  DB.notifications = [];
+  saveDB();
+  res.json({ ok: true });
+});
 
 async function startServer() {
   // Сначала восстанавливаем БД из GitHub (до старта сервера)
