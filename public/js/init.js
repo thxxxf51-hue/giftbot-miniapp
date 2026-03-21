@@ -286,7 +286,6 @@ function _removeSplashAndSwipe() {
 })();
 
 init();
-if(typeof initAdmin==='function') initAdmin();
 
 /* ══ GLOBAL STATS + COUNT ANIMATION ══ */
 function loadGlobalStats() {
