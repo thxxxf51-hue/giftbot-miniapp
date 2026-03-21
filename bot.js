@@ -2927,7 +2927,6 @@ app.get('/api/support/poll', (req, res) => {
 });
 
 /* ══ SERVER ══ */
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // ── Миграция: добавляем uid в записи рефов у которых его нет ──
 // (для старых рефералов записанных до обновления)
@@ -3445,6 +3444,8 @@ app.post('/api/admin/notifications/clear', (req, res) => {
   saveDB();
   res.json({ ok: true });
 });
+
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 async function startServer() {
   // Сначала восстанавливаем БД из GitHub (до старта сервера)
