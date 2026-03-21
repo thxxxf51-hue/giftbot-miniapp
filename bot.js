@@ -2948,9 +2948,14 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
    ══════════════════════════════════════════ */
 function adminCheck(req, res) {
   const uid = String(req.query.userId || req.body?.userId || '');
-  if (!isAdmin(uid)) { res.status(403).json({ error: 'Forbidden' }); return false; }
-  return true;
+  const secret = req.query.secret || req.body?.secret || '';
+  const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
+  if (isAdmin(uid)) return true;
+  if (ADMIN_SECRET && secret === ADMIN_SECRET) return true;
+  res.status(403).json({ error: 'Forbidden' });
+  return false;
 }
+
 
 app.get('/api/admin/stats', (req, res) => {
   if (!adminCheck(req, res)) return;
