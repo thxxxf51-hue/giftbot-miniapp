@@ -469,13 +469,14 @@ app.post('/api/user/sync', (req, res) => {
     return res.json({ ok: true, banned: true, banUntil: ban.until, balance: u.balance, starsBalance: u.starsBalance });
   }
 
-  // Если был сброс — говорим клиенту очистить localStorage
+  // Если был сброс — говорим клиенту очистить localStorage (не для администратора)
   const wasReset = u.resetAt ? u.resetAt : null;
   if (wasReset) {
-    // Сбрасываем флаг чтобы не сбрасывать повторно
     delete u.resetAt;
     saveDB();
-    return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
+    if (!isAdmin(userId)) {
+      return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
+    }
   }
 
   // If server has authoritative balance (set by /pgive), use it and clear flag

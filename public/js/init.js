@@ -170,8 +170,8 @@ async function init(){
       // Бан
       if(sd.banned){ showBanScreen(sd.banUntil); return; }
 
-      // Сброс статистики — очищаем localStorage и перезагружаемся
-      if(sd.reset){
+      // Сброс статистики — очищаем localStorage и перезагружаемся (не для администратора)
+      if(sd.reset && UID !== (typeof ADMIN_UID !== 'undefined' ? ADMIN_UID : '')){
         hardReset();
         return;
       }
