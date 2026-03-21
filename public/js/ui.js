@@ -21,7 +21,7 @@ function go(name){
     // Page enter hooks (inside setTimeout so page is visible)
     if(name==='inventory')renderInv();
     if(name==='pvp')onPvpPageEnter?.();
-    if(name==='admin')loadAdminSection(admTab);
+    if(name==='admin')loadAdminSection();
     if(name==='profile')loadTxList();
   },60);
   PAGES.forEach(p=>document.getElementById('nb-'+p)?.classList.remove('active'));

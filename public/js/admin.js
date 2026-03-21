@@ -1,37 +1,40 @@
 /* ══ ADMIN PANEL ══ */
 const ADMIN_UID = '6151671553';
-let admTab = 'dashboard';
-let admUsers = [], admTasks = [], admDraws = {active:[], finished:[]}, admPromos = [], admNotifs = [];
+let admCurrentSection = 'dashboard';
+let admUsers = [], admTasks = [], admDraws = {active:[], finished:[]}, admPromos = [], admNotifs = [], admShopItems = [];
+let admStatsCache = null;
 
 /* ── SVG icons ── */
 const AICO = {
-  dashboard: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`,
-  users:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-  tasks:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
-  draws:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
-  promos:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`,
-  notifs:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
-  plus:      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
-  trash:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
-  edit:      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
-  shield:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-  backup:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 16 20 20 4 20 4 16"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="4" x2="12" y2="16"/></svg>`,
-  send:      `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
-  coin:      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
-  gift:      `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
-  broadcast: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 11.22a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 2.55h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
-  search:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
-  star:      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-  crown:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg>`,
-  check:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
-  alert:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
-  bell:      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
-  timer:     `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  img:       `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
-  upload:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`,
-  ticket:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><line x1="9" y1="12" x2="15" y2="12"/></svg>`,
-  desc:      `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>`,
-  users2:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  users:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  tasks:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+  draws:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
+  promos:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`,
+  notifs:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+  shop:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+  coin:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+  plus:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  trash:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
+  edit:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  backup:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 16 20 20 4 20 4 16"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="4" x2="12" y2="16"/></svg>`,
+  send:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`,
+  broadcast: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 11.22a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.9 2.55h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  search:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  star:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  crown:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><line x1="5" y1="20" x2="19" y2="20"/></svg>`,
+  check:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+  alert:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  bell:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+  timer:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  img:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+  upload:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`,
+  ticket:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/><line x1="9" y1="12" x2="15" y2="12"/></svg>`,
+  desc:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>`,
+  users2:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  ban:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+  shield:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  gift:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
+  color:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>`,
 };
 
 function admApi(path, method, body) {
@@ -82,29 +85,55 @@ function fmtDate(ts) {
 /* ── Init admin ─────────────────────────────── */
 function initAdmin() {
   if (UID !== ADMIN_UID) return;
-  const nav = document.getElementById('main-nav');
-  if (nav && !document.getElementById('nb-admin')) {
-    const btn = document.createElement('button');
-    btn.className = 'nb';
-    btn.id = 'nb-admin';
-    btn.onclick = () => go('admin');
-    btn.innerHTML = `<div class="nb-icon">${AICO.shield}<div class="nb-red"></div></div><span class="nb-label">Админ</span>`;
-    nav.appendChild(btn);
-    if (!PAGES.includes('admin')) PAGES.push('admin');
-  }
+  // Показываем карточку на странице Профиль
+  const profileEntry = document.getElementById('profile-admin-entry');
+  if (profileEntry) profileEntry.style.display = 'block';
+  // Добавляем страницу admin в список страниц
+  if (!PAGES.includes('admin')) PAGES.push('admin');
 }
 
-/* ── Load section ───────────────────────────── */
-async function loadAdminSection(tab) {
-  admTab = tab;
-  document.querySelectorAll('.adm-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.adm-section').forEach(s => s.classList.toggle('active', s.id === 'adm-' + tab));
-  if (tab === 'dashboard') await loadAdmDashboard();
-  else if (tab === 'users')  await loadAdmUsers();
-  else if (tab === 'tasks')  await loadAdmTasks();
-  else if (tab === 'draws')  await loadAdmDraws();
-  else if (tab === 'promos') await loadAdmPromos();
-  else if (tab === 'notifs') await loadAdmNotifs();
+/* ── Navigation ─────────────────────────────── */
+function admGoSection(section) {
+  admCurrentSection = section;
+  // Прячем все секции
+  document.querySelectorAll('.adm-section').forEach(s => {
+    s.style.display = 'none';
+    s.classList.remove('active');
+  });
+  // Показываем нужную
+  const el = document.getElementById('adm-' + section);
+  if (el) { el.style.display = 'block'; el.classList.add('active'); }
+
+  // Заголовок и кнопка назад
+  const titles = {
+    dashboard: 'Админ панель',
+    users: 'Пользователи',
+    tasks: 'Задания',
+    shop: 'Магазин',
+    draws: 'Розыгрыши',
+    promos: 'Промокоды',
+    notifs: 'Рассылка',
+  };
+  const titleEl = document.getElementById('adm-page-title');
+  if (titleEl) titleEl.textContent = titles[section] || 'Админ панель';
+
+  const backBtn = document.getElementById('adm-back-btn');
+  const coinsPill = document.getElementById('adm-coins-pill');
+  if (backBtn) backBtn.style.display = section === 'dashboard' ? 'none' : 'flex';
+  if (coinsPill) coinsPill.style.display = section === 'dashboard' ? 'flex' : 'none';
+
+  // Загружаем контент
+  if (section === 'dashboard') loadAdmDashboard();
+  else if (section === 'users')  loadAdmUsers();
+  else if (section === 'tasks')  loadAdmTasks();
+  else if (section === 'shop')   loadAdmShop();
+  else if (section === 'draws')  loadAdmDraws();
+  else if (section === 'promos') loadAdmPromos();
+  else if (section === 'notifs') loadAdmNotifs();
+}
+
+function loadAdminSection() {
+  admGoSection('dashboard');
 }
 
 function admLoading(id) {
@@ -113,38 +142,63 @@ function admLoading(id) {
 }
 
 /* ════════════════════════════════════════════
-   DASHBOARD
+   DASHBOARD — сетка карточек
 ════════════════════════════════════════════ */
 async function loadAdmDashboard() {
   admLoading('adm-dashboard');
   const d = await admApi('/stats', 'GET');
-  if (d.error) { document.getElementById('adm-dashboard').innerHTML = `<div class="adm-err">${AICO.alert} ${d.error}</div>`; return; }
+  if (d.error) {
+    document.getElementById('adm-dashboard').innerHTML = `<div class="adm-err">${AICO.alert} ${d.error}</div>`;
+    return;
+  }
+  admStatsCache = d;
 
-  const statItems = [
-    { icon: AICO.users,  val: d.users||0,         label: 'Пользователи' },
-    { icon: AICO.draws,  val: d.draws||0,          label: 'Розыгрыши' },
-    { icon: AICO.tasks,  val: d.tasks||0,          label: 'Задания' },
-    { icon: AICO.promos, val: d.promos||0,         label: 'Промокоды' },
-    { icon: AICO.notifs, val: d.notifications||0,  label: 'Уведомления' },
+  // Обновляем монеты в пилюле заголовка
+  const coinsEl = document.getElementById('adm-total-coins');
+  if (coinsEl) coinsEl.textContent = (d.totalCoins||0).toLocaleString('ru');
+
+  const cards = [
+    { id: 'users',  icon: AICO.users,  count: d.users||0,               label: 'Пользователи',    color: '#4fc3f7' },
+    { id: 'coins',  icon: AICO.coin,   count: (d.totalCoins||0).toLocaleString('ru'), label: 'Монет в обороте', color: '#ffd54f', noSection: true },
+    { id: 'tasks',  icon: AICO.tasks,  count: d.tasks||0,               label: 'Задания',          color: '#81c784' },
+    { id: 'shop',   icon: AICO.shop,   count: d.shop||0,                label: 'Магазин',          color: '#ce93d8' },
+    { id: 'draws',  icon: AICO.draws,  count: d.draws||0,               label: 'Розыгрыши',        color: '#ff8a65' },
+    { id: 'promos', icon: AICO.promos, count: d.promos||0,              label: 'Промокоды',        color: '#4db6ac' },
+    { id: 'notifs', icon: AICO.notifs, count: d.notifications||0,       label: 'Рассылка',         color: '#f48fb1' },
   ];
 
-  let html = `<div class="adm-stats">`;
-  for (const s of statItems) html += `<div class="adm-stat"><div class="adm-stat-icon">${s.icon}</div><div class="adm-stat-val">${s.val}</div><div class="adm-stat-label">${s.label}</div></div>`;
+  let html = `<div class="adm-grid">`;
+  for (const c of cards) {
+    const click = c.noSection ? '' : `onclick="admGoSection('${c.id}')"`;
+    const cursor = c.noSection ? 'cursor:default' : 'cursor:pointer';
+    html += `<div class="adm-grid-card" ${click} style="${cursor}">
+      <div class="adm-gc-count" style="color:${c.color}">${c.count}</div>
+      <div class="adm-gc-icon" style="color:${c.color}">${c.icon}</div>
+      <div class="adm-gc-label">${c.label}</div>
+    </div>`;
+  }
   html += `</div>`;
 
+  // Топ по балансу
   if (d.topUsers && d.topUsers.length) {
-    html += `<div class="adm-card"><div class="adm-card-hdr"><div class="adm-card-title">${AICO.crown} Топ по балансу</div></div>`;
+    html += `<div class="adm-card" style="margin-top:14px">
+      <div class="adm-card-hdr"><div class="adm-card-title">${AICO.crown} Топ по балансу</div></div>`;
     d.topUsers.forEach((u, i) => {
-      const medal = ['🥇','🥈','🥉'][i] || (i+1);
-      html += `<div class="adm-top-row"><div class="adm-top-rank">${medal}</div><div class="adm-top-name">${u.username?'@'+u.username:u.firstName||'?'}</div><div class="adm-top-bal">${(u.balance||0).toLocaleString('ru')}&nbsp;${AICO.coin}</div></div>`;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
+      html += `<div class="adm-top-row">
+        <div class="adm-top-rank">${medal}</div>
+        <div class="adm-top-name">${u.username?'@'+u.username:u.firstName||'?'}</div>
+        <div class="adm-top-bal">${(u.balance||0).toLocaleString('ru')} ${AICO.coin}</div>
+      </div>`;
     });
     html += `</div>`;
   }
 
+  // Бэкап
   html += `<div class="adm-backup-row">
     <div class="adm-backup-info">
       <div class="adm-backup-title">${AICO.backup} Бэкап базы данных</div>
-      <div class="adm-backup-sub">Сохранить db.json на GitHub (ветка db-backup)</div>
+      <div class="adm-backup-sub">Сохранить db.json на GitHub</div>
     </div>
     <button class="adm-btn adm-btn-sm adm-btn-blue" onclick="admBackupNow(this)">${AICO.backup} Бэкап</button>
   </div>`;
@@ -169,7 +223,10 @@ async function loadAdmUsers() {
     <div class="adm-search">${AICO.search}<input id="adm-user-search" placeholder="Поиск по юзернейму или имени..." oninput="admFilterUsers()" autocomplete="off"></div>
     <div id="adm-user-list"><div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div></div>`;
   const data = await admApi('/users', 'GET');
-  if (data.error) { document.getElementById('adm-user-list').innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}<br><small style="opacity:.6">UID: ${UID}</small></div>`; return; }
+  if (data.error) {
+    document.getElementById('adm-user-list').innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}</div>`;
+    return;
+  }
   admUsers = data;
   admRenderUsers(admUsers);
 }
@@ -186,7 +243,7 @@ function admRenderUsers(list) {
   el.innerHTML = list.slice(0, 100).map(u => {
     const initials = (u.firstName || u.username || '?')[0].toUpperCase();
     const name = u.username ? '@'+u.username : (u.firstName||'—');
-    const sub = `${(u.balance||0).toLocaleString('ru')} монет · ${u.refs||0} реф.${u.banned?' · 🚫':''}`;
+    const sub = `${(u.balance||0).toLocaleString('ru')} монет · ${u.refs||0} реф.${u.banned?' · 🚫 Бан':''}`;
     return `<div class="adm-user-item" onclick="admViewUser('${u.uid}')" style="cursor:pointer">
       <div class="adm-user-avatar">${initials}</div>
       <div class="adm-user-info">
@@ -212,16 +269,19 @@ async function admViewUser(uid) {
 
   const name = d.username ? '@'+d.username : (d.firstName||'—');
   const fullName = d.firstName ? d.firstName + (d.username ? ' (@'+d.username+')' : '') : (d.username ? '@'+d.username : '—');
-  const vipStr = d.vipActive ? `✅ Активна до ${fmtDate(d.vipExpiry)}` : '—';
+  const vipStr = d.vipActive ? `✅ до ${fmtDate(d.vipExpiry)}` : '—';
   const invItems = Object.entries(d.inventory||{}).filter(([,v])=>v>0).map(([k,v])=>`${k}: ${v}`).join(', ') || '—';
   const txHtml = (d.transactions||[]).length
     ? (d.transactions||[]).map(t=>`<div class="adm-up-row"><span style="opacity:.5">${t.date}</span><span>${t.details||t.type}</span><span style="color:${String(t.amount).startsWith('+')?'#00FFA3':'#ff6b6b'};font-weight:700">${t.amount}</span></div>`).join('')
     : '<div style="opacity:.4;font-size:11px">Транзакций нет</div>';
 
+  const isBanned = d.banned;
+  const banTarget = d.username || d.uid;
+
   body.innerHTML = `
     <div class="adm-up-avatar">${(d.firstName||d.username||'?')[0].toUpperCase()}</div>
     <div class="adm-up-name">${fullName}</div>
-    <div class="adm-up-uid">ID: ${d.uid}${d.banned?' · <span style="color:#ff6b6b">🚫 Забанен</span>':''}</div>
+    <div class="adm-up-uid">ID: ${d.uid}${isBanned?' · <span style="color:#ff6b6b">🚫 Забанен</span>':''}</div>
     <div class="adm-up-grid">
       <div class="adm-up-cell"><div class="adm-up-cell-label">💰 Монеты</div><div class="adm-up-cell-val">${(d.balance||0).toLocaleString('ru')}</div></div>
       <div class="adm-up-cell"><div class="adm-up-cell-label">⭐ Звёзды</div><div class="adm-up-cell-val">${d.starsBalance||0}</div></div>
@@ -232,8 +292,6 @@ async function admViewUser(uid) {
     </div>
     <div class="adm-up-row"><span>👑 VIP</span><span>${vipStr}</span></div>
     <div class="adm-up-row"><span>💎 Корона</span><span>${d.hasCrown?'✅ Есть':'—'}</span></div>
-    <div class="adm-up-row"><span>🎨 Цвет ника</span><span>${d.nickColor?`<span style="color:${d.nickColor}">${d.nickColor}</span>`:'—'}</span></div>
-    <div class="adm-up-row"><span>🌟 Легенда</span><span>${d.legendActive?`✅ (${d.legendColor})`:'—'}</span></div>
     <div class="adm-up-row"><span>💼 Кошелёк</span><span style="font-size:9px;word-break:break-all">${d.walletAddress||'—'}</span></div>
     <div class="adm-up-row"><span>📦 Инвентарь</span><span style="font-size:10px">${invItems}</span></div>
     <div class="adm-up-row"><span>📅 Регистрация</span><span>${d.regDate||'—'}</span></div>
@@ -241,15 +299,70 @@ async function admViewUser(uid) {
       <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);margin-bottom:8px">Последние транзакции</div>
       ${txHtml}
     </div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="adm-btn adm-btn-green" style="flex:1" onclick="admCloseUserMo();admOpenBalance('${d.username||d.uid}','add')">${AICO.plus} Начислить</button>
-      <button class="adm-btn adm-btn-danger" style="flex:1" onclick="admCloseUserMo();admOpenBalance('${d.username||d.uid}','remove')">&minus; Снять</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+      <button class="adm-btn adm-btn-green" onclick="admCloseUserMo();admOpenBalance('${banTarget}','add')">${AICO.plus} Начислить</button>
+      <button class="adm-btn adm-btn-danger" onclick="admCloseUserMo();admOpenBalance('${banTarget}','remove')">&minus; Снять</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+      ${isBanned
+        ? `<button class="adm-btn adm-btn-blue" style="grid-column:1/-1" onclick="admUnbanUser('${banTarget}',this)">${AICO.shield} Разбанить</button>`
+        : `<button class="adm-btn adm-btn-danger" onclick="admBanUser('${banTarget}','0',this)">${AICO.ban} Бан навсегда</button>
+           <button class="adm-btn" style="background:rgba(255,150,0,.15);border:1px solid rgba(255,150,0,.25);color:#ff9632" onclick="admBanPicker('${banTarget}')">${AICO.timer} Бан на время</button>`
+      }
     </div>`;
 }
 
 function admCloseUserMo() {
   const mo = document.getElementById('adm-user-mo');
   if (mo) mo.style.display = 'none';
+}
+
+async function admBanUser(target, duration, btn) {
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = `<div class="adm-spin" style="width:10px;height:10px;border-width:2px;display:inline-block;vertical-align:middle"></div>`; }
+  const r = await admApi('/ban', 'POST', { username: target, duration: Number(duration) });
+  if (r.ok) {
+    toast(`🚫 Забанен: ${target}`, 'r');
+    admCloseUserMo();
+    loadAdmUsers();
+  } else {
+    toast(r.error || 'Ошибка', 'r');
+    if (btn) { btn.disabled = false; btn.innerHTML = label; }
+  }
+}
+
+async function admUnbanUser(target, btn) {
+  const label = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = `<div class="adm-spin" style="width:10px;height:10px;border-width:2px;display:inline-block;vertical-align:middle"></div> Снимаем...`; }
+  const r = await admApi('/unban', 'POST', { username: target });
+  if (r.ok) {
+    toast(`✅ Разбанен: ${target}`, 'g');
+    admCloseUserMo();
+    loadAdmUsers();
+  } else {
+    toast(r.error || 'Ошибка', 'r');
+    if (btn) { btn.disabled = false; btn.innerHTML = label; }
+  }
+}
+
+function admBanPicker(target) {
+  const opts = [
+    { label: '1 час',   ms: 3600000 },
+    { label: '3 часа',  ms: 10800000 },
+    { label: '12 часов',ms: 43200000 },
+    { label: '1 день',  ms: 86400000 },
+    { label: '3 дня',   ms: 259200000 },
+    { label: '7 дней',  ms: 604800000 },
+    { label: '30 дней', ms: 2592000000 },
+  ];
+  const body = document.getElementById('adm-user-mo-body');
+  if (!body) return;
+  body.innerHTML += `<div style="border-top:1px solid rgba(255,255,255,.08);margin-top:12px;padding-top:12px">
+    <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:8px">${AICO.timer} Выберите срок бана:</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      ${opts.map(o=>`<button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admBanUser('${target}','${o.ms}',this)">${o.label}</button>`).join('')}
+    </div>
+  </div>`;
 }
 
 function admOpenBalance(username, action) {
@@ -265,12 +378,12 @@ function admOpenBalance(username, action) {
     else toast(r.error||'Ошибка', 'r');
   });
   setTimeout(() => {
-    const body = document.getElementById('gm-body');
-    if (body && !document.getElementById('gm-extra-input')) {
+    const b = document.getElementById('gm-body');
+    if (b && !document.getElementById('gm-extra-input')) {
       const inp = document.createElement('input');
       inp.id = 'gm-extra-input'; inp.className = 'adm-input';
       inp.type = 'number'; inp.placeholder = 'Сумма монет'; inp.style.marginTop = '12px';
-      body.appendChild(inp); inp.focus();
+      b.appendChild(inp); inp.focus();
     }
   }, 60);
 }
@@ -286,6 +399,13 @@ async function loadAdmTasks() {
   if (data.error) { el.innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}</div>`; return; }
   admTasks = data;
 
+  const TAG_COLORS = [
+    { label: '🟢 Зелёный (подписка)', val: 'g' },
+    { label: '🔴 Красный (друзья)', val: 'fr' },
+    { label: '🟠 Оранжевый (задание)', val: 'o' },
+    { label: '🔵 Синий (кошелёк)', val: 'b' },
+  ];
+
   let listHtml = '';
   if (admTasks.length) {
     listHtml = `<div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.tasks} Задания (${admTasks.length})</div></div>`;
@@ -294,7 +414,7 @@ async function loadAdmTasks() {
         <div class="adm-item-icon-svg">${AICO.tasks}</div>
         <div class="adm-item-body">
           <div class="adm-item-name">${t.name}</div>
-          <div class="adm-item-sub">${t.rew} монет · #${t.id} · ${t.tag}</div>
+          <div class="adm-item-sub">${t.rew} монет · #${t.id} · тег: ${t.tag||'—'}</div>
         </div>
         <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteTask(${t.id})">${AICO.trash}</button>
       </div>`).join('');
@@ -312,6 +432,15 @@ async function loadAdmTasks() {
           <div class="adm-input-group"><div class="adm-label">${AICO.coin} Монеты</div><input class="adm-input" id="atask-rew" type="number" placeholder="500"></div>
         </div>
         <div class="adm-input-group"><div class="adm-label">${AICO.desc} Описание</div><input class="adm-input" id="atask-desc" placeholder="Подпишись на @channel"></div>
+        <div class="adm-input-group">
+          <div class="adm-label">${AICO.color} Цвет тега</div>
+          <select class="adm-select" id="atask-tag">
+            <option value="g">🟢 Зелёный (подписка)</option>
+            <option value="fr">🔴 Красный (друзья/NEW)</option>
+            <option value="o">🟠 Оранжевый (задание)</option>
+            <option value="b">🔵 Синий (кошелёк)</option>
+          </select>
+        </div>
         <div class="adm-check-row"><div class="adm-check-label">${AICO.star} Пометка NEW</div><button class="adm-toggle" id="atask-new-toggle" onclick="this.classList.toggle('on')"></button></div>
         <button class="adm-btn adm-btn-primary" onclick="admCreateTask()">${AICO.plus} Создать задание</button>
       </div>
@@ -323,9 +452,10 @@ async function admCreateTask() {
   const name = document.getElementById('atask-name')?.value.trim();
   const rew = parseInt(document.getElementById('atask-rew')?.value||'0');
   const desc = document.getElementById('atask-desc')?.value.trim();
+  const tag = document.getElementById('atask-tag')?.value || 'o';
   const isNew = document.getElementById('atask-new-toggle')?.classList.contains('on');
   if (!type || !name || !rew) { toast('Заполни все поля', 'r'); return; }
-  const r = await admApi('/tasks', 'POST', { type, reward: rew, name, desc: desc||name, isNew });
+  const r = await admApi('/tasks', 'POST', { type, reward: rew, name, desc: desc||name, tag, isNew });
   if (r.ok) { toast(`Задание создано #${r.task.id}`, 'g'); loadAdmTasks(); }
   else toast(r.error||'Ошибка', 'r');
 }
@@ -333,6 +463,189 @@ async function admCreateTask() {
 async function admDeleteTask(id) {
   const r = await admApi('/tasks/'+id, 'DELETE', {});
   if (r.ok) { toast('Задание удалено', 'g'); loadAdmTasks(); }
+  else toast(r.error||'Ошибка', 'r');
+}
+
+/* ════════════════════════════════════════════
+   SHOP ADMIN
+════════════════════════════════════════════ */
+async function loadAdmShop() {
+  admLoading('adm-shop');
+  const data = await admApi('/shop', 'GET');
+  const el = document.getElementById('adm-shop');
+  if (!el) return;
+  if (data.error) { el.innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}</div>`; return; }
+  admShopItems = data;
+
+  let listHtml = '';
+  if (admShopItems.length) {
+    listHtml = `<div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.shop} Товары (${admShopItems.length})</div></div>`;
+    listHtml += admShopItems.map(it => {
+      const imgThumb = it.imageUrl ? `<img src="${it.imageUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:8px;flex-shrink:0" onerror="this.style.display='none'">` : '';
+      const borderStyle = it.borderColor ? `border:1px solid ${it.borderColor}` : '';
+      return `<div class="adm-item" style="${borderStyle}">
+        ${imgThumb}
+        <div class="adm-item-body">
+          <div class="adm-item-name">${it.name}${it.tag?` <span class="adm-tag-pill" style="background:${it.tagColor||'rgba(255,255,255,.1)'}">${it.tag}</span>`:''}</div>
+          <div class="adm-item-sub">${it.price} монет · #${it.id}</div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="adm-btn adm-btn-sm" onclick="admEditShopItem(${it.id})" title="Редактировать">${AICO.edit}</button>
+          <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteShopItem(${it.id})">${AICO.trash}</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    listHtml = `<div class="adm-empty">${AICO.shop} Товаров нет</div>`;
+  }
+
+  el.innerHTML = `${listHtml}
+    <div class="adm-card">
+      <div class="adm-card-hdr"><div class="adm-card-title">${AICO.plus} Добавить товар</div></div>
+      <div class="adm-form">
+        <div class="adm-input-row">
+          <div class="adm-input-group"><div class="adm-label">${AICO.desc} Название</div><input class="adm-input" id="ashop-name" placeholder="VIP 7 дней"></div>
+          <div class="adm-input-group"><div class="adm-label">${AICO.coin} Цена</div><input class="adm-input" id="ashop-price" type="number" placeholder="500"></div>
+        </div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.desc} Описание</div><input class="adm-input" id="ashop-desc" placeholder="Краткое описание товара"></div>
+        <div class="adm-input-row">
+          <div class="adm-input-group"><div class="adm-label">${AICO.star} Тег (NEW / СКИДКА...)</div><input class="adm-input" id="ashop-tag" placeholder="NEW"></div>
+          <div class="adm-input-group"><div class="adm-label">${AICO.color} Цвет тега</div><input class="adm-input" id="ashop-tagcolor" placeholder="#2ecc71" style="font-size:12px"></div>
+        </div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.color} Цвет обводки товара</div><input class="adm-input" id="ashop-border" placeholder="rgba(46,204,113,.3)" style="font-size:12px"></div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.img} Картинка (URL)</div><input class="adm-input" id="ashop-img" placeholder="https://..."></div>
+        <div class="adm-input-group">
+          <div class="adm-label">${AICO.upload} Загрузить фото с устройства</div>
+          <label class="adm-file-label">
+            ${AICO.upload} Выбрать фото
+            <input type="file" accept="image/*" style="display:none" onchange="admUploadShopImgNew(event)">
+          </label>
+          <div id="ashop-img-status" class="adm-img-status"></div>
+        </div>
+        <button class="adm-btn adm-btn-primary" onclick="admCreateShopItem()">${AICO.plus} Добавить товар</button>
+      </div>
+    </div>`;
+}
+
+async function admUploadShopImgNew(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('ashop-img-status');
+  if (status) status.innerHTML = `<div class="adm-spin" style="width:10px;height:10px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px"></div> Загружаем...`;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    const mimeType = file.type;
+    const tmpId = Date.now();
+    const r = await admApi(`/shop/${tmpId}/image`, 'POST', { imageBase64: base64, mimeType });
+    if (r.ok) {
+      const imgInput = document.getElementById('ashop-img');
+      if (imgInput) imgInput.value = r.imageUrl;
+      if (status) status.innerHTML = `<span style="color:#00FFA3">${AICO.check} Загружено</span>`;
+    } else {
+      if (status) status.innerHTML = `<span style="color:#ff6b6b">${AICO.alert} ${r.error||'Ошибка'}</span>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function admCreateShopItem() {
+  const name = document.getElementById('ashop-name')?.value.trim();
+  const price = parseInt(document.getElementById('ashop-price')?.value||'0');
+  const desc = document.getElementById('ashop-desc')?.value.trim();
+  const tag = document.getElementById('ashop-tag')?.value.trim();
+  const tagColor = document.getElementById('ashop-tagcolor')?.value.trim();
+  const borderColor = document.getElementById('ashop-border')?.value.trim();
+  const imageUrl = document.getElementById('ashop-img')?.value.trim();
+  if (!name || !price) { toast('Заполни название и цену', 'r'); return; }
+  const r = await admApi('/shop', 'POST', { name, price, desc, tag, tagColor, borderColor, imageUrl });
+  if (r.ok) { toast(`Товар "${name}" добавлен`, 'g'); loadAdmShop(); }
+  else toast(r.error||'Ошибка', 'r');
+}
+
+function admEditShopItem(id) {
+  const item = admShopItems.find(i => i.id === id);
+  if (!item) return;
+  const el = document.getElementById('adm-shop');
+  if (!el) return;
+  const editId = `ashop-edit-${id}`;
+  const existing = document.getElementById(editId);
+  if (existing) { existing.remove(); return; }
+
+  const editHtml = document.createElement('div');
+  editHtml.id = editId;
+  editHtml.className = 'adm-card';
+  editHtml.style.marginTop = '8px';
+  editHtml.innerHTML = `
+    <div class="adm-card-hdr"><div class="adm-card-title">${AICO.edit} Редактировать #${id}</div></div>
+    <div class="adm-form">
+      <div class="adm-input-row">
+        <div class="adm-input-group"><div class="adm-label">Название</div><input class="adm-input" id="ase-name-${id}" value="${item.name||''}"></div>
+        <div class="adm-input-group"><div class="adm-label">Цена</div><input class="adm-input" id="ase-price-${id}" type="number" value="${item.price||0}"></div>
+      </div>
+      <div class="adm-input-group"><div class="adm-label">Описание</div><input class="adm-input" id="ase-desc-${id}" value="${item.desc||''}"></div>
+      <div class="adm-input-row">
+        <div class="adm-input-group"><div class="adm-label">Тег</div><input class="adm-input" id="ase-tag-${id}" value="${item.tag||''}"></div>
+        <div class="adm-input-group"><div class="adm-label">Цвет тега</div><input class="adm-input" id="ase-tagc-${id}" value="${item.tagColor||''}" placeholder="#hex"></div>
+      </div>
+      <div class="adm-input-group"><div class="adm-label">Цвет обводки</div><input class="adm-input" id="ase-border-${id}" value="${item.borderColor||''}" placeholder="rgba(...)"></div>
+      <div class="adm-input-group"><div class="adm-label">URL фото</div><input class="adm-input" id="ase-img-${id}" value="${item.imageUrl||''}" placeholder="https://..."></div>
+      <div class="adm-input-group">
+        <div class="adm-label">${AICO.upload} Загрузить новое фото</div>
+        <label class="adm-file-label">
+          ${AICO.upload} Выбрать фото
+          <input type="file" accept="image/*" style="display:none" onchange="admUploadShopImg(event,${id})">
+        </label>
+        <div id="ase-img-status-${id}" class="adm-img-status"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="adm-btn adm-btn-primary" style="flex:1" onclick="admSaveShopItem(${id})">${AICO.check} Сохранить</button>
+        <button class="adm-btn" style="flex:0 0 auto;background:rgba(255,255,255,.06)" onclick="document.getElementById('${editId}').remove()">${AICO.trash} Отмена</button>
+      </div>
+    </div>`;
+
+  const itemEl = el.querySelector(`.adm-item [onclick*="admDeleteShopItem(${id})"]`)?.closest('.adm-item');
+  if (itemEl) itemEl.after(editHtml);
+  else el.querySelector('.adm-card').before(editHtml);
+}
+
+async function admUploadShopImg(event, id) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const status = document.getElementById(`ase-img-status-${id}`);
+  if (status) status.innerHTML = `<div class="adm-spin" style="width:10px;height:10px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px"></div> Загружаем...`;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const base64 = e.target.result.split(',')[1];
+    const mimeType = file.type;
+    const r = await admApi(`/shop/${id}/image`, 'POST', { imageBase64: base64, mimeType });
+    if (r.ok) {
+      const imgInput = document.getElementById(`ase-img-${id}`);
+      if (imgInput) imgInput.value = r.imageUrl;
+      if (status) status.innerHTML = `<span style="color:#00FFA3">${AICO.check} Загружено</span>`;
+    } else {
+      if (status) status.innerHTML = `<span style="color:#ff6b6b">${AICO.alert} ${r.error||'Ошибка'}</span>`;
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function admSaveShopItem(id) {
+  const name = document.getElementById(`ase-name-${id}`)?.value.trim();
+  const price = parseInt(document.getElementById(`ase-price-${id}`)?.value||'0');
+  const desc = document.getElementById(`ase-desc-${id}`)?.value.trim();
+  const tag = document.getElementById(`ase-tag-${id}`)?.value.trim();
+  const tagColor = document.getElementById(`ase-tagc-${id}`)?.value.trim();
+  const borderColor = document.getElementById(`ase-border-${id}`)?.value.trim();
+  const imageUrl = document.getElementById(`ase-img-${id}`)?.value.trim();
+  const r = await admApi(`/shop/${id}`, 'PATCH', { name, price, desc, tag, tagColor, borderColor, imageUrl });
+  if (r.ok) { toast('Сохранено', 'g'); loadAdmShop(); }
+  else toast(r.error||'Ошибка', 'r');
+}
+
+async function admDeleteShopItem(id) {
+  const r = await admApi('/shop/'+id, 'DELETE', {});
+  if (r.ok) { toast('Товар удалён', 'g'); loadAdmShop(); }
   else toast(r.error||'Ошибка', 'r');
 }
 
@@ -376,8 +689,8 @@ async function loadAdmDraws() {
             <option value="604800000">7 дней</option>
           </select>
         </div>
-        <div class="adm-input-group"><div class="adm-label">${AICO.desc} Описание (необязательно)</div><input class="adm-input" id="adraw-desc" placeholder="Описание розыгрыша"></div>
-        <div class="adm-input-group"><div class="adm-label">${AICO.img} Картинка по URL (необязательно)</div><input class="adm-input" id="adraw-img" placeholder="https://..."></div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.desc} Название/описание</div><input class="adm-input" id="adraw-desc" placeholder="Описание розыгрыша"></div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.img} Картинка по URL</div><input class="adm-input" id="adraw-img" placeholder="https://..."></div>
         <div class="adm-input-group"><div class="adm-label">${AICO.broadcast} Канал-условие (необязательно)</div><input class="adm-input" id="adraw-cond-chan" placeholder="@channel"></div>
         <div class="adm-check-row"><div class="adm-check-label">${AICO.ticket} Только по билету</div><button class="adm-toggle" id="adraw-ticket-toggle" onclick="this.classList.toggle('on')"></button></div>
         <button class="adm-btn adm-btn-primary" onclick="admCreateDraw()">${AICO.plus} Создать розыгрыш</button>
@@ -390,7 +703,7 @@ function admDrawCard(d) {
   const leftStr = fmtDur(left) || 'завершается';
   const participantsCount = (d.participants||[]).length;
   const hasTicket = d.requireTicket;
-  const imgThumb = d.imageUrl ? `<div class="adm-draw-thumb"><img src="${d.imageUrl}" onerror="this.parentElement.style.display='none'" style="width:100%;height:100%;object-fit:cover;border-radius:6px"></div>` : '';
+  const imgThumb = d.imageUrl ? `<img src="${d.imageUrl}" onerror="this.style.display='none'" style="width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0">` : '';
   return `<div class="adm-draw-card" id="adm-draw-${d.id}">
     <div class="adm-draw-header">
       ${imgThumb}
@@ -403,18 +716,18 @@ function admDrawCard(d) {
         <div class="adm-draw-id">#${d.id}</div>
       </div>
       <div class="adm-draw-btns">
-        <button class="adm-btn adm-btn-sm" onclick="admToggleDrawEdit(${d.id})" title="Редактировать">${AICO.edit}</button>
-        <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteDraw(${d.id})" title="Удалить">${AICO.trash}</button>
+        <button class="adm-btn adm-btn-sm" onclick="admToggleDrawEdit(${d.id})">${AICO.edit}</button>
+        <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteDraw(${d.id})">${AICO.trash}</button>
       </div>
     </div>
     <div class="adm-draw-edit" id="adm-draw-edit-${d.id}" style="display:none">
       <div class="adm-form" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
         <div class="adm-input-group"><div class="adm-label">${AICO.gift} Приз</div><input class="adm-input" id="dedit-prize-${d.id}" value="${d.prize||''}"></div>
         <div class="adm-input-group"><div class="adm-label">${AICO.desc} Описание</div><input class="adm-input" id="dedit-desc-${d.id}" value="${d.desc||''}"></div>
-        <div class="adm-input-group"><div class="adm-label">${AICO.img} Картинка по URL</div><input class="adm-input" id="dedit-img-${d.id}" value="${d.imageUrl||''}" placeholder="https://..."></div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.img} Картинка URL</div><input class="adm-input" id="dedit-img-${d.id}" value="${d.imageUrl||''}" placeholder="https://..."></div>
         <div class="adm-input-group">
-          <div class="adm-label">${AICO.upload} Загрузить фото с устройства</div>
-          <label class="adm-file-label" onclick="">
+          <div class="adm-label">${AICO.upload} Загрузить фото</div>
+          <label class="adm-file-label">
             ${AICO.upload} Выбрать фото
             <input type="file" accept="image/*" style="display:none" onchange="admUploadDrawImg(event, ${d.id})">
           </label>
@@ -440,14 +753,13 @@ async function admUploadDrawImg(event, drawId) {
   if (status) status.innerHTML = `<div class="adm-spin" style="width:10px;height:10px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px"></div> Загружаем...`;
   const reader = new FileReader();
   reader.onload = async (e) => {
-    const dataUrl = e.target.result;
-    const base64 = dataUrl.split(',')[1];
+    const base64 = e.target.result.split(',')[1];
     const mimeType = file.type;
     const r = await admApi(`/draws/${drawId}/image`, 'POST', { imageBase64: base64, mimeType });
     if (r.ok) {
       const imgInput = document.getElementById(`dedit-img-${drawId}`);
       if (imgInput) imgInput.value = r.imageUrl;
-      if (status) status.innerHTML = `<span style="color:#00FFA3">${AICO.check} Загружено: ${r.imageUrl}</span>`;
+      if (status) status.innerHTML = `<span style="color:#00FFA3">${AICO.check} Загружено</span>`;
     } else {
       if (status) status.innerHTML = `<span style="color:#ff6b6b">${AICO.alert} ${r.error||'Ошибка'}</span>`;
     }
@@ -506,10 +818,6 @@ async function loadAdmPromos() {
     listHtml += admPromos.map(p => {
       const isFull = p.usedCount >= p.maxUses;
       const pct = p.maxUses ? Math.round(p.usedCount / p.maxUses * 100) : 0;
-      let soldOutStr = '';
-      if (p.soldOutAt && p.createdAt) {
-        soldOutStr = `<span class="adm-promo-soldout">${AICO.timer} Разобрали за ${fmtSoldOut(p.soldOutAt - p.createdAt)}</span>`;
-      }
       return `<div class="adm-promo-item">
         <div class="adm-promo-top">
           <div class="adm-promo-code-wrap">
@@ -519,12 +827,11 @@ async function loadAdmPromos() {
           </div>
           <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeletePromo('${p.code}')">${AICO.trash}</button>
         </div>
-        <div class="adm-promo-reward">${AICO.coin} ${p.reward} монет за активацию</div>
+        <div class="adm-promo-reward">${AICO.coin} ${p.reward} монет · ${p.usedCount}/${p.maxUses} активаций</div>
         <div class="adm-promo-bar-wrap">
           <div class="adm-promo-bar"><div class="adm-promo-bar-fill${isFull?' full':''}" style="width:${pct}%"></div></div>
-          <div class="adm-promo-count">${p.usedCount} / ${p.maxUses}</div>
+          <div class="adm-promo-count">${pct}%</div>
         </div>
-        ${soldOutStr}
         ${p.createdAt ? `<div class="adm-promo-date">${AICO.timer} Создан ${fmtDate(p.createdAt)}</div>` : ''}
       </div>`;
     }).join('');
@@ -565,7 +872,7 @@ async function admDeletePromo(code) {
 }
 
 /* ════════════════════════════════════════════
-   NOTIFICATIONS
+   NOTIFICATIONS / BROADCAST
 ════════════════════════════════════════════ */
 async function loadAdmNotifs() {
   admLoading('adm-notifs');
@@ -595,10 +902,10 @@ async function loadAdmNotifs() {
 
   el.innerHTML = `${listHtml}
     <div class="adm-card">
-      <div class="adm-card-hdr"><div class="adm-card-title">${AICO.send} Создать уведомление</div></div>
+      <div class="adm-card-hdr"><div class="adm-card-title">${AICO.bell} Уведомление в приложении</div></div>
       <div class="adm-form">
         <div class="adm-input-group">
-          <div class="adm-label">${AICO.bell} Тип</div>
+          <div class="adm-label">Тип уведомления</div>
           <div class="adm-notif-type">
             <button class="adm-notif-type-btn sel" data-type="system" onclick="admSelectNotifType(this)">${AICO.bell} Система</button>
             <button class="adm-notif-type-btn" data-type="promo" onclick="admSelectNotifType(this)">${AICO.gift} Промо</button>
@@ -606,13 +913,15 @@ async function loadAdmNotifs() {
             <button class="adm-notif-type-btn" data-type="alert" onclick="admSelectNotifType(this)">${AICO.alert} Важно</button>
           </div>
         </div>
-        <div class="adm-input-group"><div class="adm-label">${AICO.desc} Текст</div><textarea class="adm-textarea" id="anotif-text" placeholder="Текст уведомления для всех пользователей..."></textarea></div>
-        <button class="adm-btn adm-btn-primary" onclick="admCreateNotif()">${AICO.send} Отправить уведомление</button>
-        <div style="border-top:1px solid rgba(255,255,255,.07);padding-top:12px;margin-top:4px">
-          <div class="adm-label" style="margin-bottom:8px">${AICO.broadcast} Telegram рассылка</div>
-          <textarea class="adm-textarea" id="abroadcast-text" placeholder="Текст для рассылки в Telegram всем пользователям..." style="min-height:60px"></textarea>
-          <button class="adm-btn adm-btn-broadcast" onclick="admBroadcast()">${AICO.broadcast} Разослать в Telegram</button>
-        </div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.desc} Текст</div><textarea class="adm-textarea" id="anotif-text" placeholder="Текст уведомления для всех..."></textarea></div>
+        <button class="adm-btn adm-btn-primary" onclick="admCreateNotif()">${AICO.send} Отправить в приложение</button>
+      </div>
+    </div>
+    <div class="adm-card" style="margin-top:10px">
+      <div class="adm-card-hdr"><div class="adm-card-title">${AICO.broadcast} Рассылка в Telegram</div></div>
+      <div class="adm-form">
+        <textarea class="adm-textarea" id="abroadcast-text" placeholder="Текст для рассылки всем пользователям в Telegram..."></textarea>
+        <button class="adm-btn adm-btn-broadcast" onclick="admBroadcast()">${AICO.broadcast} Разослать в Telegram</button>
       </div>
     </div>`;
 }

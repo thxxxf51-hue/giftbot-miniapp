@@ -621,6 +621,11 @@ app.post('/api/check-chat', async (req, res) => {
   res.json({ ok: true, member });
 });
 
+/* ── Public custom shop items ── */
+app.get('/api/shop/custom', (req, res) => {
+  res.json(DB.customShopItems || []);
+});
+
 app.post('/api/promo', (req, res) => {
   const { code, userId, isVip } = req.body;
   const c = (code||'').toUpperCase().trim();
@@ -2951,12 +2956,15 @@ app.get('/api/admin/stats', (req, res) => {
   const topUsers = Object.entries(DB.users)
     .map(([uid, u]) => ({ uid, username: u.username||'?', firstName: u.firstName||'', balance: u.balance||0 }))
     .sort((a, b) => b.balance - a.balance).slice(0, 5);
+  const totalCoins = Object.values(DB.users).reduce((s, u) => s + (u.balance||0), 0);
   res.json({
     users: Object.keys(DB.users).length,
     draws: Object.keys(DB.draws).length,
     tasks: (DB.customTasks||[]).length,
     promos: Object.keys(DB.promos||{}).length,
     notifications: (DB.notifications||[]).length,
+    shop: (DB.customShopItems||[]).length,
+    totalCoins,
     topUsers
   });
 });
@@ -3283,6 +3291,70 @@ app.post('/api/admin/broadcast', async (req, res) => {
     await new Promise(r => setTimeout(r, 50));
   }
   res.json({ ok: true, sent, failed, total: userIds.length });
+});
+
+/* ══ ADMIN: SHOP ITEMS ══ */
+app.get('/api/admin/shop', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  res.json(DB.customShopItems || []);
+});
+
+app.post('/api/admin/shop', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
+  if (!name || !price) return res.status(400).json({ error: 'name и price обязательны' });
+  if (!DB.customShopItems) DB.customShopItems = [];
+  const id = Date.now();
+  const item = { id, name, price: Number(price), desc: desc||'', tag: tag||'', tagColor: tagColor||'', borderColor: borderColor||'', imageUrl: imageUrl||'' };
+  DB.customShopItems.push(item);
+  saveDB();
+  res.json({ ok: true, item });
+});
+
+app.patch('/api/admin/shop/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  if (!DB.customShopItems) return res.status(404).json({ error: 'Not found' });
+  const id = Number(req.params.id);
+  const idx = DB.customShopItems.findIndex(i => i.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Item not found' });
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
+  const item = DB.customShopItems[idx];
+  if (name !== undefined) item.name = name;
+  if (price !== undefined) item.price = Number(price);
+  if (desc !== undefined) item.desc = desc;
+  if (tag !== undefined) item.tag = tag;
+  if (tagColor !== undefined) item.tagColor = tagColor;
+  if (borderColor !== undefined) item.borderColor = borderColor;
+  if (imageUrl !== undefined) item.imageUrl = imageUrl;
+  saveDB();
+  res.json({ ok: true, item });
+});
+
+app.delete('/api/admin/shop/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  if (!DB.customShopItems) return res.json({ ok: true });
+  const id = Number(req.params.id);
+  DB.customShopItems = DB.customShopItems.filter(i => i.id !== id);
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/shop/:id/image', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { imageBase64, mimeType } = req.body;
+  if (!imageBase64) return res.status(400).json({ error: 'imageBase64 required' });
+  const ext = (mimeType||'image/jpeg').split('/')[1].replace('jpeg','jpg');
+  const fname = `shop_${req.params.id}_${Date.now()}.${ext}`;
+  const fpath = require('path').join(__dirname, 'public', 'uploads', fname);
+  require('fs').mkdirSync(require('path').join(__dirname, 'public', 'uploads'), { recursive: true });
+  require('fs').writeFileSync(fpath, Buffer.from(imageBase64, 'base64'));
+  const imageUrl = `/uploads/${fname}`;
+  if (DB.customShopItems) {
+    const id = Number(req.params.id);
+    const item = DB.customShopItems.find(i => i.id === id);
+    if (item) { item.imageUrl = imageUrl; saveDB(); }
+  }
+  res.json({ ok: true, imageUrl });
 });
 
 const PORT = process.env.PORT || 5000;

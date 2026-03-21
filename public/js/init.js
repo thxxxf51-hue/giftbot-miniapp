@@ -154,7 +154,7 @@ async function init(){
     }
   } catch{}
   renderTasks();
-  rShopItems();
+  loadCustomShopItems();
   rCases();
   rRefStats();
   rRefList();

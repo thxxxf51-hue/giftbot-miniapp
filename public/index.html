@@ -711,6 +711,79 @@
       <div id="tx-list"><div class="tx-empty">Нет транзакций</div></div>
     </div>
   </div>
+
+  <!-- ADMIN ENTRY (только для администратора) -->
+  <div id="profile-admin-entry" style="display:none;margin:0 4px 16px">
+    <div class="prn-admin-card" onclick="go('admin')">
+      <div class="pac-left">
+        <div class="pac-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="pac-info">
+          <div class="pac-title">Панель администратора</div>
+          <div class="pac-sub">Управление ботом</div>
+        </div>
+      </div>
+      <span class="pac-arr">›</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN PAGE ══════════════ -->
+<div class="page" id="page-admin" style="display:none">
+  <div class="phdr">
+    <button class="adm-back-btn" onclick="admGoSection('dashboard')" id="adm-back-btn" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="ptitle" id="adm-page-title">Админ панель</div>
+    <div class="bpill" id="adm-coins-pill" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="adm-total-coins">0</span></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="adm-dashboard" class="adm-section active">
+    <div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>
+  </div>
+
+  <!-- USERS -->
+  <div id="adm-users" class="adm-section" style="display:none">
+    <div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>
+  </div>
+
+  <!-- TASKS -->
+  <div id="adm-tasks" class="adm-section" style="display:none">
+    <div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>
+  </div>
+
+  <!-- SHOP -->
+  <div id="adm-shop" class="adm-section" style="display:none">
+    <div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>
+  </div>
+
+  <!-- DRAWS -->
+  <div id="adm-draws" class="adm-section" style="display:none">
+    <div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>
+  </div>
+
+  <!-- PROMOS -->
+  <div id="adm-promos" class="adm-section" style="display:none">
+    <div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>
+  </div>
+
+  <!-- NOTIFS -->
+  <div id="adm-notifs" class="adm-section" style="display:none">
+    <div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div>
+  </div>
+
+  <!-- USER DETAIL MODAL -->
+  <div id="adm-user-mo" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center" onclick="if(event.target===this)admCloseUserMo()">
+    <div style="background:#13131b;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-height:85vh;overflow-y:auto;border-top:1px solid rgba(255,255,255,.08)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:700">Профиль пользователя</div>
+        <button onclick="admCloseUserMo()" style="background:rgba(255,255,255,.08);border:none;color:#fff;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px">&times;</button>
+      </div>
+      <div id="adm-user-mo-body"><div class="adm-loading"><div class="adm-spin"></div>Загружаем...</div></div>
+    </div>
+  </div>
 </div>
 
 <!-- SWIPE TO ENTER -->
@@ -1189,9 +1262,9 @@
 <script src="js/mines.js"></script>
 <script src="js/effects.js"></script>
 <script src="js/bets.js"></script>
-<script src="js/bets.js"></script>
 <script src="js/lang.js"></script>
 <script src="js/wallet.js"></script>
+<script src="js/admin.js"></script>
 <script src="js/init.js"></script>
 
 <!-- PvP History Modal -->
