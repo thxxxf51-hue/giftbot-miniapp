@@ -85,11 +85,10 @@ function fmtDate(ts) {
 /* ── Init admin ─────────────────────────────── */
 function initAdmin() {
   if (UID !== ADMIN_UID) return;
-  // Показываем карточку на странице Профиль
   const profileEntry = document.getElementById('profile-admin-entry');
   if (profileEntry) profileEntry.style.display = 'block';
-  // Добавляем страницу admin в список страниц
   if (!PAGES.includes('admin')) PAGES.push('admin');
+  admApi('/stats', 'GET').then(d => { if (!d.error) admStatsCache = d; }).catch(() => {});
 }
 
 /* ── Navigation ─────────────────────────────── */
@@ -144,16 +143,7 @@ function admLoading(id) {
 /* ════════════════════════════════════════════
    DASHBOARD — сетка карточек
 ════════════════════════════════════════════ */
-async function loadAdmDashboard() {
-  admLoading('adm-dashboard');
-  const d = await admApi('/stats', 'GET');
-  if (d.error) {
-    document.getElementById('adm-dashboard').innerHTML = `<div class="adm-err">${AICO.alert} ${d.error}</div>`;
-    return;
-  }
-  admStatsCache = d;
-
-  // Обновляем монеты в пилюле заголовка
+function _renderAdmDashboard(d) {
   const coinsEl = document.getElementById('adm-total-coins');
   if (coinsEl) coinsEl.textContent = (d.totalCoins||0).toLocaleString('ru');
 
@@ -179,7 +169,6 @@ async function loadAdmDashboard() {
   }
   html += `</div>`;
 
-  // Топ по балансу
   if (d.topUsers && d.topUsers.length) {
     html += `<div class="adm-card" style="margin-top:14px">
       <div class="adm-card-hdr"><div class="adm-card-title">${AICO.crown} Топ по балансу</div></div>`;
@@ -194,7 +183,6 @@ async function loadAdmDashboard() {
     html += `</div>`;
   }
 
-  // Бэкап
   html += `<div class="adm-backup-row">
     <div class="adm-backup-info">
       <div class="adm-backup-title">${AICO.backup} Бэкап базы данных</div>
@@ -204,6 +192,23 @@ async function loadAdmDashboard() {
   </div>`;
 
   document.getElementById('adm-dashboard').innerHTML = html;
+}
+
+async function loadAdmDashboard() {
+  if (admStatsCache) {
+    _renderAdmDashboard(admStatsCache);
+  } else {
+    admLoading('adm-dashboard');
+  }
+  const d = await admApi('/stats', 'GET');
+  if (d.error) {
+    if (!admStatsCache) {
+      document.getElementById('adm-dashboard').innerHTML = `<div class="adm-err">${AICO.alert} ${d.error}</div>`;
+    }
+    return;
+  }
+  admStatsCache = d;
+  _renderAdmDashboard(d);
 }
 
 async function admBackupNow(btn) {
