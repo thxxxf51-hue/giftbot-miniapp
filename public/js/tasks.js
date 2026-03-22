@@ -2,6 +2,15 @@
 const COIN_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
 const CHECK_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
+let pendingVerifyTask=null;
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&pendingVerifyTask){
+    const t=pendingVerifyTask;
+    pendingVerifyTask=null;
+    setTimeout(()=>showVerifyBtn(t),350);
+  }
+});
+
 const DONE_TOAST_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="#00FFA3" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
 const WIP_TOAST_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="#f4c430" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
@@ -23,9 +32,9 @@ function renderTasks(){
 
     const rew=`<div class="tc-rew">${COIN_ICO} ${t.rew.toLocaleString('ru')}</div>`;
 
-    // Динамический прогресс для реферальных заданий
+    // Динамический прогресс для реферальных заданий (всегда, даже если выполнено)
     let prog=t.prog||null;
-    if(!done && t.check==='ref'){
+    if(t.check==='ref'){
       const cnt=S.refs?S.refs.length:0;
       if(cnt<3)      prog={cur:cnt,max:3};
       else if(cnt<5) prog={cur:cnt,max:5};
@@ -33,17 +42,20 @@ function renderTasks(){
     }
 
     let pct=0;
-    if(done){ pct=100; }
-    else if(prog!=null){ pct=Math.min(100,Math.round((prog.cur/prog.max)*100)); }
+    if(prog!=null){ pct=Math.min(100,Math.round((prog.cur/prog.max)*100)); }
+    else if(done){ pct=100; }
 
     let bottom='';
-    if(done){
-      bottom=`<div class="tc-done-lbl">${CHECK_ICO} Выполнено</div>`;
-    } else if(prog!=null){
+    if(prog!=null){
       const isFull=prog.cur>=prog.max;
       const fillClass='tc-prog-fill'+(isFull?' prog-full':'');
       const progTxt=`<div class="tc-prog-txt">${prog.cur} / ${prog.max}${prog.unit?' '+prog.unit:''}</div>`;
       bottom=`<div class="tc-prog-bar"><div class="${fillClass}" style="width:${pct}%"></div></div>${progTxt}`;
+    } else if(done){
+      bottom=`<div class="tc-done-lbl">${CHECK_ICO} Выполнено</div>`;
+    }
+    if(done && t.check==='ref'){
+      bottom+=`<div class="tc-done-lbl">${CHECK_ICO} Выполнено</div>`;
     }
 
     card.innerHTML=`
@@ -127,42 +139,78 @@ function openTask(id){
   }
   if(t.check==='sub'){
     _openTaskModal(t,'Перейти на канал',()=>{
+      pendingVerifyTask=t;
       if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
-      closeGenMo();
-      setTimeout(()=>showVerifyBtn(t),800);
+      closeTaskMo();
     });
     return;
   }
   if(t.check==='chat'){
     _openTaskModal(t,'Открыть чат',()=>{
+      pendingVerifyTask=t;
       if(tg)tg.openTelegramLink(t.url);else window.open(t.url,'_blank');
-      closeGenMo();
-      setTimeout(()=>showVerifyBtn(t),800);
+      closeTaskMo();
     });
     return;
   }
 }
 
 function showVerifyBtn(t){
-  openGenMo(
-    'Проверка задания',
-    t.check==='sub'
-      ? `Подписался ли ты на @${t.channel}?`
-      : `Написал ли ты слово в @${t.channel}?`,
-    '✅ Проверить',
-    ()=>verifyTask(t)
-  );
-  document.querySelector('#genmo .mbtn.gray').textContent='Ещё не выполнил';
-  document.querySelector('#genmo .mbtn.gray').onclick=()=>{
-    closeGenMo();
-    toast(t.check==='sub'?'Вы не подписались':'Вы не написали слово в чат','r');
-  };
+  const mo=document.getElementById('genmo');
+  const box=mo.querySelector('.modal-box');
+  if(!box._origHTML) box._origHTML=box.innerHTML;
+  box.classList.add('tm-modal-box');
+
+  const desc=t.check==='sub'
+    ?`Подписался ли ты на @${t.channel}?`
+    :`Написал ли ты слово в @${t.channel}?`;
+
+  function renderVerify(error){
+    const errHtml=error
+      ?`<div style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.3);border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#ff5555;font-size:14px;font-weight:700">${_X_SVG} ${error}</div>`
+      :'';
+    box.innerHTML=`
+      <div class="tm-hdr">
+        <div class="tm-title">Проверка задания</div>
+        <button class="tm-x" onclick="closeTaskMo()">${_X_SVG}</button>
+      </div>
+      <div class="tm-sep"></div>
+      <div class="tm-body">
+        ${errHtml}
+        <div class="tm-desc">${desc}</div>
+        <button class="tm-act tm-act--go" id="tm-verify-btn">✅ Проверить</button>
+        <button class="tm-cancel" onclick="closeTaskMo()">Ещё не выполнил</button>
+      </div>`;
+    box.querySelector('#tm-verify-btn').onclick=()=>doVerify();
+  }
+
+  async function doVerify(){
+    const btn=box.querySelector('#tm-verify-btn');
+    if(btn){btn.textContent='Проверяем...';btn.disabled=true;}
+    try{
+      if(t.check==='sub'){
+        const r=await fetch('/api/check-sub',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,channel:t.channel})});
+        const d=await r.json();
+        if(d.subscribed){completeTask(t.id);}
+        else{renderVerify('Не подписался');}
+      } else if(t.check==='chat'){
+        const r=await fetch('/api/check-chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,channel:t.channel})});
+        const d=await r.json();
+        if(d.member){completeTask(t.id);}
+        else{renderVerify('Ты не написал слово в чат');}
+      }
+    }catch(e){
+      renderVerify('Ошибка проверки. Попробуй ещё раз');
+    }
+  }
+
+  renderVerify(null);
+  mo.onclick=(e)=>{if(e.target===mo)closeTaskMo();};
+  mo.classList.add('show');
 }
 
 async function verifyTask(t){
   const uid=UID;
-  document.getElementById('gm-a').textContent='Проверяем...';
-  document.getElementById('gm-a').disabled=true;
   try{
     if(t.check==='sub'){
       const r=await fetch('/api/check-sub',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid,channel:t.channel})});
@@ -178,7 +226,6 @@ async function verifyTask(t){
   }catch(e){
     closeGenMo();toast('Ошибка проверки. Попробуй ещё раз','r');
   }
-  document.getElementById('gm-a').disabled=false;
 }
 
 function completeTask(id){

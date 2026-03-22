@@ -60,8 +60,8 @@ function rShopItems(){
       <div class="sitem-img-wrap">${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
-        ${btn}
       </div>
+      ${btn}
     </div>`;
   }).join('');
 
@@ -79,9 +79,9 @@ function rShopItems(){
       <div class="sitem-img-wrap">${tagHtml}${cntHtml}${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
-        ${x.desc?`<div style="font-size:11px;color:rgba(255,255,255,.4);line-height:1.3;margin-top:-3px">${x.desc}</div>`:''}
-        ${btn}
+        ${x.desc?`<div style="font-size:11px;color:rgba(255,255,255,.4);line-height:1.3;margin-top:-2px">${x.desc}</div>`:''}
       </div>
+      ${btn}
     </div>`;
   }).join('');
 
