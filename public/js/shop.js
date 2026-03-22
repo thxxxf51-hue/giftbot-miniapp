@@ -56,12 +56,12 @@ function rShopItems(){
       btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`buyItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?price:null);
     }
 
-    return`<div class="gc sitem">
-      <div class="sitem-img-wrap">
-        ${imgContent}
-        <div class="sitem-title-bar"><div class="sname">${x.name}</div></div>
+    return`<div class="sitem">
+      <div class="sitem-img-wrap">${imgContent}</div>
+      <div class="sitem-body">
+        <div class="sname">${x.name}</div>
+        ${btn}
       </div>
-      <div class="sitem-body">${btn}</div>
     </div>`;
   }).join('');
 
@@ -75,13 +75,11 @@ function rShopItems(){
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
       :fallbackIco;
     const btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`buyCustomItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?x.price:null);
-    return`<div class="gc sitem" ${borderStyle}>
-      <div class="sitem-img-wrap">
-        ${tagHtml}${cntHtml}${imgContent}
-        <div class="sitem-title-bar"><div class="sname">${x.name}</div></div>
-      </div>
+    return`<div class="sitem" ${borderStyle}>
+      <div class="sitem-img-wrap">${tagHtml}${cntHtml}${imgContent}</div>
       <div class="sitem-body">
-        ${x.desc?`<div class="sdesc" style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:6px;text-align:center">${x.desc}</div>`:''}
+        <div class="sname">${x.name}</div>
+        ${x.desc?`<div style="font-size:11px;color:rgba(255,255,255,.4);line-height:1.3;margin-top:-3px">${x.desc}</div>`:''}
         ${btn}
       </div>
     </div>`;
