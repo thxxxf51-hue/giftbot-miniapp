@@ -11,26 +11,38 @@ function renderTasks(){
   TASKS.forEach(t=>{
     const done=S.doneTasks.has(t.id);
     const card=document.createElement('div');
-    card.className='tc'+(t.wip?' tc--wip':'')+(done?' tc--done':'');
+    const isNew=!!t.isNew;
+    card.className='tc'+(t.wip?' tc--wip':'')+(done?' tc--done':'')+(isNew?' tc--new':'');
     card.onclick=()=>openTask(t.id);
 
     let tags=`<div class="tc-tag tc-tag--${t.tc}">${t.tag}</div>`;
-    if(t.isNew) tags+=`<div class="tc-tag tc-tag--new">NEW</div>`;
-    if(done)    tags+=`<div class="tc-tag tc-tag--done">Выполнено</div>`;
-    if(t.wip)   tags+=`<div class="tc-tag tc-tag--wip">В разработке</div>`;
+    if(isNew)  tags+=`<div class="tc-tag tc-tag--new">NEW</div>`;
+    if(done)   tags+=`<div class="tc-tag tc-tag--done">Выполнено</div>`;
+    if(t.wip)  tags+=`<div class="tc-tag tc-tag--wip">В разработке</div>`;
 
     const rew=`<div class="tc-rew">${COIN_ICO} ${t.rew.toLocaleString('ru')}</div>`;
 
+    // Динамический прогресс для реферальных заданий
+    let prog=t.prog||null;
+    if(!done && t.check==='ref'){
+      const cnt=S.refs?S.refs.length:0;
+      if(cnt<3)      prog={cur:cnt,max:3};
+      else if(cnt<5) prog={cur:cnt,max:5};
+      else           prog={cur:5,max:5};
+    }
+
     let pct=0;
     if(done){ pct=100; }
-    else if(t.prog!=null){ pct=Math.min(100,Math.round((t.prog.cur/t.prog.max)*100)); }
+    else if(prog!=null){ pct=Math.min(100,Math.round((prog.cur/prog.max)*100)); }
 
     let bottom='';
     if(done){
       bottom=`<div class="tc-done-lbl">${CHECK_ICO} Выполнено</div>`;
-    } else if(t.prog!=null){
-      const progTxt=`<div class="tc-prog-txt">${t.prog.cur} / ${t.prog.max}${t.prog.unit?' '+t.prog.unit:''}</div>`;
-      bottom=`<div class="tc-prog-bar"><div class="tc-prog-fill" style="width:${pct}%"></div></div>${progTxt}`;
+    } else if(prog!=null){
+      const isFull=prog.cur>=prog.max;
+      const fillClass='tc-prog-fill'+(isFull?' prog-full':'');
+      const progTxt=`<div class="tc-prog-txt">${prog.cur} / ${prog.max}${prog.unit?' '+prog.unit:''}</div>`;
+      bottom=`<div class="tc-prog-bar"><div class="${fillClass}" style="width:${pct}%"></div></div>${progTxt}`;
     }
 
     card.innerHTML=`

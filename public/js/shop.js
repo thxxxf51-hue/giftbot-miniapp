@@ -4,6 +4,8 @@ async function addServerTx(type,amount,details){
     body:JSON.stringify({userId:UID,type,amount,details})});}catch{}
 }
 
+const _SHOP_COIN_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:middle;margin-right:2px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+
 /* ══ CUSTOM SHOP ITEMS ══ */
 let customShopItems=[];
 async function loadCustomShopItems(){
@@ -22,52 +24,61 @@ function shopTab(tab,btn){
   document.getElementById('shop-cases').style.display=tab==='cases'?'grid':'none';
 }
 
+function _shopBuyBtn(cls,disabled,onclick,label,price){
+  const dis=disabled?' disabled':'';
+  return`<button class="sbuy${cls}"${dis} onclick="${onclick}">${label}${price!=null?` ${_SHOP_COIN_ICO} ${price.toLocaleString('ru')}`:''}</button>`;
+}
+
 function rShopItems(){
   const el=document.getElementById('shop-items');
   if(!el)return;
 
   const stdHtml=ITEMS.map(x=>{
-    const ok=S.balance>=x.price;
-    let btn,price=x.price;
+    let price=x.price;
     if(x.id===3&&S.vipDiscount)price=Math.floor(x.price*0.5);
-    if(x.special==='effect'&&vipStatus()==='active')price=3000;
+    const isVip=vipStatus()==='active';
+    if(x.special==='effect'&&isVip)price=Math.floor(x.price*0.6);
     const ok2=S.balance>=price;
-    if(x.wip)btn=`<button class="sbuy wip" disabled>В разработке</button>`;
-    else if(x.special==='color')btn=`<button class="sbuy" onclick="openColorPicker(false)">Выбрать цвет</button>`;
-    else if(x.special==='effect')btn=`<button class="sbuy" onclick="openEffectPicker()">Выбрать эффект</button>`;
-    else btn=`<button class="sbuy${ok2?'':' nomoney'}"${ok2?'':' disabled'} onclick="buyItem(${x.id})">${ok2?'Купить':'Мало монет'}</button>`;
-    let priceLabel;
-    if(x.id===3&&S.vipDiscount){
-      const disc=Math.floor(x.price*0.5);
-      priceLabel=`<span style="text-decoration:line-through;opacity:.5">${x.price}</span> <span style="color:var(--green)">${disc} 🪙</span>`;
+
+    const imgWrap=x.imageUrl
+      ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none'">`
+      :`<div class="sico">${ITEM_ICONS[x.icoKey]||''}</div>`;
+
+    let btn;
+    if(x.wip){
+      btn=_shopBuyBtn(' wip',true,'','В разработке',null);
+    } else if(x.special==='color'){
+      btn=`<button class="sbuy" onclick="openColorPicker(false)">Выбрать цвет</button>`;
     } else if(x.special==='effect'){
-      const vipPr=Math.floor(x.price*0.6);
-      const isVip=vipStatus()==='active';
-      priceLabel=isVip?`<span style="text-decoration:line-through;opacity:.5">${x.price}</span> <span style="color:var(--green)">${vipPr} 🪙 VIP</span>`:`${price} 🪙`;
+      btn=`<button class="sbuy" onclick="openEffectPicker()">Выбрать эффект</button>`;
     } else {
-      priceLabel=`${price} 🪙`;
+      btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`buyItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?price:null);
     }
+
     return`<div class="gc sitem">
-      <div class="sico">${ITEM_ICONS[x.icoKey]||''}</div>
-      <div class="sname">${x.name}</div>
-      <div class="sprice">${priceLabel}</div>
-      ${btn}
+      <div class="sitem-img-wrap">${imgWrap}</div>
+      <div class="sitem-body">
+        <div class="sname">${x.name}</div>
+        ${btn}
+      </div>
     </div>`;
   }).join('');
 
   const customHtml=customShopItems.map(x=>{
     const ok2=S.balance>=x.price;
-    const borderStyle=x.borderColor?`border:1px solid ${x.borderColor};`:'';
-    const tagHtml=x.tag?`<div class="sitag" style="background:${x.tagColor||'rgba(255,255,255,.12)'}">${x.tag}</div>`:'';
-    const imgHtml=x.imageUrl?`<img src="${x.imageUrl}" onerror="this.style.display='none'" style="width:52px;height:52px;object-fit:cover;border-radius:10px;margin-bottom:4px">`:
-      `<div class="sico">${ITEM_ICONS['shop']||''}</div>`;
-    return`<div class="gc sitem" style="${borderStyle}position:relative">
-      ${tagHtml}
-      ${imgHtml}
-      <div class="sname">${x.name}</div>
-      ${x.desc?`<div class="sdesc">${x.desc}</div>`:''}
-      <div class="sprice">${x.price} 🪙</div>
-      <button class="sbuy${ok2?'':' nomoney'}"${ok2?'':' disabled'} onclick="buyCustomItem(${x.id})">${ok2?'Купить':'Мало монет'}</button>
+    const borderStyle=x.borderColor?`style="border-color:${x.borderColor}!important"`:'';
+    const tagHtml=x.tag?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
+    const imgWrap=x.imageUrl
+      ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none'">`
+      :`<div class="sico">${ITEM_ICONS['shop']||''}</div>`;
+    const btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`buyCustomItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?x.price:null);
+    return`<div class="gc sitem" ${borderStyle}>
+      <div class="sitem-img-wrap">${tagHtml}${imgWrap}</div>
+      <div class="sitem-body">
+        <div class="sname">${x.name}</div>
+        ${x.desc?`<div class="sdesc">${x.desc}</div>`:''}
+        ${btn}
+      </div>
     </div>`;
   }).join('');
 
