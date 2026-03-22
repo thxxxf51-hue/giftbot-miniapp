@@ -100,11 +100,11 @@ const ITEM_ICONS={
 };
 
 const ITEMS=[
-  {id:3,icoKey:'vip7',  name:'VIP на 7 дней', price:3333, wip:false,vipDays:7,   imageUrl:'https://i.imgur.com/RzzXI8L.jpeg'},
-  {id:7,icoKey:'vip30', name:'VIP на 30 дней',price:9999, wip:false,vipDays:30,  imageUrl:'https://i.imgur.com/b0ufoy2.jpeg'},
-  {id:9,icoKey:'crown3',name:'Корона на 3 дня',price:1199,wip:false,crownDays:3, imageUrl:'https://i.imgur.com/Gi13Zy6.jpeg'},
-  {id:5,icoKey:'color', name:'Цветной ник',   price:999,  wip:false,special:'color',  imageUrl:'https://i.imgur.com/lOZkfY1.jpeg'},
-  {id:8,icoKey:'effect',name:'Эффект входа',  price:5000, wip:false,special:'effect', imageUrl:'https://i.imgur.com/9yueotG.jpeg'},
+  {id:3,icoKey:'vip7',  name:'VIP на 7 дней', price:3333, wip:false,vipDays:7,   imageUrl:'https://i.imgur.com/cMSB019.jpg'},
+  {id:7,icoKey:'vip30', name:'VIP на 30 дней',price:9999, wip:false,vipDays:30,  imageUrl:'https://i.imgur.com/2bXKYI7.jpg'},
+  {id:9,icoKey:'crown3',name:'Корона на 3 дня',price:1199,wip:false,crownDays:3, imageUrl:'https://i.imgur.com/IDK9foe.jpg'},
+  {id:5,icoKey:'color', name:'Цветной ник',   price:999,  wip:false,special:'color',  imageUrl:'https://i.imgur.com/9CX7f2s.jpg'},
+  {id:8,icoKey:'effect',name:'Эффект входа',  price:5000, wip:false,special:'effect', imageUrl:'https://i.imgur.com/HGwC5BJ.jpg'},
 ];
 
 /* ══ TASKS ══ */

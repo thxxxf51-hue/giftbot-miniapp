@@ -8,7 +8,8 @@ const WIP_TOAST_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="#f4c430" strok
 function renderTasks(){
   const wrap=document.createElement('div');
   wrap.className='tlist';
-  TASKS.forEach(t=>{
+  const sorted=[...TASKS].sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
+  sorted.forEach(t=>{
     const done=S.doneTasks.has(t.id);
     const card=document.createElement('div');
     const isNew=!!t.isNew;
