@@ -40,9 +40,10 @@ function rShopItems(){
     if(x.special==='effect'&&isVip)price=Math.floor(x.price*0.6);
     const ok2=S.balance>=price;
 
-    const imgWrap=x.imageUrl
-      ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none'">`
-      :`<div class="sico">${ITEM_ICONS[x.icoKey]||''}</div>`;
+    const fallbackIco=`<div class="sico-fb">${ITEM_ICONS[x.icoKey]||''}</div>`;
+    const imgContent=x.imageUrl
+      ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
+      :fallbackIco;
 
     let btn;
     if(x.wip){
@@ -56,11 +57,11 @@ function rShopItems(){
     }
 
     return`<div class="gc sitem">
-      <div class="sitem-img-wrap">${imgWrap}</div>
-      <div class="sitem-body">
-        <div class="sname">${x.name}</div>
-        ${btn}
+      <div class="sitem-img-wrap">
+        ${imgContent}
+        <div class="sitem-title-bar"><div class="sname">${x.name}</div></div>
       </div>
+      <div class="sitem-body">${btn}</div>
     </div>`;
   }).join('');
 
@@ -68,15 +69,19 @@ function rShopItems(){
     const ok2=S.balance>=x.price;
     const borderStyle=x.borderColor?`style="border-color:${x.borderColor}!important"`:'';
     const tagHtml=x.tag?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
-    const imgWrap=x.imageUrl
-      ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none'">`
-      :`<div class="sico">${ITEM_ICONS['shop']||''}</div>`;
+    const cntHtml=x.count?`<div class="sitem-cnt-badge">${x.count} шт.</div>`:'';
+    const fallbackIco=`<div class="sico-fb">${ITEM_ICONS['shop']||''}</div>`;
+    const imgContent=x.imageUrl
+      ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
+      :fallbackIco;
     const btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`buyCustomItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?x.price:null);
     return`<div class="gc sitem" ${borderStyle}>
-      <div class="sitem-img-wrap">${tagHtml}${imgWrap}</div>
+      <div class="sitem-img-wrap">
+        ${tagHtml}${cntHtml}${imgContent}
+        <div class="sitem-title-bar"><div class="sname">${x.name}</div></div>
+      </div>
       <div class="sitem-body">
-        <div class="sname">${x.name}</div>
-        ${x.desc?`<div class="sdesc">${x.desc}</div>`:''}
+        ${x.desc?`<div class="sdesc" style="font-size:11px;color:rgba(255,255,255,.45);margin-bottom:6px;text-align:center">${x.desc}</div>`:''}
         ${btn}
       </div>
     </div>`;
