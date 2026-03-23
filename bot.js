@@ -144,6 +144,8 @@ const DB = {
   customTasks:      _saved?.customTasks      || [], // задания, созданные админом через /ctask
   customTaskCounter:_saved?.customTaskCounter|| 0,
   caseOpens:        _saved?.caseOpens        || {}, // счётчик открытий по каждому кейсу {caseId: N}
+  taskOverrides:    _saved?.taskOverrides    || {}, // overrides for static tasks {id: {rew, name, desc, tag, tc}}
+  accessControl:    _saved?.accessControl    || { enabled: false, whitelist: [] }, // whitelist access control
 };
 
 // Init task counter from existing tasks if not set
@@ -3111,6 +3113,34 @@ app.delete('/api/admin/tasks/:id', (req, res) => {
   res.json({ ok: true, removed });
 });
 
+// Static task overrides
+app.get('/api/admin/tasks/overrides', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  res.json(DB.taskOverrides || {});
+});
+
+app.patch('/api/admin/tasks/static/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (!DB.taskOverrides) DB.taskOverrides = {};
+  const allowed = ['rew', 'name', 'desc', 'tag', 'tc'];
+  const current = DB.taskOverrides[id] || {};
+  for (const k of allowed) {
+    if (req.body[k] !== undefined) current[k] = req.body[k];
+  }
+  DB.taskOverrides[id] = current;
+  saveDB();
+  res.json({ ok: true, override: current });
+});
+
+app.delete('/api/admin/tasks/static/:id/override', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (DB.taskOverrides) delete DB.taskOverrides[id];
+  saveDB();
+  res.json({ ok: true });
+});
+
 app.get('/api/admin/draws', (req, res) => {
   if (!adminCheck(req, res)) return;
   const active = Object.values(DB.draws).filter(d => !d.finished);
@@ -3198,6 +3228,20 @@ app.post('/api/admin/draws/:id/image', (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Upload failed: ' + e.message });
   }
+});
+
+// Edit finished draw
+app.patch('/api/admin/draws/finished/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = (DB.finished || {})[id];
+  if (!draw) return res.status(404).json({ error: 'Finished draw not found' });
+  const { prize, desc, imageUrl } = req.body;
+  if (prize !== undefined) draw.prize = prize;
+  if (desc !== undefined) draw.desc = desc;
+  if (imageUrl !== undefined) draw.imageUrl = imageUrl || null;
+  saveDB();
+  res.json({ ok: true, draw });
 });
 
 app.get('/api/admin/promos', (req, res) => {
@@ -3441,6 +3485,52 @@ app.post('/api/admin/notify', (req, res) => {
 app.post('/api/admin/notifications/clear', (req, res) => {
   if (!adminCheck(req, res)) return;
   DB.notifications = [];
+  saveDB();
+  res.json({ ok: true });
+});
+
+// ══ ACCESS CONTROL ══
+app.get('/api/access/check', (req, res) => {
+  const userId = String(req.query.userId || '');
+  const ac = DB.accessControl || { enabled: false, whitelist: [] };
+  if (!ac.enabled) return res.json({ ok: true, allowed: true });
+  if (userId === '6151671553') return res.json({ ok: true, allowed: true }); // admin always allowed
+  const allowed = (ac.whitelist || []).some(u => String(u.uid) === userId);
+  res.json({ ok: true, allowed });
+});
+
+app.get('/api/admin/access', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  res.json(DB.accessControl || { enabled: false, whitelist: [] });
+});
+
+app.post('/api/admin/access', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { enabled } = req.body;
+  if (!DB.accessControl) DB.accessControl = { enabled: false, whitelist: [] };
+  DB.accessControl.enabled = !!enabled;
+  saveDB();
+  res.json({ ok: true, accessControl: DB.accessControl });
+});
+
+app.post('/api/admin/access/users', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { uid, username, firstName } = req.body;
+  if (!uid) return res.status(400).json({ error: 'uid required' });
+  if (!DB.accessControl) DB.accessControl = { enabled: false, whitelist: [] };
+  if (!DB.accessControl.whitelist) DB.accessControl.whitelist = [];
+  const exists = DB.accessControl.whitelist.some(u => String(u.uid) === String(uid));
+  if (exists) return res.json({ ok: true, already: true });
+  DB.accessControl.whitelist.push({ uid: String(uid), username: username || '', firstName: firstName || '', addedAt: Date.now() });
+  saveDB();
+  res.json({ ok: true });
+});
+
+app.delete('/api/admin/access/users/:uid', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const uid = String(req.params.uid);
+  if (!DB.accessControl) return res.json({ ok: true });
+  DB.accessControl.whitelist = (DB.accessControl.whitelist || []).filter(u => String(u.uid) !== uid);
   saveDB();
   res.json({ ok: true });
 });
