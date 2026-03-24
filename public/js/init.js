@@ -106,8 +106,27 @@ function hardReset() {
   setTimeout(() => location.reload(), 50);
 }
 
+/* ══ ACCESS CHECK ══ */
+async function checkAccess(){
+  try{
+    const r=await fetch(`/api/access/check?userId=${UID}`);
+    const d=await r.json();
+    if(d.ok && d.allowed===false){
+      document.querySelector('.app').style.display='none';
+      const el=document.getElementById('access-denied');
+      if(el) el.classList.add('show');
+      return false;
+    }
+  }catch{}
+  return true;
+}
+
 /* ══ INIT ══ */
 async function init(){
+  // Проверяем доступ перед загрузкой приложения
+  const hasAccess = await checkAccess();
+  if(!hasAccess) return;
+
   const name=TGU.first_name||'User';
   const uname=TGU.username?'@'+TGU.username:'Без username';
   function setAv(id, url){
@@ -153,6 +172,17 @@ async function init(){
       ct.forEach(t=>{ if(!TASKS.find(x=>x.id===t.id)) TASKS.push(t); });
     }
   } catch{}
+  // Применяем overrides к статическим заданиям
+  try{
+    const ov=await fetch('/api/tasks/overrides').then(r=>r.json());
+    if(ov && typeof ov==='object' && !ov.error){
+      const allowed=['rew','name','desc','tag','tc'];
+      for(const [id,fields] of Object.entries(ov)){
+        const t=TASKS.find(x=>x.id===parseInt(id));
+        if(t) allowed.forEach(k=>{ if(fields[k]!==undefined) t[k]=fields[k]; });
+      }
+    }
+  }catch{}
   renderTasks();
   loadCustomShopItems();
   rCases();

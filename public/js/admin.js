@@ -99,10 +99,6 @@ function admGoSection(section) {
     s.style.display = 'none';
     s.classList.remove('active');
   });
-  // Показываем нужную
-  const el = document.getElementById('adm-' + section);
-  if (el) { el.style.display = 'block'; el.classList.add('active'); }
-
   // Заголовок и кнопка назад
   const titles = {
     dashboard: 'Админ панель',
@@ -112,6 +108,7 @@ function admGoSection(section) {
     draws: 'Розыгрыши',
     promos: 'Промокоды',
     notifs: 'Рассылка',
+    access: 'Доступ',
   };
   const titleEl = document.getElementById('adm-page-title');
   if (titleEl) titleEl.textContent = titles[section] || 'Админ панель';
@@ -121,6 +118,18 @@ function admGoSection(section) {
   if (backBtn) backBtn.style.display = section === 'dashboard' ? 'none' : 'flex';
   if (coinsPill) coinsPill.style.display = section === 'dashboard' ? 'flex' : 'none';
 
+  // Создаём секцию если нет в HTML
+  if (!document.getElementById('adm-' + section)) {
+    const wrapper = document.getElementById('adm-content-wrapper') || document.getElementById('adm-content') || document.body;
+    const div = document.createElement('div');
+    div.id = 'adm-' + section;
+    div.className = 'adm-section';
+    div.style.display = 'none';
+    wrapper.appendChild(div);
+  }
+  const el = document.getElementById('adm-' + section);
+  if (el) { el.style.display = 'block'; el.classList.add('active'); }
+
   // Загружаем контент
   if (section === 'dashboard') loadAdmDashboard();
   else if (section === 'users')  loadAdmUsers();
@@ -129,6 +138,7 @@ function admGoSection(section) {
   else if (section === 'draws')  loadAdmDraws();
   else if (section === 'promos') loadAdmPromos();
   else if (section === 'notifs') loadAdmNotifs();
+  else if (section === 'access') loadAdmAccess();
 }
 
 function loadAdminSection() {
@@ -155,6 +165,7 @@ function _renderAdmDashboard(d) {
     { id: 'draws',  icon: AICO.draws,  count: d.draws||0,               label: 'Розыгрыши',        color: '#ff8a65' },
     { id: 'promos', icon: AICO.promos, count: d.promos||0,              label: 'Промокоды',        color: '#4db6ac' },
     { id: 'notifs', icon: AICO.notifs, count: d.notifications||0,       label: 'Рассылка',         color: '#f48fb1' },
+    { id: 'access', icon: AICO.star,   count: '🔒',                     label: 'Доступ',            color: '#e57373' },
   ];
 
   let html = `<div class="adm-grid">`;
@@ -396,25 +407,77 @@ function admOpenBalance(username, action) {
 /* ════════════════════════════════════════════
    TASKS
 ════════════════════════════════════════════ */
+// Статические задания из config.js (дублируются для редактирования в админке)
+const STATIC_TASKS = [
+  {id:1, icoKey:'sub',    tag:'Подписка', tc:'g',  name:'Подписаться на канал',     desc:'Подпишись на @broketalking и включи уведомления! (В случае отписки с баланса будет списан штраф)',  rew:100},
+  {id:4, icoKey:'ref',    tag:'Друзья',   tc:'fr', name:'Пригласить первого друга', desc:'Пригласи друга по своей реф-ссылке и получи монеты за каждого реферала!',                            rew:1000},
+  {id:6, icoKey:'case',   tag:'Задание',  tc:'o',  name:'Открыть первый кейс',      desc:'Открой любой кейс в разделе Магазин → Кейсы и получи награду!',                                      rew:200},
+  {id:7, icoKey:'wallet', tag:'Кошелёк',  tc:'b',  name:'Подключить TON кошелёк',   desc:'Подключи TonKeeper или Telegram Wallet в разделе Профиль и получи монеты!',                           rew:2000},
+];
+
 async function loadAdmTasks() {
   admLoading('adm-tasks');
-  const data = await admApi('/tasks', 'GET');
+  const [data, overridesData] = await Promise.all([
+    admApi('/tasks', 'GET'),
+    admApi('/tasks/overrides', 'GET'),
+  ]);
   const el = document.getElementById('adm-tasks');
   if (!el) return;
   if (data.error) { el.innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}</div>`; return; }
   admTasks = data;
+  const overrides = overridesData.error ? {} : (overridesData || {});
 
-  const TAG_COLORS = [
-    { label: '🟢 Зелёный (подписка)', val: 'g' },
-    { label: '🔴 Красный (друзья)', val: 'fr' },
-    { label: '🟠 Оранжевый (задание)', val: 'o' },
-    { label: '🔵 Синий (кошелёк)', val: 'b' },
-  ];
+  // ── Статические задания ──
+  const staticHtml = STATIC_TASKS.map(t => {
+    const ov = overrides[t.id] || {};
+    const rew = ov.rew !== undefined ? ov.rew : t.rew;
+    const name = ov.name || t.name;
+    const desc = ov.desc || t.desc;
+    const tag = ov.tag || t.tag;
+    const tc = ov.tc || t.tc;
+    const hasOverride = Object.keys(ov).length > 0;
+    return `
+      <div class="adm-draw-card" id="adm-stask-${t.id}">
+        <div class="adm-draw-header">
+          <div class="adm-draw-info">
+            <div class="adm-draw-prize">${name} ${hasOverride ? '<span style="font-size:10px;color:#f39c12;margin-left:4px">✏️ изм.</span>' : ''}</div>
+            <div class="adm-draw-meta">${AICO.coin} ${rew} монет &nbsp;·&nbsp; тег: <b>${tag}</b> (${tc}) &nbsp;·&nbsp; #${t.id}</div>
+          </div>
+          <div class="adm-draw-btns">
+            <button class="adm-btn adm-btn-sm" onclick="admToggleStaticTaskEdit(${t.id})">${AICO.edit}</button>
+            ${hasOverride ? `<button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admResetStaticTask(${t.id})" title="Сбросить изменения">${AICO.trash}</button>` : ''}
+          </div>
+        </div>
+        <div class="adm-draw-edit" id="adm-stask-edit-${t.id}" style="display:none">
+          <div class="adm-form" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
+            <div class="adm-input-row">
+              <div class="adm-input-group"><div class="adm-label">${AICO.desc} Название</div><input class="adm-input" id="stedit-name-${t.id}" value="${(name||'').replace(/"/g,'&quot;')}"></div>
+              <div class="adm-input-group"><div class="adm-label">${AICO.coin} Монеты</div><input class="adm-input" id="stedit-rew-${t.id}" type="number" value="${rew}"></div>
+            </div>
+            <div class="adm-input-group"><div class="adm-label">${AICO.desc} Описание</div><input class="adm-input" id="stedit-desc-${t.id}" value="${(desc||'').replace(/"/g,'&quot;')}"></div>
+            <div class="adm-input-row">
+              <div class="adm-input-group"><div class="adm-label">${AICO.color} Тег (текст)</div><input class="adm-input" id="stedit-tag-${t.id}" value="${tag||''}"></div>
+              <div class="adm-input-group">
+                <div class="adm-label">${AICO.color} Цвет тега</div>
+                <select class="adm-select" id="stedit-tc-${t.id}">
+                  <option value="g" ${tc==='g'?'selected':''}>🟢 Зелёный</option>
+                  <option value="fr" ${tc==='fr'?'selected':''}>🔴 Красный</option>
+                  <option value="o" ${tc==='o'?'selected':''}>🟠 Оранжевый</option>
+                  <option value="b" ${tc==='b'?'selected':''}>🔵 Синий</option>
+                </select>
+              </div>
+            </div>
+            <button class="adm-btn adm-btn-primary" onclick="admSaveStaticTask(${t.id})">${AICO.check} Сохранить</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 
-  let listHtml = '';
+  // ── Пользовательские задания ──
+  let customHtml = '';
   if (admTasks.length) {
-    listHtml = `<div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.tasks} Задания (${admTasks.length})</div></div>`;
-    listHtml += admTasks.map(t => `
+    customHtml = `<div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.tasks} Кастомные задания (${admTasks.length})</div></div>`;
+    customHtml += admTasks.map(t => `
       <div class="adm-item">
         <div class="adm-item-icon-svg">${AICO.tasks}</div>
         <div class="adm-item-body">
@@ -423,11 +486,12 @@ async function loadAdmTasks() {
         </div>
         <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteTask(${t.id})">${AICO.trash}</button>
       </div>`).join('');
-  } else {
-    listHtml = `<div class="adm-empty">${AICO.tasks} Заданий нет</div>`;
   }
 
-  el.innerHTML = `${listHtml}
+  el.innerHTML = `
+    <div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.tasks} Статические задания (${STATIC_TASKS.length})</div></div>
+    ${staticHtml}
+    ${customHtml || `<div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.tasks} Кастомные задания (0)</div></div>`}
     <div class="adm-card">
       <div class="adm-card-hdr"><div class="adm-card-title">${AICO.plus} Создать задание</div></div>
       <div class="adm-form">
@@ -437,19 +501,44 @@ async function loadAdmTasks() {
           <div class="adm-input-group"><div class="adm-label">${AICO.coin} Монеты</div><input class="adm-input" id="atask-rew" type="number" placeholder="500"></div>
         </div>
         <div class="adm-input-group"><div class="adm-label">${AICO.desc} Описание</div><input class="adm-input" id="atask-desc" placeholder="Подпишись на @channel"></div>
-        <div class="adm-input-group">
-          <div class="adm-label">${AICO.color} Цвет тега</div>
-          <select class="adm-select" id="atask-tag">
-            <option value="g">🟢 Зелёный (подписка)</option>
-            <option value="fr">🔴 Красный (друзья/NEW)</option>
-            <option value="o">🟠 Оранжевый (задание)</option>
-            <option value="b">🔵 Синий (кошелёк)</option>
-          </select>
+        <div class="adm-input-row">
+          <div class="adm-input-group"><div class="adm-label">${AICO.color} Тег (текст)</div><input class="adm-input" id="atask-tag-text" placeholder="Подписка"></div>
+          <div class="adm-input-group">
+            <div class="adm-label">${AICO.color} Цвет тега</div>
+            <select class="adm-select" id="atask-tag">
+              <option value="g">🟢 Зелёный</option>
+              <option value="fr">🔴 Красный</option>
+              <option value="o" selected>🟠 Оранжевый</option>
+              <option value="b">🔵 Синий</option>
+            </select>
+          </div>
         </div>
         <div class="adm-check-row"><div class="adm-check-label">${AICO.star} Пометка NEW</div><button class="adm-toggle" id="atask-new-toggle" onclick="this.classList.toggle('on')"></button></div>
         <button class="adm-btn adm-btn-primary" onclick="admCreateTask()">${AICO.plus} Создать задание</button>
       </div>
     </div>`;
+}
+
+function admToggleStaticTaskEdit(id) {
+  const el = document.getElementById(`adm-stask-edit-${id}`);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function admSaveStaticTask(id) {
+  const name = document.getElementById(`stedit-name-${id}`)?.value.trim();
+  const rew = parseInt(document.getElementById(`stedit-rew-${id}`)?.value || '0');
+  const desc = document.getElementById(`stedit-desc-${id}`)?.value.trim();
+  const tag = document.getElementById(`stedit-tag-${id}`)?.value.trim();
+  const tc = document.getElementById(`stedit-tc-${id}`)?.value;
+  const r = await admApi(`/tasks/static/${id}`, 'PATCH', { name, rew, desc, tag, tc });
+  if (r.ok) { toast('Сохранено', 'g'); loadAdmTasks(); }
+  else toast(r.error || 'Ошибка', 'r');
+}
+
+async function admResetStaticTask(id) {
+  const r = await admApi(`/tasks/static/${id}/override`, 'DELETE', {});
+  if (r.ok) { toast('Сброшено', 'g'); loadAdmTasks(); }
+  else toast(r.error || 'Ошибка', 'r');
 }
 
 async function admCreateTask() {
@@ -665,6 +754,7 @@ async function loadAdmDraws() {
   if (data.error) { el.innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}</div>`; return; }
   admDraws = data;
   const active = admDraws.active || [];
+  const finished = admDraws.finished || [];
 
   let listHtml = '';
   if (active.length) {
@@ -672,6 +762,12 @@ async function loadAdmDraws() {
     listHtml += active.map(d => admDrawCard(d)).join('');
   } else {
     listHtml = `<div class="adm-empty">${AICO.gift} Нет активных розыгрышей</div>`;
+  }
+
+  // Завершённые розыгрыши
+  if (finished.length) {
+    listHtml += `<div class="adm-sec-hdr" style="margin-top:8px"><div class="adm-sec-label">${AICO.check} Завершённые (${finished.length})</div></div>`;
+    listHtml += finished.map(d => admFinishedDrawCard(d)).join('');
   }
 
   el.innerHTML = `${listHtml}
@@ -804,6 +900,123 @@ async function admDeleteDraw(id) {
   const r = await admApi('/draws/'+id, 'DELETE', {});
   if (r.ok) { toast('Розыгрыш удалён', 'g'); loadAdmDraws(); }
   else toast(r.error||'Ошибка', 'r');
+}
+
+function admFinishedDrawCard(d) {
+  const ts = d.finishedAt ? new Date(d.finishedAt).toLocaleDateString('ru') : '—';
+  const winnersStr = (d.winners || []).map(w => w.firstName || w.username || w.uid).join(', ') || '—';
+  const imgThumb = d.imageUrl ? `<img src="${d.imageUrl}" onerror="this.style.display='none'" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0;opacity:.7">` : '';
+  return `<div class="adm-draw-card" id="adm-fdraw-${d.id}" style="opacity:.85">
+    <div class="adm-draw-header">
+      ${imgThumb}
+      <div class="adm-draw-info">
+        <div class="adm-draw-prize">${d.prize}${/^\d+$/.test(String(d.prize))?' монет':''}</div>
+        <div class="adm-draw-meta">${AICO.check} ${ts} &nbsp;·&nbsp; ${AICO.crown} ${winnersStr} &nbsp;·&nbsp; #${d.id}</div>
+      </div>
+      <div class="adm-draw-btns">
+        <button class="adm-btn adm-btn-sm" onclick="admToggleFinishedDrawEdit(${d.id})">${AICO.edit}</button>
+      </div>
+    </div>
+    <div class="adm-draw-edit" id="adm-fdraw-edit-${d.id}" style="display:none">
+      <div class="adm-form" style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
+        <div class="adm-input-group"><div class="adm-label">${AICO.gift} Приз</div><input class="adm-input" id="fdedit-prize-${d.id}" value="${(d.prize||'').toString().replace(/"/g,'&quot;')}"></div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.desc} Описание</div><input class="adm-input" id="fdedit-desc-${d.id}" value="${(d.desc||'').replace(/"/g,'&quot;')}"></div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.img} Картинка URL</div><input class="adm-input" id="fdedit-img-${d.id}" value="${d.imageUrl||''}" placeholder="https://..."></div>
+        <button class="adm-btn adm-btn-primary" onclick="admSaveFinishedDraw(${d.id})">${AICO.check} Сохранить</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function admToggleFinishedDrawEdit(id) {
+  const el = document.getElementById(`adm-fdraw-edit-${id}`);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function admSaveFinishedDraw(id) {
+  const prize = document.getElementById(`fdedit-prize-${id}`)?.value.trim();
+  const desc = document.getElementById(`fdedit-desc-${id}`)?.value.trim();
+  const imageUrl = document.getElementById(`fdedit-img-${id}`)?.value.trim();
+  const r = await admApi(`/draws/finished/${id}`, 'PATCH', { prize, desc, imageUrl });
+  if (r.ok) { toast('Сохранено', 'g'); loadAdmDraws(); }
+  else toast(r.error || 'Ошибка', 'r');
+}
+
+/* ════════════════════════════════════════════
+   ACCESS CONTROL
+════════════════════════════════════════════ */
+async function loadAdmAccess() {
+  const el = document.getElementById('adm-access');
+  if (!el) return;
+  admLoading('adm-access');
+  const data = await admApi('/access', 'GET');
+  if (data.error) { el.innerHTML = `<div class="adm-err">${AICO.alert} ${data.error}</div>`; return; }
+
+  const enabled = data.enabled;
+  const whitelist = data.whitelist || [];
+
+  const wlHtml = whitelist.length
+    ? whitelist.map(u => `
+        <div class="adm-item">
+          <div class="adm-item-icon-svg">${AICO.users2}</div>
+          <div class="adm-item-body">
+            <div class="adm-item-name">${u.firstName || u.username || u.uid}</div>
+            <div class="adm-item-sub">UID: ${u.uid}${u.username?' · @'+u.username:''}</div>
+          </div>
+          <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admRemoveAccessUser('${u.uid}')">${AICO.trash}</button>
+        </div>`).join('')
+    : `<div class="adm-empty">${AICO.users2} Список пуст — все пользователи имеют доступ</div>`;
+
+  el.innerHTML = `
+    <div class="adm-card">
+      <div class="adm-card-hdr"><div class="adm-card-title">${AICO.star} Контроль доступа</div></div>
+      <div class="adm-form">
+        <div class="adm-check-row">
+          <div class="adm-check-label">${AICO.star} Включить ограничение доступа</div>
+          <button class="adm-toggle${enabled?' on':''}" id="access-enabled-toggle" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:-4px;margin-bottom:8px">
+          Если включено — только пользователи из белого списка смогут зайти в приложение. Администратор всегда имеет доступ.
+        </div>
+        <button class="adm-btn adm-btn-primary" onclick="admSaveAccessEnabled()">${AICO.check} Сохранить настройку</button>
+      </div>
+    </div>
+    <div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.users2} Белый список (${whitelist.length})</div></div>
+    ${wlHtml}
+    <div class="adm-card" style="margin-top:8px">
+      <div class="adm-card-hdr"><div class="adm-card-title">${AICO.plus} Добавить пользователя</div></div>
+      <div class="adm-form">
+        <div class="adm-input-row">
+          <div class="adm-input-group"><div class="adm-label">${AICO.users2} UID</div><input class="adm-input" id="access-uid" placeholder="123456789" type="number"></div>
+          <div class="adm-input-group"><div class="adm-label">${AICO.desc} Username</div><input class="adm-input" id="access-username" placeholder="@username"></div>
+        </div>
+        <div class="adm-input-group"><div class="adm-label">${AICO.desc} Имя</div><input class="adm-input" id="access-firstname" placeholder="Иван"></div>
+        <button class="adm-btn adm-btn-primary" onclick="admAddAccessUser()">${AICO.plus} Добавить</button>
+      </div>
+    </div>`;
+}
+
+async function admSaveAccessEnabled() {
+  const enabled = document.getElementById('access-enabled-toggle')?.classList.contains('on');
+  const r = await admApi('/access', 'POST', { enabled });
+  if (r.ok) { toast(enabled ? 'Доступ ограничен' : 'Доступ открыт для всех', 'g'); loadAdmAccess(); }
+  else toast(r.error || 'Ошибка', 'r');
+}
+
+async function admAddAccessUser() {
+  const uid = document.getElementById('access-uid')?.value.trim();
+  const username = (document.getElementById('access-username')?.value || '').replace('@', '').trim();
+  const firstName = document.getElementById('access-firstname')?.value.trim();
+  if (!uid) { toast('Введи UID', 'r'); return; }
+  const r = await admApi('/access/users', 'POST', { uid, username, firstName });
+  if (r.ok) { toast('Добавлено', 'g'); loadAdmAccess(); }
+  else toast(r.error || 'Ошибка', 'r');
+}
+
+async function admRemoveAccessUser(uid) {
+  const r = await admApi(`/access/users/${uid}`, 'DELETE', {});
+  if (r.ok) { toast('Удалено', 'g'); loadAdmAccess(); }
+  else toast(r.error || 'Ошибка', 'r');
 }
 
 /* ════════════════════════════════════════════

@@ -49,14 +49,14 @@ function rShopItems(){
     if(x.wip){
       btn=_shopBuyBtn(' wip',true,'','В разработке',null);
     } else if(x.special==='color'){
-      btn=`<button class="sbuy" onclick="openColorPicker(false)">Выбрать цвет</button>`;
+      btn=`<button class="sbuy" onclick="event.stopPropagation();openColorPicker(false)">Выбрать цвет</button>`;
     } else if(x.special==='effect'){
-      btn=`<button class="sbuy" onclick="openEffectPicker()">Выбрать эффект</button>`;
+      btn=`<button class="sbuy" onclick="event.stopPropagation();openEffectPicker()">Выбрать эффект</button>`;
     } else {
-      btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`buyItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?price:null);
+      btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`event.stopPropagation();buyItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?price:null);
     }
 
-    return`<div class="sitem">
+    return`<div class="sitem" onclick="openShopModal('std',${x.id})">
       <div class="sitem-img-wrap">${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
@@ -74,8 +74,8 @@ function rShopItems(){
     const imgContent=x.imageUrl
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
       :fallbackIco;
-    const btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`buyCustomItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?x.price:null);
-    return`<div class="sitem" ${borderStyle}>
+    const btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`event.stopPropagation();buyCustomItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?x.price:null);
+    return`<div class="sitem" ${borderStyle} onclick="openShopModal('custom',${x.id})">
       <div class="sitem-img-wrap">${tagHtml}${cntHtml}${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
@@ -86,6 +86,83 @@ function rShopItems(){
   }).join('');
 
   el.innerHTML=stdHtml+customHtml;
+}
+
+/* ══ SHOP ITEM MODAL ══ */
+const _SHOPMO_COIN_ICO=`<svg class="shopmo-price-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+
+function openShopModal(type,id){
+  const mo=document.getElementById('shopmo');
+  if(!mo)return;
+  let x;
+  if(type==='std') x=ITEMS.find(i=>i.id===id);
+  else x=customShopItems.find(i=>i.id===id);
+  if(!x)return;
+
+  let price=x.price;
+  if(type==='std'){
+    if(id===3&&S.vipDiscount)price=Math.floor(x.price*0.5);
+    if(x.special==='effect'&&vipStatus()==='active')price=Math.floor(x.price*0.6);
+  }
+  const ok2=S.balance>=price;
+  const need=price-S.balance;
+
+  // image
+  const imgHtml=x.imageUrl
+    ?`<img class="shopmo-img" src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`+
+     `<div class="shopmo-img-placeholder" style="display:none"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`
+    :`<div class="shopmo-img-placeholder"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+
+  // insufficient text
+  const insuf=!ok2&&!x.wip&&!x.special
+    ?`<div class="shopmo-insufficient">Недостаточно монет. Нужно ещё ${need.toLocaleString('ru')} 🪙</div>`:'';
+
+  // buy button
+  let buyHtml;
+  if(x.wip){
+    buyHtml=`<button class="shopmo-buy" disabled>В разработке</button>`;
+  } else if(x.special==='color'){
+    buyHtml=`<button class="shopmo-buy" onclick="closeShopModal();openColorPicker(false)">Выбрать цвет</button>`;
+  } else if(x.special==='effect'){
+    buyHtml=`<button class="shopmo-buy" onclick="closeShopModal();openEffectPicker()">Выбрать эффект</button>`;
+  } else {
+    const cls=ok2?'':' nomoney';
+    buyHtml=`<button class="shopmo-buy${cls}"${ok2?'':' disabled'} onclick="doShopModalBuy('${type}',${id})">
+      <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      ${ok2?`Купить за ${price.toLocaleString('ru')} 🪙`:`Мало монет — нужно ${price.toLocaleString('ru')} 🪙`}
+    </button>`;
+  }
+
+  const desc=x.desc||'';
+
+  document.getElementById('shopmo-content').innerHTML=`
+    ${imgHtml}
+    <div class="shopmo-hdr">
+      <div></div>
+      <button class="shopmo-close" onclick="closeShopModal()">✕</button>
+    </div>
+    <div class="shopmo-body">
+      <div class="shopmo-name">${x.name}</div>
+      ${desc?`<div class="shopmo-desc">${desc}</div>`:''}
+      ${!x.wip&&!x.special?`<div class="shopmo-price-row">${_SHOPMO_COIN_ICO}<div class="shopmo-price">${price.toLocaleString('ru')}</div></div>`:''}
+      ${insuf}
+      ${buyHtml}
+    </div>`;
+
+  mo.dataset.type=type;
+  mo.dataset.id=id;
+  mo.classList.add('show');
+}
+
+function closeShopModal(){
+  const mo=document.getElementById('shopmo');
+  if(mo)mo.classList.remove('show');
+}
+
+function doShopModalBuy(type,id){
+  closeShopModal();
+  if(type==='std') buyItem(id);
+  else buyCustomItem(id);
 }
 
 function buyItem(id){

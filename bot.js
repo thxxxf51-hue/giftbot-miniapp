@@ -3113,7 +3113,12 @@ app.delete('/api/admin/tasks/:id', (req, res) => {
   res.json({ ok: true, removed });
 });
 
-// Static task overrides
+// Static task overrides (public read)
+app.get('/api/tasks/overrides', (req, res) => {
+  res.json(DB.taskOverrides || {});
+});
+
+// Static task overrides (admin)
 app.get('/api/admin/tasks/overrides', (req, res) => {
   if (!adminCheck(req, res)) return;
   res.json(DB.taskOverrides || {});
