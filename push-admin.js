@@ -3,8 +3,9 @@ const fs = require('fs');
 const path = require('path');
 
 const TOKEN = process.env.GITHUB_ADMIN_TOKEN;
-const OWNER = 'thxxxf51-hue';
-const REPO  = 'admin';
+const ADMIN_REPO = process.env.ADMIN_GITHUB_REPO || 'thxxxf51-hue/admin';
+const OWNER = ADMIN_REPO.split('/')[0];
+const REPO  = ADMIN_REPO.split('/')[1];
 const BRANCH = 'main';
 const MSG   = process.argv[2] || 'Auto-update from Replit';
 const FILES = process.argv.slice(3);

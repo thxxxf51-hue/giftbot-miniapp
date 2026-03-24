@@ -2,7 +2,7 @@
 const https = require('https');
 
 const ADMIN_TOKEN = process.env.GITHUB_ADMIN_TOKEN;
-const REPO = 'thxxxf51-hue/admin';
+const REPO = process.env.ADMIN_GITHUB_REPO || 'thxxxf51-hue/admin';
 
 function ghGet(path) {
   return new Promise((resolve, reject) => {
