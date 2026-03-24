@@ -3113,9 +3113,28 @@ app.delete('/api/admin/tasks/:id', (req, res) => {
   res.json({ ok: true, removed });
 });
 
+// Static task definitions (mirrored from frontend config.js)
+const STATIC_TASKS = [
+  {id:1, icoKey:'sub',    tag:'Подписка', tc:'g',  name:'Подписаться на канал',     desc:'Подпишись на @broketalking и включи уведомления! (В случае отписки с баланса будет списан штраф)', rew:100,  url:'https://t.me/broketalking', check:'sub', channel:'broketalking'},
+  {id:4, icoKey:'ref',    tag:'Друзья',   tc:'fr', name:'Пригласить первого друга',  desc:'Пригласи друга по своей реф-ссылке и получи монеты за каждого реферала!',                           rew:1000, check:'ref'},
+  {id:6, icoKey:'case',   tag:'Задание',  tc:'o',  name:'Открыть первый кейс',       desc:'Открой любой кейс в разделе Магазин → Кейсы и получи награду!',                                     rew:200,  check:'case'},
+  {id:7, icoKey:'wallet', tag:'Кошелёк',  tc:'b',  name:'Подключить TON кошелёк',    desc:'Подключи TonKeeper или Telegram Wallet в разделе Профиль и получи монеты!',                          rew:2000, check:'wallet'},
+];
+
 // Static task overrides (public read)
 app.get('/api/tasks/overrides', (req, res) => {
   res.json(DB.taskOverrides || {});
+});
+
+// Static tasks list for admin (with overrides applied)
+app.get('/api/admin/tasks/static', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const overrides = DB.taskOverrides || {};
+  const tasks = STATIC_TASKS.map(t => {
+    const ov = overrides[t.id] || {};
+    return { ...t, ...ov, _isStatic: true };
+  });
+  res.json(tasks);
 });
 
 // Static task overrides (admin)
