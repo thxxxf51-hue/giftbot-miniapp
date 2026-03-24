@@ -144,7 +144,8 @@ const DB = {
   customTasks:      _saved?.customTasks      || [], // задания, созданные админом через /ctask
   customTaskCounter:_saved?.customTaskCounter|| 0,
   caseOpens:        _saved?.caseOpens        || {}, // счётчик открытий по каждому кейсу {caseId: N}
-  taskOverrides:    _saved?.taskOverrides    || {}, // overrides for static tasks {id: {rew, name, desc, tag, tc}}
+  taskOverrides:    _saved?.taskOverrides    || {}, // overrides for static tasks {id: {rew, name, desc, tag, tc, order}}
+  shopItemOverrides:_saved?.shopItemOverrides|| {}, // overrides for static ITEMS {id: {name, price, tag, tagColor, borderColor}}
   accessControl:    _saved?.accessControl    || { enabled: false, whitelist: [] }, // whitelist access control
 };
 
@@ -3033,6 +3034,7 @@ app.get('/api/admin/users/:uid', (req, res) => {
     walletAddress: u.walletAddress || null,
     banned: !!(DB.bans?.[u.username] || DB.bansByUid?.[uid]),
     transactions: (u.transactions || []).slice(0, 10),
+    lastSeen: u.lastSeen || null,
   });
 });
 
@@ -3147,7 +3149,7 @@ app.patch('/api/admin/tasks/static/:id', (req, res) => {
   if (!adminCheck(req, res)) return;
   const id = parseInt(req.params.id);
   if (!DB.taskOverrides) DB.taskOverrides = {};
-  const allowed = ['rew', 'name', 'desc', 'tag', 'tc'];
+  const allowed = ['rew', 'name', 'desc', 'tag', 'tc', 'order'];
   const current = DB.taskOverrides[id] || {};
   for (const k of allowed) {
     if (req.body[k] !== undefined) current[k] = req.body[k];
@@ -3161,6 +3163,56 @@ app.delete('/api/admin/tasks/static/:id/override', (req, res) => {
   if (!adminCheck(req, res)) return;
   const id = parseInt(req.params.id);
   if (DB.taskOverrides) delete DB.taskOverrides[id];
+  saveDB();
+  res.json({ ok: true });
+});
+
+// ── STATIC SHOP ITEMS (стандартные товары конфига) ──
+const STATIC_ITEMS = [
+  { id: 3, name: 'VIP на 7 дней',  price: 3333, imageUrl: 'https://i.imgur.com/cMSB019.jpg' },
+  { id: 7, name: 'VIP на 30 дней', price: 9999, imageUrl: 'https://i.imgur.com/2bXKYI7.jpg' },
+  { id: 9, name: 'Корона на 3 дня',price: 1199, imageUrl: 'https://i.imgur.com/IDK9foe.jpg' },
+  { id: 5, name: 'Цветной ник',    price: 999,  imageUrl: 'https://i.imgur.com/9CX7f2s.jpg' },
+  { id: 8, name: 'Эффект входа',   price: 5000, imageUrl: 'https://i.imgur.com/HGwC5BJ.jpg' },
+];
+
+// Public endpoint — overrides for static items (used by frontend)
+app.get('/api/shop/item-overrides', (req, res) => {
+  res.json(DB.shopItemOverrides || {});
+});
+
+// Admin — list static items with overrides applied
+app.get('/api/admin/shop/static', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const ovr = DB.shopItemOverrides || {};
+  const items = STATIC_ITEMS.map(item => {
+    const ov = ovr[item.id] || {};
+    return { ...item, ...ov, _isStatic: true };
+  });
+  res.json(items);
+});
+
+// Admin — patch static item override
+app.patch('/api/admin/shop/static/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (!STATIC_ITEMS.find(i => i.id === id)) return res.status(404).json({ error: 'Not found' });
+  if (!DB.shopItemOverrides) DB.shopItemOverrides = {};
+  const allowed = ['name', 'price', 'tag', 'tagColor', 'borderColor', 'imageUrl'];
+  const current = DB.shopItemOverrides[id] || {};
+  for (const k of allowed) {
+    if (req.body[k] !== undefined) current[k] = req.body[k];
+  }
+  DB.shopItemOverrides[id] = current;
+  saveDB();
+  res.json({ ok: true, override: current });
+});
+
+// Admin — delete static item override
+app.delete('/api/admin/shop/static/:id/override', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (DB.shopItemOverrides) delete DB.shopItemOverrides[id];
   saveDB();
   res.json({ ok: true });
 });
