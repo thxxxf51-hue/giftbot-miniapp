@@ -2,6 +2,14 @@
 const COIN_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
 const CHECK_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
+let _taskOverrides={};
+async function fetchTaskOverrides(){
+  try{
+    const r=await fetch('/api/tasks/overrides');
+    _taskOverrides=await r.json();
+  }catch{_taskOverrides={};}
+}
+
 let pendingVerifyTask=null;
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&pendingVerifyTask){
@@ -17,15 +25,32 @@ const WIP_TOAST_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="#f4c430" strok
 function renderTasks(){
   const wrap=document.createElement('div');
   wrap.className='tlist';
-  const sorted=[...TASKS].sort((a,b)=>(b.isNew?1:0)-(a.isNew?1:0));
-  sorted.forEach(t=>{
+  // Apply overrides to each task
+  const tasksWithOv=TASKS.map(t=>{
+    const ov=_taskOverrides[t.id]||{};
+    return{...t,...ov};
+  });
+  // Sort: by order (if set), then new first
+  tasksWithOv.sort((a,b)=>{
+    const ao=a.order!=null?a.order:9999;
+    const bo=b.order!=null?b.order:9999;
+    if(ao!==bo)return ao-bo;
+    return(b.isNew?1:0)-(a.isNew?1:0);
+  });
+  tasksWithOv.forEach(t=>{
     const done=S.doneTasks.has(t.id);
     const card=document.createElement('div');
     const isNew=!!t.isNew;
     card.className='tc'+(t.wip?' tc--wip':'')+(done?' tc--done':'')+(isNew?' tc--new':'');
     card.onclick=()=>openTask(t.id);
 
-    let tags=`<div class="tc-tag tc-tag--${t.tc}">${t.tag}</div>`;
+    // Support hex color in tc field
+    let tags;
+    if(t.tc&&t.tc.startsWith('#')){
+      tags=`<div class="tc-tag" style="background:${t.tc}22;color:${t.tc};border:1px solid ${t.tc}44">${t.tag}</div>`;
+    }else{
+      tags=`<div class="tc-tag tc-tag--${t.tc}">${t.tag}</div>`;
+    }
     if(isNew)  tags+=`<div class="tc-tag tc-tag--new">NEW</div>`;
     if(done)   tags+=`<div class="tc-tag tc-tag--done">Выполнено</div>`;
     if(t.wip)  tags+=`<div class="tc-tag tc-tag--wip">В разработке</div>`;
@@ -119,7 +144,8 @@ function _openTaskModal(t, btnText, action){
 }
 
 function openTask(id){
-  const t=TASKS.find(x=>x.id===id);if(!t)return;
+  const base=TASKS.find(x=>x.id===id);if(!base)return;
+  const t={...base,...(_taskOverrides[id]||{})};
   if(t.wip){toast('Задание в разработке','s',WIP_TOAST_ICO);return;}
   const done=S.doneTasks.has(id);
   if(t.check==='ref'){
