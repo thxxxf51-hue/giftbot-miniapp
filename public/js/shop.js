@@ -8,11 +8,16 @@ const _SHOP_COIN_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 
 /* ══ CUSTOM SHOP ITEMS ══ */
 let customShopItems=[];
+let _shopItemOverrides={};
 async function loadCustomShopItems(){
   try{
     const r=await fetch('/api/shop/custom');
     customShopItems=await r.json();
   }catch{customShopItems=[];}
+  try{
+    const ro=await fetch('/api/shop/item-overrides');
+    _shopItemOverrides=await ro.json();
+  }catch{_shopItemOverrides={};}
   rShopItems();
 }
 
@@ -33,7 +38,8 @@ function rShopItems(){
   const el=document.getElementById('shop-items');
   if(!el)return;
 
-  const stdHtml=ITEMS.map(x=>{
+  const stdHtml=ITEMS.map(rawX=>{
+    const x={...rawX,...(_shopItemOverrides[rawX.id]||{})};
     let price=x.price;
     if(x.id===3&&S.vipDiscount)price=Math.floor(x.price*0.5);
     const isVip=vipStatus()==='active';
@@ -95,8 +101,13 @@ function openShopModal(type,id){
   const mo=document.getElementById('shopmo');
   if(!mo)return;
   let x;
-  if(type==='std') x=ITEMS.find(i=>i.id===id);
-  else x=customShopItems.find(i=>i.id===id);
+  if(type==='std'){
+    const base=ITEMS.find(i=>i.id===id);
+    if(!base)return;
+    x={...base,...(_shopItemOverrides[id]||{})};
+  } else {
+    x=customShopItems.find(i=>i.id===id);
+  }
   if(!x)return;
 
   let price=x.price;
