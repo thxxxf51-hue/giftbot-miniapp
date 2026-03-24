@@ -176,10 +176,12 @@ async function init(){
   try{
     const ov=await fetch('/api/tasks/overrides').then(r=>r.json());
     if(ov && typeof ov==='object' && !ov.error){
-      const allowed=['rew','name','desc','tag','tc'];
+      const allowed=['rew','name','desc','tag','tc','order'];
       for(const [id,fields] of Object.entries(ov)){
         const t=TASKS.find(x=>x.id===parseInt(id));
         if(t) allowed.forEach(k=>{ if(fields[k]!==undefined) t[k]=fields[k]; });
+        // Store in _taskOverrides for openTask to use
+        _taskOverrides[parseInt(id)]=fields;
       }
     }
   }catch{}
