@@ -142,7 +142,7 @@ function supportStartPoll() {
         if (supportMode !== 'specialist') {
           supportMode = 'specialist';
           _supportSetStatus('specialist');
-          _supportAddMsg('system', '✅ Специалист подключился к чату');
+          _supportAddMsg('system', '✓ Специалист подключился к чату');
         }
         data.messages.forEach(m => _supportAddMsg('specialist', m.text));
       }
@@ -150,7 +150,7 @@ function supportStartPoll() {
       if (data.status === 'active' && supportMode === 'waiting') {
         supportMode = 'specialist';
         _supportSetStatus('specialist');
-        _supportAddMsg('system', '✅ Специалист подключился к чату');
+        _supportAddMsg('system', '✓ Специалист подключился к чату');
       }
       if (data.status === 'closed' && supportMode === 'specialist') {
         supportMode = 'ai';
