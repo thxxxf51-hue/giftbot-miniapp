@@ -226,7 +226,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sitem{cursor:pointer;transition:transform .12s,opacity .12s;border-radius:16px;border:1px solid rgba(255,255,255,0.08);background:#18181f;display:flex;flex-direction:column;overflow:hidden}
 .sitem:active{transform:scale(.97);opacity:.9}
-.sitem-img-wrap{width:100%;height:90px;overflow:hidden;position:relative;flex-shrink:0;background:#0d0d14}
+.sitem-img-wrap{width:100%;height:74px;overflow:hidden;position:relative;flex-shrink:0;background:#0d0d14}
 .sitem-img-wrap img{width:100%;height:100%;object-fit:cover;display:block}
 .sitem-img-wrap::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(to bottom,transparent,rgba(24,24,31,0.65));pointer-events:none}
 .sico-fb{width:100%;height:100%;display:none;align-items:center;justify-content:center}
@@ -2116,8 +2116,8 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 #shopmo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:600;flex-direction:column;align-items:stretch;justify-content:flex-end}
 #shopmo.show{display:flex}
 .shopmo-box{background:#161819;border-radius:22px 22px 0 0;width:100%;border-top:1px solid rgba(255,255,255,.08);animation:shup .24s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
-.shopmo-img{width:100%;height:190px;object-fit:cover;display:block;flex-shrink:0;background:#0d0d14}
-.shopmo-img-placeholder{width:100%;height:190px;display:flex;align-items:center;justify-content:center;background:#13141a;flex-shrink:0}
+.shopmo-img{width:100%;height:148px;object-fit:cover;display:block;flex-shrink:0;background:#0d0d14}
+.shopmo-img-placeholder{width:100%;height:148px;display:flex;align-items:center;justify-content:center;background:#13141a;flex-shrink:0}
 .shopmo-img-placeholder svg{width:52px;height:52px;stroke:rgba(255,255,255,.12);fill:none;stroke-width:1.5}
 .shopmo-body{padding:18px 18px 12px}
 .shopmo-name{font-size:18px;font-weight:800;margin-bottom:6px}
@@ -2130,8 +2130,8 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .shopmo-close{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.07);border:none;font-size:15px;cursor:pointer;color:var(--muted2);display:flex;align-items:center;justify-content:center;font-family:inherit}
 .shopmo-buy{width:100%;background:#2ecc71;color:#fff;border:none;border-radius:14px;padding:14px 8px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .12s;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
 .shopmo-buy:active{opacity:.82}
-.shopmo-buy:disabled{background:rgba(255,255,255,.07);color:var(--muted2);cursor:default;opacity:.7}
-.shopmo-buy.nomoney{background:rgba(255,96,96,.18);color:var(--red);cursor:default}
+.shopmo-buy:disabled{cursor:not-allowed}
+.shopmo-buy.nomoney{background:rgba(46,204,113,.18);color:rgba(46,204,113,.45);cursor:not-allowed}
 .shopmo-buy svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0}
 
 /* ══ ACCESS DENIED SCREEN ══ */
@@ -2141,6 +2141,6 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .acc-lock-ico svg{width:64px;height:64px;stroke:#e53935;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .acc-title{font-size:22px;font-weight:900;margin-bottom:8px;text-align:center}
 .acc-sub{font-size:14px;color:var(--muted2);text-align:center;margin-bottom:28px}
-.acc-card{background:#18181f;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px 20px;text-align:center;max-width:300px;width:100%}
+.acc-card{background:#18181f;border:1.5px solid rgba(56,189,248,.35);border-radius:16px;padding:16px 20px;text-align:center;max-width:300px;width:100%;box-shadow:0 0 18px rgba(56,189,248,.08)}
 .acc-card-text{font-size:13px;color:var(--muted2);line-height:1.6}
 .acc-card-text strong{color:#fff;font-weight:700}
