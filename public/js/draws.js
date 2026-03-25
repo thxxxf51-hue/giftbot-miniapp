@@ -274,9 +274,9 @@ function showDrawParts(drawId){
 
 function shareDrawDetail(drawId){
   const draw=_activeDraw;if(!draw)return;
-  const text=`🎁 Розыгрыш: ${draw.prize}${draw.isMoney?' монет':''}!\nУчаствуй в GiftBot → `;
+  const text=`🎁 Розыгрыш: ${draw.prize}${draw.isMoney?' монет':''}!\nУчаствуй в SatApp Gifts → `;
   if(window.tg&&tg.openTelegramLink)tg.openTelegramLink(`https://t.me/share/url?url=https://t.me/SATapp_bot&text=${encodeURIComponent(text)}`);
-  else if(navigator.share)navigator.share({title:'GiftBot',text:text,url:'https://t.me/SATapp_bot'}).catch(()=>{});
+  else if(navigator.share)navigator.share({title:'SatApp Gifts',text:text,url:'https://t.me/SATapp_bot'}).catch(()=>{});
 }
 
 /* ── Finished draws ── */
