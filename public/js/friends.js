@@ -171,7 +171,7 @@ function copyRef() { navigator.clipboard?.writeText(document.getElementById('ref
 
 function shareRef() {
   const t = document.getElementById('ref-link').textContent;
-  const msg = encodeURIComponent('🎁 Присоединяйся к GiftBot — получи 1000 монет!');
+  const msg = encodeURIComponent('🎁 Присоединяйся к SatApp Gifts — получи 1000 монет!');
   if (tg) tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(t)}&text=${msg}`); else copyRef();
 }
 
