@@ -256,7 +256,7 @@ function admRenderUsers(list) {
   const el = document.getElementById('adm-user-list');
   if (!el) return;
   if (!list || !list.length) { el.innerHTML = `<div class="adm-empty">${AICO.users} Пусто</div>`; return; }
-  el.innerHTML = list.slice(0, 100).map(u => {
+  el.innerHTML = list.map(u => {
     const initials = (u.firstName || u.username || '?')[0].toUpperCase();
     const name = u.username ? '@'+u.username : (u.firstName||'—');
     const sub = `${(u.balance||0).toLocaleString('ru')} монет · ${u.refs||0} реф.${u.banned?' · 🚫 Бан':''}`;
@@ -478,13 +478,46 @@ async function loadAdmTasks() {
   if (admTasks.length) {
     customHtml = `<div class="adm-sec-hdr"><div class="adm-sec-label">${AICO.tasks} Кастомные задания (${admTasks.length})</div></div>`;
     customHtml += admTasks.map(t => `
-      <div class="adm-item">
+      <div class="adm-item" id="adm-ctask-wrap-${t.id}">
         <div class="adm-item-icon-svg">${AICO.tasks}</div>
         <div class="adm-item-body">
-          <div class="adm-item-name">${t.name}</div>
+          <div class="adm-item-name">${t.name}${t.isNew?` <span style="font-size:9px;padding:2px 6px;border-radius:10px;background:${t.newTagColor||'rgba(80,160,255,.25)'};color:#5ab0ff;font-weight:700">NEW</span>`:''}</div>
           <div class="adm-item-sub">${t.rew} монет · #${t.id} · тег: ${t.tag||'—'}</div>
         </div>
-        <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteTask(${t.id})">${AICO.trash}</button>
+        <div style="display:flex;gap:4px">
+          <button class="adm-btn adm-btn-sm" onclick="admToggleCustomTaskEdit(${t.id})" title="Редактировать">${AICO.edit}</button>
+          <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteTask(${t.id})">${AICO.trash}</button>
+        </div>
+      </div>
+      <div id="adm-ctask-edit-${t.id}" style="display:none" class="adm-card" style="margin:4px 0 8px">
+        <div class="adm-card-hdr"><div class="adm-card-title">${AICO.edit} Редактировать #${t.id}</div></div>
+        <div class="adm-form">
+          <div class="adm-input-row">
+            <div class="adm-input-group"><div class="adm-label">Название</div><input class="adm-input" id="ctedit-name-${t.id}" value="${(t.name||'').replace(/"/g,'&quot;')}"></div>
+            <div class="adm-input-group"><div class="adm-label">Монеты</div><input class="adm-input" id="ctedit-rew-${t.id}" type="number" value="${t.rew||0}"></div>
+          </div>
+          <div class="adm-input-group"><div class="adm-label">Описание</div><input class="adm-input" id="ctedit-desc-${t.id}" value="${(t.desc||'').replace(/"/g,'&quot;')}"></div>
+          <div class="adm-input-row">
+            <div class="adm-input-group"><div class="adm-label">Тег (текст)</div><input class="adm-input" id="ctedit-tagtext-${t.id}" value="${t.tagText||''}"></div>
+            <div class="adm-input-group"><div class="adm-label">Цвет тега</div>
+              <select class="adm-select" id="ctedit-tag-${t.id}">
+                <option value="g"${t.tag==='g'?' selected':''}>🟢 Зелёный</option>
+                <option value="fr"${t.tag==='fr'?' selected':''}>🔴 Красный</option>
+                <option value="o"${t.tag==='o'?' selected':''}>🟠 Оранжевый</option>
+                <option value="b"${t.tag==='b'?' selected':''}>🔵 Синий</option>
+              </select>
+            </div>
+          </div>
+          <div class="adm-input-row">
+            <div class="adm-input-group"><div class="adm-label">Цвет обводки карточки</div><input class="adm-input" id="ctedit-border-${t.id}" value="${t.borderColor||''}" placeholder="rgba(0,255,120,0.35)"></div>
+            <div class="adm-input-group"><div class="adm-label">Цвет тега NEW</div><input class="adm-input" id="ctedit-newcolor-${t.id}" value="${t.newTagColor||''}" placeholder="#5ab0ff"></div>
+          </div>
+          <div class="adm-check-row"><div class="adm-check-label">${AICO.star} Пометка NEW</div><button class="adm-toggle${t.isNew?' on':''}" id="ctedit-new-${t.id}" onclick="this.classList.toggle('on')"></button></div>
+          <div style="display:flex;gap:8px">
+            <button class="adm-btn adm-btn-primary" style="flex:1" onclick="admSaveCustomTask(${t.id})">${AICO.check} Сохранить</button>
+            <button class="adm-btn" style="background:rgba(255,255,255,.06)" onclick="admToggleCustomTaskEdit(${t.id})">${AICO.trash} Отмена</button>
+          </div>
+        </div>
       </div>`).join('');
   }
 
@@ -513,6 +546,10 @@ async function loadAdmTasks() {
             </select>
           </div>
         </div>
+        <div class="adm-input-row">
+          <div class="adm-input-group"><div class="adm-label">${AICO.color} Цвет обводки карточки</div><input class="adm-input" id="atask-border" placeholder="rgba(0,255,120,0.35)" style="font-size:12px"></div>
+          <div class="adm-input-group"><div class="adm-label">${AICO.color} Цвет тега NEW</div><input class="adm-input" id="atask-newcolor" placeholder="#5ab0ff" style="font-size:12px"></div>
+        </div>
         <div class="adm-check-row"><div class="adm-check-label">${AICO.star} Пометка NEW</div><button class="adm-toggle" id="atask-new-toggle" onclick="this.classList.toggle('on')"></button></div>
         <button class="adm-btn adm-btn-primary" onclick="admCreateTask()">${AICO.plus} Создать задание</button>
       </div>
@@ -522,6 +559,26 @@ async function loadAdmTasks() {
 function admToggleStaticTaskEdit(id) {
   const el = document.getElementById(`adm-stask-edit-${id}`);
   if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function admToggleCustomTaskEdit(id) {
+  const el = document.getElementById(`adm-ctask-edit-${id}`);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function admSaveCustomTask(id) {
+  const name = document.getElementById(`ctedit-name-${id}`)?.value.trim();
+  const rew = parseInt(document.getElementById(`ctedit-rew-${id}`)?.value || '0');
+  const desc = document.getElementById(`ctedit-desc-${id}`)?.value.trim();
+  const tag = document.getElementById(`ctedit-tag-${id}`)?.value || 'o';
+  const tagText = document.getElementById(`ctedit-tagtext-${id}`)?.value.trim();
+  const borderColor = document.getElementById(`ctedit-border-${id}`)?.value.trim();
+  const newTagColor = document.getElementById(`ctedit-newcolor-${id}`)?.value.trim();
+  const isNew = document.getElementById(`ctedit-new-${id}`)?.classList.contains('on');
+  if (!name || !rew) { toast('Заполни название и монеты', 'r'); return; }
+  const r = await admApi(`/tasks/${id}`, 'PATCH', { name, reward: rew, desc: desc||name, tag, tagText, borderColor, newTagColor, isNew });
+  if (r.ok) { toast('Сохранено', 'g'); loadAdmTasks(); }
+  else toast(r.error || 'Ошибка', 'r');
 }
 
 async function admSaveStaticTask(id) {
@@ -547,9 +604,11 @@ async function admCreateTask() {
   const rew = parseInt(document.getElementById('atask-rew')?.value||'0');
   const desc = document.getElementById('atask-desc')?.value.trim();
   const tag = document.getElementById('atask-tag')?.value || 'o';
+  const borderColor = document.getElementById('atask-border')?.value.trim();
+  const newTagColor = document.getElementById('atask-newcolor')?.value.trim();
   const isNew = document.getElementById('atask-new-toggle')?.classList.contains('on');
   if (!type || !name || !rew) { toast('Заполни все поля', 'r'); return; }
-  const r = await admApi('/tasks', 'POST', { type, reward: rew, name, desc: desc||name, tag, isNew });
+  const r = await admApi('/tasks', 'POST', { type, reward: rew, name, desc: desc||name, tag, isNew, borderColor: borderColor||undefined, newTagColor: newTagColor||undefined });
   if (r.ok) { toast(`Задание создано #${r.task.id}`, 'g'); loadAdmTasks(); }
   else toast(r.error||'Ошибка', 'r');
 }

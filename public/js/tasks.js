@@ -42,6 +42,10 @@ function renderTasks(){
     const card=document.createElement('div');
     const isNew=!!t.isNew;
     card.className='tc'+(t.wip?' tc--wip':'')+(done?' tc--done':'')+(isNew?' tc--new':'');
+    if(t.borderColor){
+      card.style.border=`1px solid ${t.borderColor}`;
+      card.style.boxShadow=`inset 0 0 18px ${t.borderColor}`;
+    }
     card.onclick=()=>openTask(t.id);
 
     // Support hex color in tc field
@@ -51,7 +55,10 @@ function renderTasks(){
     }else{
       tags=`<div class="tc-tag tc-tag--${t.tc}">${t.tag}</div>`;
     }
-    if(isNew)  tags+=`<div class="tc-tag tc-tag--new">NEW</div>`;
+    const newColor=t.newTagColor;
+    if(isNew)  tags+=newColor
+      ?`<div class="tc-tag tc-tag--new" style="background:${newColor}30;color:${newColor}">NEW</div>`
+      :`<div class="tc-tag tc-tag--new">NEW</div>`;
     if(done)   tags+=`<div class="tc-tag tc-tag--done">Выполнено</div>`;
     if(t.wip)  tags+=`<div class="tc-tag tc-tag--wip">В разработке</div>`;
 
@@ -267,7 +274,8 @@ function completeTask(id){
     fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:t.rew})}).catch(()=>{});
   }
   closeGenMo();renderTasks();
-  toast(`+${t?.rew||0} монет! 🎉`,'g');
+  const coinSvg=`<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;display:block"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+  toast(`+${t?.rew||0} монет!`,'g',coinSvg);
 }
 
 /* Send tx to server */

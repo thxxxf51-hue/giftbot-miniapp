@@ -8,7 +8,7 @@ const Jimp = require('jimp');
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
 const APP_URL = process.env.APP_URL || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : '');
-const GITHUB_TOKEN = process.env.GITHUB_PERSONAL_ACCESS_TOKEN || '';
+const GITHUB_TOKEN = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_PERSONAL_ACCESS_TOKEN || '';
 const GITHUB_REPO = 'thxxxf51-hue/giftbot-miniapp';
 
 /* ══ GITHUB DB BACKUP ══ */
@@ -3100,6 +3100,24 @@ app.post('/api/admin/tasks', (req, res) => {
   if (channel) { task.channel = channel; task.url = url; }
   if (!DB.customTasks) DB.customTasks = [];
   DB.customTasks.push(task);
+  saveDB();
+  res.json({ ok: true, task });
+});
+
+app.patch('/api/admin/tasks/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (!DB.customTasks) return res.status(404).json({ error: 'No tasks' });
+  const idx = DB.customTasks.findIndex(t => t.id === id);
+  if (idx === -1) return res.status(404).json({ error: 'Task not found' });
+  const allowed = ['name', 'reward', 'desc', 'tag', 'tagText', 'isNew', 'borderColor', 'newTagColor'];
+  const task = DB.customTasks[idx];
+  for (const k of allowed) {
+    if (req.body[k] !== undefined) {
+      if (k === 'reward') task.rew = req.body[k];
+      else task[k] = req.body[k];
+    }
+  }
   saveDB();
   res.json({ ok: true, task });
 });

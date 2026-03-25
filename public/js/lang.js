@@ -67,6 +67,9 @@ const TRANSLATIONS = {
     'ref-c2-sub':       'Скоро',
     'ref-earn-lbl':     'Заработано',
     'ref-sec':          'Ваши рефералы',
+    /* Home stats */
+    'stat-users':       'Пользователей',
+    'stat-earned':      'Монет заработано',
     /* Promo */
     'promo-ph':         'Введите промокод',
     'promo-btn':        'Применить',
@@ -157,6 +160,9 @@ const TRANSLATIONS = {
     'ref-c2-sub':       'Coming soon',
     'ref-earn-lbl':     'Earned',
     'ref-sec':          'Your referrals',
+    /* Home stats */
+    'stat-users':       'Users',
+    'stat-earned':      'Coins earned',
     /* Promo */
     'promo-ph':         'Enter promo code',
     'promo-btn':        'Apply',
