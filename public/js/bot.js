@@ -662,7 +662,7 @@ app.post('/api/stars/create-invoice', async (req, res) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: '⭐ Пополнение Stars',
-        description: `Зачисление ${stars} Stars на баланс GiftBot`,
+        description: `Зачисление ${stars} Stars на баланс SatApp Gifts`,
         payload: JSON.stringify({ userId: String(userId), amount: stars }),
         currency: 'XTR',              // XTR = Telegram Stars
         prices: [{ label: 'Stars', amount: stars }],
@@ -1390,8 +1390,8 @@ bot.start(async (ctx) => {
     }
   }
   await ctx.reply(
-    `👋 Привет, ${ctx.from.first_name}!\n\n🎁 Добро пожаловать в GiftBot!\n💰 Баланс: ${u.balance} монет\n⭐ Stars: ${u.starsBalance}`,
-    { reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] } }
+    `👋 Привет, ${ctx.from.first_name}!\n\n🎁 Добро пожаловать в SatApp Gifts!\n💰 Баланс: ${u.balance} монет\n⭐ Stars: ${u.starsBalance}`,
+    { reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] } }
   );
 });
 
@@ -1719,7 +1719,7 @@ bot.on('photo', async (ctx) => {
       try {
         await bot.telegram.sendPhoto(Number(uid), fileId, {
           caption: text,
-          reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+          reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
         });
         sent++;
       } catch (e) {
@@ -1917,7 +1917,7 @@ bot.command('sprom', async (ctx) => {
         parse_mode: 'HTML',
         reply_markup: {
           inline_keyboard: [[{
-            text: '🎁 Открыть GiftBot',
+            text: '🎁 Открыть SatApp Gifts',
             web_app: { url: APP_URL }
           }]]
         }
@@ -2060,7 +2060,7 @@ bot.command('broadcast', async (ctx) => {
   for (const uid of userIds) {
     try {
       await bot.telegram.sendMessage(Number(uid), text, {
-        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
       });
       sent++;
     } catch (e) {
@@ -2089,7 +2089,7 @@ bot.command('broadcast_vip', async (ctx) => {
   for (const uid of vipUsers) {
     try {
       await bot.telegram.sendMessage(Number(uid), '👑 ' + text, {
-        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
       });
       sent++;
     } catch { failed++; }
@@ -2367,7 +2367,7 @@ bot.command('ban', async (ctx) => {
   if (uid) {
     try {
       await bot.telegram.sendMessage(Number(uid),
-        `🚫 Вы заблокированы в GiftBot.\n\n` +
+        `🚫 Вы заблокированы в боте.\n\n` +
         `⏱ Срок: ${durationStr}\n` +
         (until !== 0 ? `📅 Разбан: ${new Date(until).toLocaleString('ru-RU')}` : '')
       );
@@ -2401,8 +2401,8 @@ bot.command('unban', (ctx) => {
   ctx.reply(`✅ @${username} разбанен!`);
 
   if (uid) {
-    bot.telegram.sendMessage(Number(uid), `✅ Ваш бан снят! Добро пожаловать обратно в GiftBot.`, {
-      reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+    bot.telegram.sendMessage(Number(uid), `✅ Ваш бан снят! Добро пожаловать обратно к нам.`, {
+      reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
     }).catch(() => {});
   }
 });
@@ -2695,15 +2695,15 @@ const SPECIALIST_ID = ADMIN_ID; // специалист = админ, можно
 // activeSupport[specialistTgId] = userWebAppId (string)
 const activeSupport = {};
 
-const SUPPORT_SYS = `Ты — дружелюбный помощник поддержки Telegram-бота GiftBot. Отвечай на ЛЮБЫЕ вопросы по-русски, кратко (2–4 предложения).
+const SUPPORT_SYS = `Ты — дружелюбный помощник поддержки Telegram-бота SatApp Gifts. Отвечай на ЛЮБЫЕ вопросы по-русски, кратко (2–4 предложения).
 
-О боте GiftBot:
+О боте SatApp Gifts:
 - Telegram-бот для игр на монеты (внутренняя валюта)
-- Игры: Соло (открытие подарков), Дуэль (PvP 1v1), Мины (поле 5×5 — открывай клетки, избегай мин, забирай множитель)
+- Игры: Соло (открытие подарков), Дуэль (PvP против людей, ставь монеты и выигрывай весь банк), Мины (поле 5×5 — открывай клетки, избегай мин, забирай множитель)
 - Монеты пополняются через Telegram Stars. Stars покупают прямо в Telegram
 - Рефералы: приглашай друзей по реферальной ссылке → бонусные монеты
 - Топ выигрышей: лучшие победы за последние 24ч, порог для попадания — 30 000 монет
-- Вывод Stars — через раздел Профиль
+- Вывод Stars — Вывод пока не доступен.
 - При технических проблемах (не зачислились монеты, баг и т.д.) предлагай вызвать специалиста
 
 В конце каждого своего ответа ВСЕГДА добавляй с новой строки:
@@ -2741,7 +2741,7 @@ app.post('/api/support/ai', async (req, res) => {
     userContext = `\nДанные пользователя:\n- Имя: ${u.firstName || '?'}\n- Монеты: ${u.balance || 0}\n- Stars: ${u.starsBalance || 0}\n- VIP: ${u.vipExpiry && u.vipExpiry > Date.now() ? 'да' : 'нет'}\n- Рефералов: ${u.refs?.length || 0}\n`;
   }
 
-  const systemPrompt = `Ты — дружелюбный помощник поддержки GiftBot. Отвечай ТОЛЬКО на русском языке, никогда не используй другие языки. Пиши кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО GiftBot:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа обязательно пиши ТОЧНО эту фразу (без изменений и опечаток): "Если ответ не помог — напишите «вызвать специалиста»"`;
+  const systemPrompt = `Ты — дружелюбный помощник поддержки SatApp Gifts. Отвечай ТОЛЬКО на русском языке, никогда не используй другие языки. Пиши кратко (2–4 предложения). Отвечай на ЛЮБЫЕ вопросы.\n\nО SatApp Gifts:\n- Игры на монеты: Соло, Дуэль (PvP), Мины (5×5)\n- Монеты — через Telegram Stars\n- Рефералы: приглашай → бонусы\n- Топ выигрышей за 24ч (от 30 000 монет)\n${userContext}\nВ конце КАЖДОГО ответа обязательно пиши ТОЧНО эту фразу (без изменений и опечаток): "Если ответ не помог — напишите «вызвать специалиста»"`;
 
   try {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -3232,7 +3232,7 @@ app.post('/api/admin/ban', (req, res) => {
     if ((u.username||'').toLowerCase() === un) {
       DB.bansByUid[uid] = banData;
       const durStr = until === 0 ? 'навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
-      bot.telegram.sendMessage(Number(uid), `🚫 Вы заблокированы в GiftBot.\n\n⏱ Срок: ${durStr}`).catch(()=>{});
+      bot.telegram.sendMessage(Number(uid), `🚫 Вы заблокированы в боте.\n\n⏱ Срок: ${durStr}`).catch(()=>{});
       break;
     }
   }
@@ -3250,7 +3250,7 @@ app.post('/api/admin/unban', (req, res) => {
     if ((u.username||'').toLowerCase() === un) {
       delete DB.bansByUid[uid];
       bot.telegram.sendMessage(Number(uid), `✅ Ваша блокировка снята. Добро пожаловать обратно!`, {
-        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
       }).catch(()=>{});
       break;
     }
@@ -3268,7 +3268,7 @@ app.post('/api/admin/broadcast', async (req, res) => {
   for (const uid of userIds) {
     try {
       await bot.telegram.sendMessage(Number(uid), text, {
-        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть GiftBot', web_app: { url: APP_URL } }]] }
+        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
       });
       sent++;
     } catch { failed++; }
