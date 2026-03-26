@@ -2229,17 +2229,13 @@ bot.command('dstats', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
   const uids = Object.keys(DB.users);
   if (!uids.length) return ctx.reply('❌ Нет пользователей в базе');
-  const msg = await ctx.reply(`⚠️ Сбросить статистику ВСЕХ ${uids.length} пользователей?\n\nБудет сброшено: баланс, VIP, инвентарь, корона, легенда, задания.\n⭐ Stars не тронутся.\n\nОтвет: да / нет`);
-  // Ждём подтверждения через следующее сообщение
-  bot.on('text', async (c) => {
-    if (!isAdmin(c.from.id)) return;
-    if (c.message.reply_to_message?.message_id !== msg.message_id) return;
-    const ans = c.message.text.toLowerCase();
-    if (ans !== 'да' && ans !== 'yes') return c.reply('❌ Отменено');
-    let count = 0;
-    for (const uid of uids) { if (resetUserStats(uid)) count++; }
-    c.reply(`✅ Статистика сброшена у ${count} пользователей.\n⭐ Stars не тронуты.`);
-  });
+  const msg = await ctx.reply(
+    `⚠️ Сбросить статистику ВСЕХ ${uids.length} пользователей?\n\n` +
+    `Будет сброшено: баланс, VIP, инвентарь, корона, легенда, задания.\n` +
+    `⭐ Stars не тронутся.\n\n` +
+    `Напиши да или нет`
+  );
+  pendingDstatsConfirm.set(ctx.from.id, { uids, msgId: msg.message_id, type: 'all' });
 });
 
 
@@ -2721,6 +2717,8 @@ const SPECIALIST_ID = ADMIN_ID; // специалист = админ, можно
 
 // activeSupport[specialistTgId] = userWebAppId (string)
 const activeSupport = {};
+// Pending /dstats confirmations: adminId -> { uids, msgId }
+const pendingDstatsConfirm = new Map();
 
 const SUPPORT_SYS = `Ты — дружелюбный помощник поддержки Telegram-бота SatApp Gifts. Отвечай на ЛЮБЫЕ вопросы по-русски, кратко (2–4 предложения).
 
@@ -2893,6 +2891,20 @@ app.post('/api/support/user-message', async (req, res) => {
 // Сообщение от специалиста → пересылаем пользователю
 bot.on('text', async (ctx, next) => {
   const specId = ctx.from.id;
+
+  // ── /dstats pending confirmation ──────────────────────────
+  if (pendingDstatsConfirm.has(specId)) {
+    const ans = ctx.message.text.trim().toLowerCase();
+    const { uids, type } = pendingDstatsConfirm.get(specId);
+    pendingDstatsConfirm.delete(specId);
+    if (ans !== 'да' && ans !== 'yes') return ctx.reply('❌ Отменено');
+    let count = 0;
+    for (const uid of uids) { if (resetUserStats(uid)) count++; }
+    saveDB();
+    return ctx.reply(`✅ Статистика сброшена у ${count} пользователей.\n⭐ Stars не тронуты.`);
+  }
+  // ──────────────────────────────────────────────────────────
+
   if (!activeSupport[specId]) return next ? next() : undefined;
 
   const userId = activeSupport[specId];
