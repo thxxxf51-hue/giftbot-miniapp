@@ -26,16 +26,17 @@ async function initTonConnect() {
     _tcUI.onStatusChange(wallet => {
       if (wallet) {
         const addr = wallet.account.address;
-        const isNew = !S.walletAddress; // first time connecting
+        const isNew = !S.walletAddress; // first time connecting this session
         S.walletAddress = addr;
         save();
         _updateWalletUI(addr);
-        if (isNew) {
-          // Show one-time success banner on profile page
+        // Complete wallet task whenever freshly connected
+        const wTask = TASKS.find(t => t.check === 'wallet' && !S.doneTasks.has(t.id));
+        if (wTask) {
           _showWalletBanner();
-          // Check wallet task
-          const wTask = TASKS.find(t => t.check === 'wallet' && !S.doneTasks.has(t.id));
-          if (wTask) completeTask(wTask.id);
+          completeTask(wTask.id);
+        } else if (isNew) {
+          _showWalletBanner();
         }
       } else {
         S.walletAddress = null;
@@ -46,8 +47,19 @@ async function initTonConnect() {
 
     // Restore session silently — no toast, no banner
     if (_tcUI.wallet) {
-      S.walletAddress = _tcUI.wallet.account.address;
-      _updateWalletUI(S.walletAddress);
+      // If wallet task was reset (doneTasks empty) — disconnect TonConnect so user must reconnect
+      const wTask = TASKS.find(t => t.check === 'wallet');
+      const walletTaskDone = wTask && S.doneTasks.has(wTask.id);
+      if (!walletTaskDone) {
+        // Task was reset — force disconnect so the task can be redone
+        try { await _tcUI.disconnect(); } catch {}
+        S.walletAddress = null;
+        save();
+        _updateWalletUI(null);
+      } else {
+        S.walletAddress = _tcUI.wallet.account.address;
+        _updateWalletUI(S.walletAddress);
+      }
     } else if (S.walletAddress) {
       _updateWalletUI(S.walletAddress);
     }

@@ -307,10 +307,22 @@ async function loadTxList() {
     const r = await fetch('/api/transactions?userId=' + UID);
     const d = await r.json();
     const serverTxs = (d.ok && d.transactions) ? d.transactions : [];
-    // Merge server + local, deduplicate by date+amount
+    // Merge server + local, deduplicate by id (preferred) or date+amount+details
     const localTxs = S.localTx || [];
-    const seen = new Set(serverTxs.map(t => t.date + t.amount));
-    const merged = [...serverTxs, ...localTxs.filter(t => !seen.has(t.date + t.amount))];
+    const seenIds = new Set(serverTxs.map(t => t.id).filter(Boolean));
+    const seenFallback = new Set(serverTxs.map(t => t.date + t.amount + (t.details||'')));
+    const merged = [...serverTxs, ...localTxs.filter(t => {
+      if (t.id && seenIds.has(t.id)) return false;
+      if (!t.id && seenFallback.has(t.date + t.amount + (t.details||''))) return false;
+      return true;
+    })];
+    // Remove local txs that are now on server
+    S.localTx = (S.localTx||[]).filter(t => {
+      if (t.id && seenIds.has(t.id)) return false;
+      if (!t.id && seenFallback.has(t.date + t.amount + (t.details||''))) return false;
+      return true;
+    });
+    save();
     merged.sort((a,b) => (b.date||'').localeCompare(a.date||''));
     const all = merged;
     if (!all.length) {

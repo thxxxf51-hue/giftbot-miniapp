@@ -166,7 +166,7 @@ function openTask(id){
     return;
   }
   if(t.check==='wallet'){
-    if(!done&&S.walletAddress){completeTask(id);return;}
+    // Задание выполняется только при активном подключении кошелька (не из кеша)
     _openTaskModal(t,'К профилю',()=>{closeGenMo();go('profile');});
     return;
   }
@@ -294,7 +294,8 @@ function _addTxLocal(type, amount, details){
   if(!S.localTx) S.localTx=[];
   const now=new Date();
   const date=now.toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'});
-  S.localTx.unshift({type,amount,details,date});
+  const txId='tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  S.localTx.unshift({id:txId,type,amount,details,date});
   if(S.localTx.length>50) S.localTx=S.localTx.slice(0,50);
   save();
   loadTxList();

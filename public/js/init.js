@@ -196,7 +196,7 @@ async function init(){
 
   try{
     const sr=await fetch('/api/user/sync',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance,vipExpiry:S.vipExpiry||null,photoUrl:TGU.photo_url||null,localRefs:S.refs||[],localRefEarned:S.refEarned||0,localTask3Done:!!(S.task3refsDone||S.task3Done),localTask5Done:!!(S.task5refsDone||S.task5Done),localDoneTasks:[...S.doneTasks],localUsedPromos:[...S.usedPromos],localInventory:S.inventory||{},localNickColor:S.nickColor||'',localEntryEffect:S.entryEffect||null,localOwnedEffects:S.ownedEffects||[],localEffectExpiries:S.effectExpiries||{},localHasCrown:!!S.hasCrown,localLegendExpiry:S.legendExpiry||null,localLegendColor:S.legendColor||'#2ecc71'})});
+      body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance,vipExpiry:S.vipExpiry||null,photoUrl:TGU.photo_url||null,localRefs:S.refs||[],localRefEarned:S.refEarned||0,localTask3Done:!!(S.task3refsDone||S.task3Done),localTask5Done:!!(S.task5refsDone||S.task5Done),localDoneTasks:[...S.doneTasks],localUsedPromos:[...S.usedPromos],localInventory:S.inventory||{},localNickColor:S.nickColor||'',localEntryEffect:S.entryEffect||null,localOwnedEffects:S.ownedEffects||[],localEffectExpiries:S.effectExpiries||{},localHasCrown:!!S.hasCrown,localLegendExpiry:S.legendExpiry||null,localLegendColor:S.legendColor||'#2ecc71',localWalletAddress:S.walletAddress||null})});
     const sd=await sr.json();
     if(sd.ok){
       // Бан
