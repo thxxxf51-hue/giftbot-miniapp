@@ -88,6 +88,7 @@ if (ADMIN_TOKEN && ADMIN_REPO_URL) {
     t('git config user.name "GiftBot Deploy"');
     t('git add -A');
     t('git commit -m "' + MSG.replace(/"/g, "'") + '"');
+    t('git branch -M main');
     t('git remote add origin https://' + ADMIN_TOKEN + '@github.com/' + adminRepoPath + '.git');
     t('git push origin main --force');
     console.log('Pushed to admin repo successfully!');
