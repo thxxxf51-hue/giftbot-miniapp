@@ -225,8 +225,8 @@ function resetUserStats(uid) {
   if (!u) return false;
   const stars = u.starsBalance || 0;
   DB.users[uid] = {
-    balance: 0,
-    serverBalance: 0,
+    balance: 1000,
+    serverBalance: 1000,
     starsBalance: stars,
     refs: [],
     refBy: null,
@@ -248,6 +248,11 @@ function resetUserStats(uid) {
     task5Done: false,
     task3refsDone: false,
     task5refsDone: false,
+    entryEffect: null,
+    ownedEffects: [],
+    effectExpiries: {},
+    nickColor: '',
+    transactions: [],
     resetAt: Date.now(),
   };
   return true;
@@ -458,7 +463,7 @@ app.post('/api/ref/register', async (req, res) => {
 });
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl, localRefs, localRefEarned, localTask3Done, localTask5Done } = req.body;
+  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl, localRefs, localRefEarned, localTask3Done, localTask5Done, localDoneTasks, localUsedPromos, localInventory, localNickColor, localEntryEffect, localOwnedEffects, localEffectExpiries, localHasCrown, localLegendExpiry, localLegendColor } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
@@ -547,9 +552,35 @@ ${name} ${un}${vip}
       u.refEarned += 5000;
     }
   }
-  // Даже если рефы есть — синхронизируем флаги заданий из клиента если сервер их потерял
+  // Восстанавливаем данные из клиента если сервер их потерял (после редеплоя)
   if (localTask3Done && !u.task3Done) u.task3Done = true;
   if (localTask5Done && !u.task5Done) u.task5Done = true;
+  // Задания
+  if (localDoneTasks && Array.isArray(localDoneTasks) && localDoneTasks.length > 0 && (!u.doneTasks || u.doneTasks.length === 0)) {
+    u.doneTasks = localDoneTasks;
+  }
+  // Использованные промокоды
+  if (localUsedPromos && Array.isArray(localUsedPromos) && localUsedPromos.length > 0 && (!u.usedPromos || u.usedPromos.length === 0)) {
+    u.usedPromos = localUsedPromos;
+  }
+  // Инвентарь
+  if (localInventory && typeof localInventory === 'object' && Object.keys(localInventory).length > 0 && (!u.inventory || Object.keys(u.inventory).length === 0)) {
+    u.inventory = localInventory;
+  }
+  // Цвет ника
+  if (localNickColor && !u.nickColor) u.nickColor = localNickColor;
+  // Эффект входа
+  if (localEntryEffect && !u.entryEffect) u.entryEffect = localEntryEffect;
+  if (localOwnedEffects && Array.isArray(localOwnedEffects) && localOwnedEffects.length > 0 && (!u.ownedEffects || u.ownedEffects.length === 0)) {
+    u.ownedEffects = localOwnedEffects;
+  }
+  if (localEffectExpiries && typeof localEffectExpiries === 'object' && Object.keys(localEffectExpiries).length > 0 && (!u.effectExpiries || Object.keys(u.effectExpiries).length === 0)) {
+    u.effectExpiries = localEffectExpiries;
+  }
+  // Корона
+  if (localHasCrown && !u.hasCrown) u.hasCrown = true;
+  // Легенда
+  if (localLegendExpiry && !u.legendExpiry) { u.legendExpiry = localLegendExpiry; u.legendColor = localLegendColor || '#2ecc71'; }
 
   saveDB();
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry, task3Done: u.task3Done||false, task5Done: u.task5Done||false });
