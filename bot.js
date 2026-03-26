@@ -175,8 +175,9 @@ process.on('SIGINT', async () => {
 function addTx(uid, type, amount, details) {
   const u = getUser(uid);
   if (!u.transactions) u.transactions = [];
+  const txId = 'stx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
   u.transactions.unshift({
-    type, amount, details,
+    id: txId, type, amount, details,
     date: mskFmt(null, {day:'numeric',month:'short',year:'numeric'})
   });
   // Keep last 100
@@ -252,6 +253,7 @@ function resetUserStats(uid) {
     ownedEffects: [],
     effectExpiries: {},
     nickColor: '',
+    walletAddress: null,
     transactions: [],
     resetAt: Date.now(),
   };
@@ -463,7 +465,7 @@ app.post('/api/ref/register', async (req, res) => {
 });
 
 app.post('/api/user/sync', (req, res) => {
-  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl, localRefs, localRefEarned, localTask3Done, localTask5Done, localDoneTasks, localUsedPromos, localInventory, localNickColor, localEntryEffect, localOwnedEffects, localEffectExpiries, localHasCrown, localLegendExpiry, localLegendColor } = req.body;
+  const { userId, username, firstName, balance, starsBalance, vipExpiry, photoUrl, localRefs, localRefEarned, localTask3Done, localTask5Done, localDoneTasks, localUsedPromos, localInventory, localNickColor, localEntryEffect, localOwnedEffects, localEffectExpiries, localHasCrown, localLegendExpiry, localLegendColor, localWalletAddress } = req.body;
   if (!userId) return res.json({ ok: false });
   const u = getUser(userId);
   if (username) u.username = username.toLowerCase();
@@ -581,6 +583,8 @@ ${name} ${un}${vip}
   if (localHasCrown && !u.hasCrown) u.hasCrown = true;
   // Легенда
   if (localLegendExpiry && !u.legendExpiry) { u.legendExpiry = localLegendExpiry; u.legendColor = localLegendColor || '#2ecc71'; }
+  // Кошелёк
+  if (localWalletAddress && !u.walletAddress) u.walletAddress = localWalletAddress;
 
   saveDB();
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance, refs: u.refs, refEarned: u.refEarned, vipExpiry: u.vipExpiry, task3Done: u.task3Done||false, task5Done: u.task5Done||false });
