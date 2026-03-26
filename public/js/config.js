@@ -1,13 +1,5 @@
 /* ══ INVENTORY DEFS ══ */
 const INV_DEF={
-  gift:{ico:'🎁',name:'Подарок',desc:'Открой и получи от 100 до 500 монет',action:'openGift'},
-  crystal:{ico:'💎',name:'Кристалл',desc:'Накопи 10 и получи скидку 50% на VIP 7 дней',action:'usecrystal'},
-  bonus3:{ico:'⚡',name:'Бонус х3',desc:'Следующий денежный приз из кейса умножается на 3 (1 раз)',action:'activateBonus3'},
-  bonus5:{ico:'🔥',name:'Бонус х5',desc:'Следующий денежный приз из кейса умножается на 5 (1 раз)',action:'activateBonus5'},
-  ticket:{ico:'🎟️',name:'Билет',desc:'Используй для участия в розыгрышах требующих билеты',action:'useTicket'},
-  super:{ico:'🌟',name:'Супер',desc:'Смени цвет ника бесплатно (1 раз)',action:'useSuper'},
-  crown:{ico:'👑',name:'Корона',desc:'Надень корону или обменяй за 777 🪙',action:'wearCrown'},
-  legend:{ico:'✨',name:'Легенда',desc:'Активируй свечение или обменяй за 333 🪙',action:'activateLegendItem'},
   megagift:{ico:'🎁',name:'Мега-подарок',desc:'Крути мега-рулетку: VIP 7д, Билеты х10, Корона, Кейс Богача',action:'openMegaGift'},
 };
 
@@ -16,14 +8,7 @@ const INV_DEF={
 /* SVG иконки для призов (используются в рулетке и превью) */
 const DROP_ICONS={
   coins:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`,
-  gift:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>`,
-  bonus:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-  crystal:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9z"/><path d="M2 9h20M6 3l4 6M18 3l-4 6M12 3l2 6M10 9L12 22M14 9l-2 13"/></svg>`,
-  ticket: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 000 6v2a2 2 0 002 2h16a2 2 0 002-2v-2a3 3 0 000-6V7a2 2 0 00-2-2H4a2 2 0 00-2 2v2z"/><line x1="9" y1="12" x2="15" y2="12" stroke-dasharray="2 2"/></svg>`,
   vip:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M7 10v4M12 10v4M17 10v4M5 6V4a1 1 0 011-1h12a1 1 0 011 1v2"/><line x1="2" y1="14" x2="22" y2="14"/></svg>`,
-  super:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-  crown:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 19h20M3 9l4 5 5-8 5 8 4-5v9a1 1 0 01-1 1H4a1 1 0 01-1-1V9z"/></svg>`,
-  legend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5H18l-3.75 2.7 1.5 4.5L12 12l-3.75 2.7 1.5-4.5L6 7.5h4.5L12 3z"/><path d="M5 20h14M8 17h8"/></svg>`,
   megagift:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/><circle cx="12" cy="4" r="1" fill="currentColor"/></svg>`,
 };
 
@@ -32,11 +17,7 @@ const CASES=[
    photo:'https://i.imgur.com/N6vjFz8.jpeg',
    drops:[
      {icoKey:'coins',n:'Монеты',v:'+100',coins:100},
-     {icoKey:'gift',n:'Подарок',v:'х1',inv:'gift',cnt:1},
-     {icoKey:'bonus',n:'Бонус',v:'х3',inv:'bonus3',cnt:1},
-     {icoKey:'crystal',n:'Кристалл',v:'х1',inv:'crystal',cnt:1},
      {icoKey:'coins',n:'Монеты',v:'+150',coins:150},
-     {icoKey:'ticket',n:'Билет',v:'х1',inv:'ticket',cnt:1},
      {icoKey:'coins',n:'Монеты',v:'+80',coins:80},
      {icoKey:'coins',n:'Монеты',v:'+300',coins:300},
      {icoKey:'coins',n:'Монеты',v:'+450',coins:450},
@@ -46,11 +27,7 @@ const CASES=[
    photo:'https://i.imgur.com/hxTvBaf.jpeg',
    drops:[
      {icoKey:'coins',n:'Монеты',v:'+350',coins:350},
-     {icoKey:'gift',n:'Подарок',v:'х2',inv:'gift',cnt:2},
-     {icoKey:'crystal',n:'Кристалл',v:'х2',inv:'crystal',cnt:2},
      {icoKey:'coins',n:'Монеты',v:'+250',coins:250},
-     {icoKey:'ticket',n:'Билет',v:'х3',inv:'ticket',cnt:3},
-     {icoKey:'super',n:'Супер',v:'х1',inv:'super',cnt:1},
      {icoKey:'coins',n:'Монеты',v:'+300',coins:300},
      {icoKey:'coins',n:'Монеты',v:'+555',coins:555},
      {icoKey:'coins',n:'Монеты',v:'+888',coins:888},
@@ -60,12 +37,7 @@ const CASES=[
    photo:'https://i.imgur.com/dpfHwkG.jpeg',photoPos:'center 25%',
    drops:[
      {icoKey:'coins',n:'Монеты',v:'+1500',coins:1500},
-     {icoKey:'crystal',n:'Кристалл',v:'х5',inv:'crystal',cnt:5},
-     {icoKey:'gift',n:'Подарок',v:'х5',inv:'gift',cnt:5},
-     {icoKey:'super',n:'Супер',v:'х1',inv:'super',cnt:1},
-     {icoKey:'crown',n:'Корона',v:'х1',inv:'crown',cnt:1},
      {icoKey:'coins',n:'Монеты',v:'+2222',coins:2222},
-     {icoKey:'bonus',n:'Бонус',v:'х5',inv:'bonus5',cnt:1},
      {icoKey:'coins',n:'Монеты',v:'+999',coins:999},
      {icoKey:'coins',n:'Монеты',v:'+1111',coins:1111},
      {icoKey:'coins',n:'Монеты',v:'+7777',coins:7777},
@@ -73,11 +45,8 @@ const CASES=[
   {id:4,name:'Кейс Миллионера',price:7777,bg:'linear-gradient(145deg,#200a0a,#1a0808)',ic:'#FF4D4D',ib:'rgba(255,77,77,.15)',
    photo:'https://i.imgur.com/3iI3Gpq.jpeg',
    drops:[
-     {icoKey:'crown',n:'Корона',v:'х1',inv:'crown',cnt:1},
-     {icoKey:'coins',n:'Монеты',v:'+1000',coins:1000},
-     {icoKey:'legend',n:'Легенда',v:'х1',inv:'legend',cnt:1},
-     {icoKey:'super',n:'Супер',v:'х1',inv:'super',cnt:1},
      {icoKey:'megagift',n:'Мега-подарок',v:'х1',inv:'megagift',cnt:1},
+     {icoKey:'coins',n:'Монеты',v:'+1000',coins:1000},
      {icoKey:'coins',n:'Монеты',v:'+2000',coins:2000},
      {icoKey:'coins',n:'Монеты',v:'+2500',coins:2500},
      {icoKey:'coins',n:'Монеты',v:'+9999',coins:9999},

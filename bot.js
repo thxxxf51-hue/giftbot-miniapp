@@ -8,7 +8,7 @@ const Jimp = require('jimp');
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
 const APP_URL = process.env.APP_URL || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : '');
-const GITHUB_TOKEN = process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_PERSONAL_ACCESS_TOKEN || '';
+const GITHUB_TOKEN = process.env.GITHUB_PERSONAL_TOKEN || process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_PERSONAL_ACCESS_TOKEN || '';
 const GITHUB_REPO = 'thxxxf51-hue/giftbot-miniapp';
 
 /* ══ GITHUB DB BACKUP ══ */
@@ -3001,10 +3001,11 @@ app.get('/api/admin/users', (req, res) => {
     starsBalance: u.starsBalance||0,
     regDate: u.regDate||'',
     refs: (u.refs||[]).length,
-    banned: !!(DB.bans?.[u.username] || DB.bansByUid?.[uid])
+    banned: !!(DB.bans?.[u.username] || DB.bansByUid?.[uid]),
+    photoUrl: u.photoUrl||null
   })).sort((a, b) => b.balance - a.balance);
   if (q) users = users.filter(u => u.username.toLowerCase().includes(q) || u.firstName.toLowerCase().includes(q));
-  res.json(users.slice(0, 100));
+  res.json(users);
 });
 
 app.get('/api/admin/users/:uid', (req, res) => {
@@ -3241,7 +3242,7 @@ app.delete('/api/admin/shop/static/:id/override', (req, res) => {
 app.get('/api/admin/draws', (req, res) => {
   if (!adminCheck(req, res)) return;
   const active = Object.values(DB.draws).filter(d => !d.finished);
-  const finished = Object.values(DB.finished||{}).slice(-10).reverse();
+  const finished = Object.values(DB.finished||{}).sort((a,b) => b.finishedAt - a.finishedAt);
   res.json({ active, finished });
 });
 
@@ -3325,6 +3326,39 @@ app.post('/api/admin/draws/:id/image', (req, res) => {
   } catch (e) {
     res.status(500).json({ error: 'Upload failed: ' + e.message });
   }
+});
+
+// Delete finished draw
+app.delete('/api/admin/draws/finished/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  if (!DB.finished || !DB.finished[id]) return res.status(404).json({ error: 'Finished draw not found' });
+  delete DB.finished[id];
+  saveDB();
+  res.json({ ok: true });
+});
+
+// Reroll winners for active draw
+app.post('/api/admin/draws/:id/reroll', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.draws[id];
+  if (!draw) return res.status(404).json({ error: 'Draw not found' });
+  await finishDraw(id);
+  res.json({ ok: true });
+});
+
+// Extend/shorten draw end time
+app.patch('/api/admin/draws/:id/time', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.draws[id];
+  if (!draw) return res.status(404).json({ error: 'Draw not found' });
+  const { addMs } = req.body;
+  if (!addMs) return res.status(400).json({ error: 'Missing addMs' });
+  draw.endsAt = Math.max(Date.now() + 1000, draw.endsAt + Number(addMs));
+  saveDB();
+  res.json({ ok: true, endsAt: draw.endsAt });
 });
 
 // Edit finished draw

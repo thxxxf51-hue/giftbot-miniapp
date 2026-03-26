@@ -260,8 +260,11 @@ function admRenderUsers(list) {
     const initials = (u.firstName || u.username || '?')[0].toUpperCase();
     const name = u.username ? '@'+u.username : (u.firstName||'—');
     const sub = `${(u.balance||0).toLocaleString('ru')} монет · ${u.refs||0} реф.${u.banned?' · 🚫 Бан':''}`;
+    const avatarHtml = u.photoUrl
+      ? `<div class="adm-user-avatar" style="background:none;padding:0;overflow:hidden"><img src="${u.photoUrl}" alt="${initials}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='${initials}'"></div>`
+      : `<div class="adm-user-avatar">${initials}</div>`;
     return `<div class="adm-user-item" onclick="admViewUser('${u.uid}')" style="cursor:pointer">
-      <div class="adm-user-avatar">${initials}</div>
+      ${avatarHtml}
       <div class="adm-user-info">
         <div class="adm-user-name">${name}${u.firstName&&u.username?' ('+u.firstName+')':''}</div>
         <div class="adm-user-sub">${sub}</div>
@@ -894,7 +897,18 @@ function admDrawCard(d) {
           <div id="dedit-img-status-${d.id}" class="adm-img-status"></div>
         </div>
         <div class="adm-check-row"><div class="adm-check-label">${AICO.ticket} Требует билет</div><button class="adm-toggle${d.requireTicket?' on':''}" id="dedit-ticket-${d.id}" onclick="this.classList.toggle('on')"></button></div>
-        <button class="adm-btn adm-btn-primary" onclick="admSaveDrawEdit(${d.id})">${AICO.check} Сохранить</button>
+        <div class="adm-label" style="margin-bottom:4px">${AICO.timer} Управление временем</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="adm-btn adm-btn-sm" onclick="admExtendDrawTime(${d.id}, -3600000)">−1ч</button>
+          <button class="adm-btn adm-btn-sm" onclick="admExtendDrawTime(${d.id}, -600000)">−10м</button>
+          <button class="adm-btn adm-btn-sm adm-btn-green" onclick="admExtendDrawTime(${d.id}, 600000)">+10м</button>
+          <button class="adm-btn adm-btn-sm adm-btn-green" onclick="admExtendDrawTime(${d.id}, 3600000)">+1ч</button>
+          <button class="adm-btn adm-btn-sm adm-btn-green" onclick="admExtendDrawTime(${d.id}, 86400000)">+1д</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="adm-btn adm-btn-primary" style="flex:1" onclick="admSaveDrawEdit(${d.id})">${AICO.check} Сохранить</button>
+          <button class="adm-btn adm-btn-sm" style="background:rgba(255,140,0,.2);color:#ff8c00;border-color:rgba(255,140,0,.3)" onclick="admRerollDraw(${d.id})" title="Перекрутить победителей">${AICO.timer} Перекрутить</button>
+        </div>
       </div>
     </div>
   </div>`;
@@ -961,6 +975,26 @@ async function admDeleteDraw(id) {
   else toast(r.error||'Ошибка', 'r');
 }
 
+async function admDeleteFinishedDraw(id) {
+  if (!confirm('Удалить завершённый розыгрыш #'+id+'?')) return;
+  const r = await admApi('/draws/finished/'+id, 'DELETE', {});
+  if (r.ok) { toast('Удалено', 'g'); loadAdmDraws(); }
+  else toast(r.error||'Ошибка', 'r');
+}
+
+async function admRerollDraw(id) {
+  if (!confirm('Перекрутить победителей розыгрыша #'+id+'? Текущие победители будут заменены.')) return;
+  const r = await admApi('/draws/'+id+'/reroll', 'POST', {});
+  if (r.ok) { toast('Победители перекручены', 'g'); loadAdmDraws(); }
+  else toast(r.error||'Ошибка', 'r');
+}
+
+async function admExtendDrawTime(id, addMs) {
+  const r = await admApi('/draws/'+id+'/time', 'PATCH', { addMs });
+  if (r.ok) { toast('Время обновлено', 'g'); loadAdmDraws(); }
+  else toast(r.error||'Ошибка', 'r');
+}
+
 function admFinishedDrawCard(d) {
   const ts = d.finishedAt ? new Date(d.finishedAt).toLocaleDateString('ru') : '—';
   const winnersStr = (d.winners || []).map(w => w.firstName || w.username || w.uid).join(', ') || '—';
@@ -974,6 +1008,7 @@ function admFinishedDrawCard(d) {
       </div>
       <div class="adm-draw-btns">
         <button class="adm-btn adm-btn-sm" onclick="admToggleFinishedDrawEdit(${d.id})">${AICO.edit}</button>
+        <button class="adm-btn adm-btn-sm adm-btn-danger" onclick="admDeleteFinishedDraw(${d.id})" title="Удалить">${AICO.trash}</button>
       </div>
     </div>
     <div class="adm-draw-edit" id="adm-fdraw-edit-${d.id}" style="display:none">

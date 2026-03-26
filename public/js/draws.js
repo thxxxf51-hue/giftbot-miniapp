@@ -62,7 +62,7 @@ function renderDraws(draws){
     el.innerHTML=`
       <div class="draw-card-img">
         ${imgHtml}
-        ${isJoined?'<div class="draw-card-badge">✓ Участвует</div>':''}
+        ${isJoined?'<div class="draw-card-badge">✓ Участвуете</div>':''}
         ${draw.requireTicket?'<div class="draw-card-ticket">🎟</div>':''}
         <div class="draw-card-overlay">
           <div class="draw-card-title">${draw.prize}${draw.isMoney?` ${COIN}`:''}</div>
@@ -314,10 +314,12 @@ function renderFinishedDraws(draws){
 }
 
 /* ── Home draws preview ── */
+let _homeDrawsCache=[];
 function renderHomeDraws(draws){
+  _homeDrawsCache=draws;
   const el=document.getElementById('h-raf-block');if(!el)return;
   if(!draws.length){el.innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;padding:20px;opacity:.35;gap:8px"><div style="font-size:24px">🎁</div><div style="font-size:12px;color:var(--muted)">Пока розыгрышей нет</div></div>`;return;}
-  el.innerHTML=draws.slice(0,2).map(d=>`<div onclick="go('raffles')" style="background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px">
+  el.innerHTML=draws.slice(0,2).map((d,i)=>`<div onclick="openHomeDrawCard(${i})" style="background:var(--glass);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;cursor:pointer;margin-bottom:7px;display:flex;align-items:center;gap:10px">
     <div>${d.imageUrl?`<img src="${d.imageUrl}" style="width:34px;height:34px;border-radius:7px;object-fit:cover">`:'<div style="font-size:22px">🎁</div>'}</div>
     <div style="flex:1">
       <div style="font-size:13px;font-weight:700;color:var(--green)">${d.prize}${d.isMoney?' монет':''}</div>
@@ -328,6 +330,12 @@ function renderHomeDraws(draws){
     </div>
     <div style="font-size:14px;color:var(--muted)">›</div>
   </div>`).join('');
+}
+function openHomeDrawCard(idx){
+  const draw=_homeDrawsCache[idx];
+  if(!draw)return;
+  go('raffles');
+  setTimeout(()=>openDrawDetail(draw),120);
 }
 
 /* ── Finished draw detail modal (dp-mo) ── */
