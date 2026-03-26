@@ -63,10 +63,18 @@ if (ADMIN_TOKEN && ADMIN_REPO_URL) {
   console.log('Pushing to admin repo: ' + adminRepoPath + '...');
   try {
     execSync('mkdir -p "' + tmpDir + '"', { stdio: 'pipe' });
-    execSync(
-      'rsync -a --exclude=.git --exclude=node_modules --exclude=attached_assets --exclude=.local "' + __dirname + '/" "' + tmpDir + '/"',
-      { stdio: 'pipe' }
-    );
+    // Copy files manually excluding big/unnecessary folders
+    const ignore = new Set(['.git', 'node_modules', 'attached_assets', '.local', '.upm', '.cache']);
+    function copyDir(src, dest) {
+      if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+      for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+        if (ignore.has(entry.name)) continue;
+        const s = path.join(src, entry.name), d = path.join(dest, entry.name);
+        if (entry.isDirectory()) copyDir(s, d);
+        else fs.copyFileSync(s, d);
+      }
+    }
+    copyDir(__dirname, tmpDir);
     function t(cmd) {
       try {
         const o = execSync(cmd, { cwd: tmpDir, encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
