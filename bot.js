@@ -226,6 +226,7 @@ function resetUserStats(uid) {
   const stars = u.starsBalance || 0;
   DB.users[uid] = {
     balance: 0,
+    serverBalance: 0,
     starsBalance: stars,
     refs: [],
     refBy: null,
@@ -479,14 +480,12 @@ app.post('/api/user/sync', (req, res) => {
     return res.json({ ok: true, banned: true, banUntil: ban.until, balance: u.balance, starsBalance: u.starsBalance });
   }
 
-  // Если был сброс — говорим клиенту очистить localStorage (не для администратора)
+  // Если был сброс — говорим клиенту очистить localStorage
   const wasReset = u.resetAt ? u.resetAt : null;
   if (wasReset) {
     delete u.resetAt;
     saveDB();
-    if (!isAdmin(userId)) {
-      return res.json({ ok: true, reset: true, resetAt: wasReset, balance: u.balance, starsBalance: u.starsBalance });
-    }
+    return res.json({ ok: true, reset: true, resetAt: wasReset, balance: 0, starsBalance: u.starsBalance });
   }
 
   // If server has authoritative balance (set by /pgive), use it and clear flag
