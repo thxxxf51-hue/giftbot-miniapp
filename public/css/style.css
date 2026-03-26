@@ -230,7 +230,12 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .sitem:active{transform:scale(.97);opacity:.9}
 .sitem-img-wrap{width:100%;height:90px;overflow:hidden;position:relative;flex-shrink:0;background:#0d0d14}
 .sitem-img-wrap img{width:100%;height:100%;object-fit:cover;object-position:center 0%;display:block}
-.sitem-img-wrap .sitem-img--low{object-position:center 30%}
+/* per-item image vertical position — меняй % под каждый товар */
+.sitem-img-wrap .sitem-img--id3{object-position:center 0%}   /* VIP 7 дней  */
+.sitem-img-wrap .sitem-img--id7{object-position:center 30%}  /* VIP 30 дней */
+.sitem-img-wrap .sitem-img--id9{object-position:center 30%}  /* Корона      */
+.sitem-img-wrap .sitem-img--id5{object-position:center 30%}  /* Цветной ник */
+.sitem-img-wrap .sitem-img--id8{object-position:center 30%}  /* Эффект входа*/
 .sitem-img-wrap::after{content:'';position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(to bottom,transparent,rgba(24,24,31,0.65));pointer-events:none}
 .sico-fb{width:100%;height:100%;display:none;align-items:center;justify-content:center}
 .sico-fb svg{width:34px;height:34px;stroke:rgba(46,204,113,0.65);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
