@@ -96,14 +96,25 @@ function showBanScreen(until) {
 
 /* ══ СБРОС localStorage ══ */
 function hardReset() {
-  // Используем SK (определён в core.js) — гарантированно правильный ключ
+  // Отключаем TonConnect чтобы кошелёк тоже сбросился
+  try {
+    // Удаляем все ключи TonConnect из localStorage
+    const tcKeys = Object.keys(localStorage).filter(k =>
+      k.startsWith('ton-connect') || k.startsWith('tc-') || k.includes('tonconnect')
+    );
+    tcKeys.forEach(k => localStorage.removeItem(k));
+  } catch {}
+  // Также пробуем через API если SDK уже загружен
+  try {
+    if (window._tcUI && window._tcUI.disconnect) window._tcUI.disconnect().catch(()=>{});
+    if (typeof _tcUI !== 'undefined' && _tcUI && _tcUI.disconnect) _tcUI.disconnect().catch(()=>{});
+  } catch {}
+  // Чистим наш localStorage
   try {
     localStorage.removeItem(SK);
-    // Также чистим кеш уведомлений
     localStorage.removeItem('gb4_notifs_' + UID);
   } catch {}
-  // Небольшая задержка чтобы localStorage точно очистился
-  setTimeout(() => location.reload(), 50);
+  setTimeout(() => location.reload(), 150);
 }
 
 /* ══ ACCESS CHECK ══ */

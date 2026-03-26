@@ -65,6 +65,7 @@ async function initTonConnect() {
     }
 
     _tcReady = true;
+    window._tcUI = _tcUI; // expose for hardReset
   } catch(e) {
     console.warn('TonConnect init error:', e);
     if (S.walletAddress) _updateWalletUI(S.walletAddress);

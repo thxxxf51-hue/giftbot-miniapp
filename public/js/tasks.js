@@ -267,9 +267,8 @@ function completeTask(id){
   if(t){
     S.balance+=t.rew;
     syncB();
-    // Save task reward to transactions
-    _addTxLocal('task_reward', `+${t.rew}`, 'Задание выполнено');
-    _sendTxToServer('task_reward', `+${t.rew}`, 'Задание выполнено');
+    // Save tx only on server — no local copy to avoid duplicates
+    _sendTxToServer('task_reward', `+${t.rew}`, 'Задание выполнено').then(()=>loadTxList());
     // Записываем в глобальную статистику
     fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:t.rew})}).catch(()=>{});
   }
@@ -288,6 +287,8 @@ async function _sendTxToServer(type, amount, details){
     });
   }catch{}
 }
+
+/* Local tx — used only for non-task events (promos, etc) */
 
 /* Local tx cache for immediate display */
 function _addTxLocal(type, amount, details){
