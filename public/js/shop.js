@@ -47,9 +47,9 @@ function rShopItems(){
     const ok2=S.balance>=price;
 
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS[x.icoKey]||''}</div>`;
-    const _imgLow=(x.crownDays||x.special==='color'||x.special==='effect')?' sitem-img--low':'';
+    const _imgCls=x.imageUrl?` sitem-img--id${x.id}`:'';
     const imgContent=x.imageUrl
-      ?`<img class="sitem-img${_imgLow}" src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
+      ?`<img class="sitem-img${_imgCls}" src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
       :fallbackIco;
 
     let btn;
