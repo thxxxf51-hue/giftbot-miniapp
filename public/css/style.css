@@ -91,7 +91,6 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
   cursor:pointer;
   transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s,border-color .18s;
   position:relative;overflow:hidden;
-  box-shadow:0 2px 12px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .hm-card::before{
   content:'';position:absolute;top:0;left:0;right:0;height:40%;
@@ -1941,7 +1940,6 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
   gap:8px;
   position:relative;
   overflow:hidden;
-  box-shadow:0 2px 12px rgba(0,0,0,0.22),inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .hm-stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(180deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0) 100%);pointer-events:none;border-radius:18px 18px 0 0}
 .hm-stat-body{display:flex;flex-direction:column;gap:3px;position:relative;z-index:1}
