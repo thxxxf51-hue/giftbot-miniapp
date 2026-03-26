@@ -1,6 +1,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const TOKEN = process.env.GITHUB_PERSONAL_TOKEN || process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
 const ADMIN_TOKEN = process.env.GITHUB_ADMIN_TOKEN;
@@ -10,70 +11,83 @@ const MSG = process.argv[2] || 'Auto-deploy: update from Replit';
 
 if (!TOKEN) { console.error('GITHUB_PERSONAL_TOKEN not set'); process.exit(1); }
 
-['config.lock','index.lock','HEAD.lock'].forEach(f=>{
-  const p=path.join(__dirname,'.git',f);
-  try{if(fs.existsSync(p)){fs.unlinkSync(p);console.log('Removed lock:',f);}}catch{}
-});
-
-function run(cmd) {
+function exec(cmd, cwd) {
   try {
-    const out = execSync(cmd, { encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
-    if (out.trim()) console.log(out.trim());
+    const out = execSync(cmd, { encoding: 'utf8', stdio: ['pipe','pipe','pipe'], cwd: cwd || __dirname });
+    if (out && out.trim()) console.log(out.trim());
+    return out || '';
   } catch(e) {
-    const msg = (e.stderr || e.stdout || e.message || '').trim();
+    const msg = String(e.stderr || e.stdout || e.message || '').trim();
     console.error('Error:', msg);
     process.exit(1);
   }
 }
 
-function runSafe(cmd) {
-  try {
-    const out = execSync(cmd, { encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
-    if (out.trim()) console.log(out.trim());
-  } catch(e) {}
+function execSafe(cmd, cwd) {
+  try { return execSync(cmd, { encoding: 'utf8', stdio: ['pipe','pipe','pipe'], cwd: cwd || __dirname }) || ''; }
+  catch(e) { return ''; }
 }
 
-run('git config user.email "bot@giftbot.app"');
-run('git config user.name "GiftBot Deploy"');
-run(`git remote set-url origin https://${TOKEN}@github.com/${REPO}.git`);
+// Remove lock files
+['config.lock','index.lock','HEAD.lock','MERGE_HEAD','CHERRY_PICK_HEAD'].forEach(f=>{
+  const p=path.join(__dirname,'.git',f);
+  try{if(fs.existsSync(p)){fs.unlinkSync(p);console.log('Removed lock:',f);}}catch{}
+});
 
-runSafe('git rm --cached -r attached_assets/ --ignore-unmatch 2>/dev/null');
+// Abort any in-progress rebase/merge without resetting files
+execSafe('git rebase --abort');
+execSafe('git merge --abort');
 
-try {
-  const diff = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
-  if (!diff) {
-    console.log('Nothing to commit, checking if push is needed...');
-  } else {
-    run('git add -A');
-    run(`git commit -m "${MSG.replace(/"/g, "'")}"`);
-  }
-} catch(e) {}
+exec('git config user.email "bot@giftbot.app"');
+exec('git config user.name "GiftBot Deploy"');
+exec(`git remote set-url origin https://${TOKEN}@github.com/${REPO}.git`);
+execSafe('git remote remove admin-origin');
+execSafe('git rm --cached -r attached_assets/ --ignore-unmatch');
 
-try {
-  execSync('git pull --rebase origin main', { encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
-} catch(e) {}
+// Add all and commit
+exec('git add -A');
+const status = execSafe('git status --porcelain').trim();
+if (status) {
+  exec(`git commit -m "${MSG.replace(/"/g, "'")}"`);
+} else {
+  console.log('Nothing new to commit.');
+}
 
-run('git push origin main --force');
-console.log('✅ Pushed to main repo (giftbot-miniapp) successfully!');
+exec('git push origin main --force');
+console.log('Pushed to main repo (giftbot-miniapp) successfully!');
 
+// Admin repo: push using clean temp copy
 if (ADMIN_TOKEN && ADMIN_REPO_URL) {
+  const adminRepoPath = ADMIN_REPO_URL.replace('https://github.com/', '').replace(/\.git$/, '');
+  const tmpDir = path.join(os.tmpdir(), 'giftbot-admin-' + Date.now());
+  console.log('Pushing to admin repo: ' + adminRepoPath + '...');
   try {
-    const adminRepoPath = ADMIN_REPO_URL.replace('https://github.com/', '');
-    console.log(`\nPushing to admin repo: ${adminRepoPath}...`);
-
-    runSafe(`git remote remove admin-origin`);
-    run(`git remote add admin-origin https://${ADMIN_TOKEN}@github.com/${adminRepoPath}.git`);
-
-    try {
-      execSync('git pull --rebase admin-origin main', { encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
-    } catch(e) {}
-
-    run('git push admin-origin main --force');
-    console.log('✅ Pushed to admin repo successfully!');
-    runSafe('git remote remove admin-origin');
-  } catch(e) {
-    console.error('Admin repo push error:', e.message);
+    execSync('mkdir -p "' + tmpDir + '"', { stdio: 'pipe' });
+    execSync(
+      'rsync -a --exclude=.git --exclude=node_modules --exclude=attached_assets --exclude=.local "' + __dirname + '/" "' + tmpDir + '/"',
+      { stdio: 'pipe' }
+    );
+    function t(cmd) {
+      try {
+        const o = execSync(cmd, { cwd: tmpDir, encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
+        if (o && o.trim()) console.log(o.trim());
+      } catch(e) {
+        console.log(String(e.stderr || e.stdout || e.message || '').trim());
+      }
+    }
+    t('git init');
+    t('git config user.email "bot@giftbot.app"');
+    t('git config user.name "GiftBot Deploy"');
+    t('git add -A');
+    t('git commit -m "' + MSG.replace(/"/g, "'") + '"');
+    t('git remote add origin https://' + ADMIN_TOKEN + '@github.com/' + adminRepoPath + '.git');
+    t('git push origin main --force');
+    console.log('Pushed to admin repo successfully!');
+  } catch(err) {
+    console.error('Admin repo push error:', String(err.message || err).trim());
+  } finally {
+    try { execSync('rm -rf "' + tmpDir + '"', { stdio: 'pipe' }); } catch(e) {}
   }
 } else {
-  console.log('ℹ️ ADMIN_GITHUB_REPO or GITHUB_ADMIN_TOKEN not set — skipping admin repo push');
+  console.log('ADMIN_GITHUB_REPO or GITHUB_ADMIN_TOKEN not set — skipping admin repo push');
 }
