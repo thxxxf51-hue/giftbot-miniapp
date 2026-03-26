@@ -237,6 +237,22 @@ async function init(){
       if(d.ok&&d.banned&&!document.getElementById('ban-screen')) showBanScreen(d.banUntil);
     }catch{}
   },30000);
+
+  // Проверка сброса каждые 15 сек (пока аппка открыта)
+  setInterval(async()=>{
+    try{
+      const r=await fetch('/api/user/sync',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId:UID,username:TGU.username||'',firstName:TGU.first_name||'',balance:S.balance,starsBalance:S.starsBalance,vipExpiry:S.vipExpiry||null})});
+      const d=await r.json();
+      if(d.ok&&d.reset){ hardReset(); return; }
+      if(d.ok&&d.banned){ if(!document.getElementById('ban-screen')) showBanScreen(d.banUntil); return; }
+      if(d.ok){
+        S.balance=d.balance;
+        if(d.starsBalance!==undefined) S.starsBalance=d.starsBalance;
+        save(); syncB();
+      }
+    }catch{}
+  },15000);
 }
 
 /* ══ SPLASH SCREEN ══ */
