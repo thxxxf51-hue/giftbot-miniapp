@@ -1447,16 +1447,18 @@ bot.start(async (ctx) => {
       }
     }
   }
-  await ctx.replyWithPhoto(
-    { url: `${APP_URL}/img/welcome.jpg` },
-    {
-      caption: `👋 Привет, ${ctx.from.first_name}!\n\n🎁 Добро пожаловать в SatApp Gifts!\n💰 Баланс: ${u.balance} монет\n⭐ Stars: ${u.starsBalance}`,
-      reply_markup: { inline_keyboard: [
-        [{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }],
-        [{ text: '⭐ Купить Stars', callback_data: 'stars_buy_menu' }]
-      ] }
-    }
-  );
+  try {
+    await ctx.replyWithPhoto(
+      { url: `${APP_URL}/img/welcome.jpg` },
+      {
+        caption: `👋 Привет, ${ctx.from.first_name}!\n\n🎁 Добро пожаловать в SatApp Gifts!\n💰 Баланс: ${u.balance} монет\n⭐ Stars: ${u.starsBalance}`,
+        reply_markup: { inline_keyboard: [
+          [{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }],
+          [{ text: '⭐ Купить Stars', callback_data: 'stars_buy_menu' }]
+        ] }
+      }
+    );
+  } catch (e) { console.log('sendPhoto error:', e.message); }
 });
 
 bot.command('cpromo', (ctx) => {
