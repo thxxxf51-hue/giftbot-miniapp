@@ -2218,8 +2218,7 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .shopmo-confirm-close{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.08);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.5);font-size:16px;font-family:inherit;flex-shrink:0}
 .shopmo-confirm-body{padding:16px}
 .shopmo-confirm-row{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
-.shopmo-confirm-thumb{width:85px;height:85px;border-radius:12px;overflow:hidden;flex-shrink:0;background:#0d0d14;display:flex;align-items:center;justify-content:center}
-.shopmo-confirm-thumb img{width:100%;height:100%;object-fit:cover}
+.shopmo-confirm-thumb{width:85px;height:85px;border-radius:12px;overflow:hidden;flex-shrink:0;background:#111217;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.07)}
 .shopmo-confirm-info{flex:1;min-width:0}
 .shopmo-confirm-name{font-size:15px;font-weight:700;color:#fff;margin-bottom:5px;line-height:1.3}
 .shopmo-confirm-desc{font-size:13px;color:#8383A4;line-height:1.5;margin-bottom:8px}
@@ -2229,6 +2228,6 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .shopmo-confirm-btn{width:100%;border:none;border-radius:14px;padding:15px 8px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;transition:opacity .12s;color:#000;letter-spacing:.01em}
 .shopmo-confirm-btn:active{opacity:.82}
 .shopmo-confirm-btn:disabled{cursor:not-allowed;opacity:.5}
-.shopmo-confirm-btn--green{background:#0EA876}
-.shopmo-confirm-btn--blue{background:#4087F6}
+.shopmo-confirm-btn--green{background:#0EA876;color:#000}
+.shopmo-confirm-btn--blue{background:#4087F6;color:#fff}
 .shopmo-confirm-btn--nomoney{background:rgba(255,255,255,.1);color:var(--muted);cursor:not-allowed}

@@ -96,7 +96,8 @@ function rShopItems(){
 }
 
 /* ══ SHOP ITEM MODAL ══ */
-const _SHOPMO_COIN_ICO=`<svg class="shopmo-price-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+const _SHOPMO_COIN_ICO=`<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+const _SHOPMO_THUMB_FB=`<svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:34px;height:34px"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`;
 
 function openShopModal(type,id){
   const mo=document.getElementById('shopmo');
@@ -118,46 +119,59 @@ function openShopModal(type,id){
   }
   const ok2=S.balance>=price;
   const need=price-S.balance;
+  const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW');
 
-  // image
-  const imgHtml=x.imageUrl
-    ?`<img class="shopmo-img" src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`+
-     `<div class="shopmo-img-placeholder" style="display:none"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`
-    :`<div class="shopmo-img-placeholder"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+  // thumbnail
+  const thumbHtml=x.imageUrl
+    ?`<img src="${x.imageUrl}" alt="${x.name}" style="width:100%;height:100%;object-fit:cover;border-radius:12px;display:block" onerror="this.style.display='none'">`
+    :_SHOPMO_THUMB_FB;
 
-  // insufficient text
-  const insuf=!ok2&&!x.wip&&!x.special
-    ?`<div class="shopmo-insufficient">Недостаточно монет. Нужно ещё ${need.toLocaleString('ru')} 🪙</div>`:'';
+  // price row (only for purchasable items)
+  const priceRow=(!x.wip&&!x.special)
+    ?`<div class="shopmo-confirm-price">${_SHOPMO_COIN_ICO}<span class="shopmo-confirm-price-val">${price.toLocaleString('ru')}</span></div>`
+    :'';
+
+  // insufficient notice
+  const insuf=(!ok2&&!x.wip&&!x.special)
+    ?`<div class="shopmo-confirm-insuf">Недостаточно монет. Нужно ещё ${need.toLocaleString('ru')}</div>`
+    :'';
 
   // buy button
-  let buyHtml;
+  let btnCls,btnTxt,btnOnclick,btnDisabled='';
   if(x.wip){
-    buyHtml=`<button class="shopmo-buy" disabled>В разработке</button>`;
+    btnCls='shopmo-confirm-btn--nomoney';btnTxt='В разработке';btnDisabled=' disabled';btnOnclick='';
   } else if(x.special==='color'){
-    buyHtml=`<button class="shopmo-buy" onclick="closeShopModal();openColorPicker(false)">Выбрать цвет</button>`;
+    btnCls=isNew?'shopmo-confirm-btn--blue':'shopmo-confirm-btn--green';
+    btnTxt='Выбрать цвет';btnOnclick=`closeShopModal();openColorPicker(false)`;
   } else if(x.special==='effect'){
-    buyHtml=`<button class="shopmo-buy" onclick="closeShopModal();openEffectPicker()">Выбрать эффект</button>`;
+    btnCls=isNew?'shopmo-confirm-btn--blue':'shopmo-confirm-btn--green';
+    btnTxt='Выбрать эффект';btnOnclick=`closeShopModal();openEffectPicker()`;
+  } else if(!ok2){
+    btnCls='shopmo-confirm-btn--nomoney';btnTxt=`Мало монет (нужно ещё ${need.toLocaleString('ru')})`;btnDisabled=' disabled';btnOnclick='';
   } else {
-    const cls=ok2?'':' nomoney';
-    buyHtml=`<button class="shopmo-buy${cls}"${ok2?'':' disabled'} onclick="doShopModalBuy('${type}',${id})">
-      Купить за ${price.toLocaleString('ru')} 🪙
-    </button>`;
+    btnCls=isNew?'shopmo-confirm-btn--blue':'shopmo-confirm-btn--green';
+    btnTxt=`Купить за ${price.toLocaleString('ru')} монет`;
+    btnOnclick=`doShopModalBuy('${type}',${id})`;
   }
 
   const desc=x.desc||'';
 
   document.getElementById('shopmo-content').innerHTML=`
-    ${imgHtml}
-    <div class="shopmo-hdr">
-      <div></div>
-      <button class="shopmo-close" onclick="closeShopModal()">✕</button>
+    <div class="shopmo-confirm-hdr">
+      <div class="shopmo-confirm-title">Подтверждение покупки</div>
+      <button class="shopmo-confirm-close" onclick="closeShopModal()">✕</button>
     </div>
-    <div class="shopmo-body">
-      <div class="shopmo-name">${x.name}</div>
-      ${desc?`<div class="shopmo-desc">${desc}</div>`:''}
-      ${!x.wip&&!x.special?`<div class="shopmo-price-row">${_SHOPMO_COIN_ICO}<div class="shopmo-price">${price.toLocaleString('ru')}</div></div>`:''}
+    <div class="shopmo-confirm-body">
+      <div class="shopmo-confirm-row">
+        <div class="shopmo-confirm-thumb">${thumbHtml}</div>
+        <div class="shopmo-confirm-info">
+          <div class="shopmo-confirm-name">${x.name}</div>
+          ${desc?`<div class="shopmo-confirm-desc">${desc}</div>`:''}
+          ${priceRow}
+        </div>
+      </div>
       ${insuf}
-      ${buyHtml}
+      <button class="shopmo-confirm-btn ${btnCls}"${btnDisabled}${btnOnclick?` onclick="${btnOnclick}"`:''}>${btnTxt}</button>
     </div>`;
 
   mo.dataset.type=type;
