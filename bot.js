@@ -2852,8 +2852,12 @@ app.post('/api/support/specialist', async (req, res) => {
 // Основной путь: специалист пишет прямо в бот после нажатия кнопки
 
 // Callback: специалист нажал "Ответить пользователю"
-bot.on('callback_query', async (ctx) => {
+bot.on('callback_query', async (ctx, next) => {
   const data = ctx.callbackQuery?.data || '';
+
+  // Пропускаем stars_buy кнопки дальше к bot.action() обработчикам
+  if (data.startsWith('stars_buy:') || data === 'stars_buy_menu') return next();
+
   // Отвечаем сразу чтобы не было timeout
   try { await ctx.answerCbQuery(); } catch {}
 
