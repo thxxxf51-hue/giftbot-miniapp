@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { BalancePill } from '../components/CoinIcon';
 
@@ -13,7 +13,7 @@ export default function PVP() {
         if (el) el.style.display = 'none';
       });
       const menu = document.getElementById('pvp-menu-wrap');
-      if (menu) menu.style.display = 'block';
+      if (menu) menu.style.display = '';
       if (typeof window.onPvpPageLeave === 'function') window.onPvpPageLeave();
       return;
     }
@@ -39,53 +39,53 @@ export default function PVP() {
         </div>
       </div>
 
-      <div id="pvp-duel-wrap" style={{ display: 'none' }} />
-      <div id="pvp-solo-wrap" style={{ display: 'none' }} />
-      <div id="pvp-mines-wrap" style={{ display: 'none' }}>
-        <div id="mines-game-root" />
+      <div id="pvp-duel-wrap" style={{ display: 'none' }}>
       </div>
-      <div id="pvp-bets-wrap" style={{ display: 'none' }} />
+      <div id="pvp-solo-wrap" style={{ display: 'none' }}>
+      </div>
+      <div id="pvp-mines-wrap" style={{ display: 'none' }}>
+        <div id="mines-game-root"></div>
+      </div>
+      <div id="pvp-bets-wrap" style={{ display: 'none' }}>
+      </div>
     </div>
   );
 }
 
 function PvpModeCard({ title, desc, icon, onAction }) {
   const timerRef = useRef(null);
-  const pressedRef = useRef(false);
+  const isLongRef = useRef(false);
   const cardRef = useRef(null);
 
-  const startPress = useCallback(() => {
-    pressedRef.current = false;
+  function onDown() {
+    isLongRef.current = false;
     timerRef.current = setTimeout(() => {
-      pressedRef.current = true;
+      isLongRef.current = true;
       if (cardRef.current) cardRef.current.classList.add('pvp-card--pressed');
     }, 200);
-  }, []);
+  }
 
-  const endPress = useCallback((e) => {
+  function onUp() {
     clearTimeout(timerRef.current);
     if (cardRef.current) cardRef.current.classList.remove('pvp-card--pressed');
-    if (!pressedRef.current) {
-      onAction();
-    }
-    pressedRef.current = false;
-  }, [onAction]);
+    if (!isLongRef.current) onAction();
+    isLongRef.current = false;
+  }
 
-  const cancelPress = useCallback(() => {
+  function onCancel() {
     clearTimeout(timerRef.current);
-    pressedRef.current = false;
+    isLongRef.current = false;
     if (cardRef.current) cardRef.current.classList.remove('pvp-card--pressed');
-  }, []);
+  }
 
   return (
     <div
       ref={cardRef}
       className="gc pvp-card"
-      tabIndex={-1}
-      onPointerDown={startPress}
-      onPointerUp={endPress}
-      onPointerLeave={cancelPress}
-      onPointerCancel={cancelPress}
+      onPointerDown={onDown}
+      onPointerUp={onUp}
+      onPointerLeave={onCancel}
+      onPointerCancel={onCancel}
       style={{ padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', userSelect: 'none' }}
     >
       <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
