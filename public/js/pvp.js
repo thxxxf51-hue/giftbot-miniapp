@@ -666,6 +666,17 @@ function onPvpPageEnter() {
 function onPvpPageLeave() {
   // Stop online timer when leaving page
   if (window._pvpOnlineTimer) { clearInterval(window._pvpOnlineTimer); window._pvpOnlineTimer = null; }
+  // Hide all game wraps so on next enter the menu is clean
+  const duel  = $('pvp-duel-wrap');
+  const solo  = $('pvp-solo-wrap');
+  const mines = $('pvp-mines-wrap');
+  const bw    = document.getElementById('pvp-bets-wrap');
+  const menu  = $('pvp-menu-block');
+  if (duel)  duel.style.display  = 'none';
+  if (solo)  solo.style.display  = 'none';
+  if (mines) mines.style.display = 'none';
+  if (bw)    bw.style.display    = 'none';
+  if (menu)  menu.style.display  = 'block';
 }
 
 /* ── MODE SWITCH ── */
