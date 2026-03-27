@@ -55,18 +55,15 @@ function rShopItems(){
     let btn;
     if(x.wip){
       btn=_shopBuyBtn(' wip',true,'','В разработке',null);
-    } else if(x.special==='color'){
-      btn=`<button class="sbuy" onclick="event.stopPropagation();openColorPicker(false)">Выбрать цвет</button>`;
-    } else if(x.special==='effect'){
-      btn=`<button class="sbuy" onclick="event.stopPropagation();openEffectPicker()">Выбрать эффект</button>`;
     } else {
-      btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`event.stopPropagation();buyItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?price:null);
+      btn=_shopBuyBtn(ok2?'':' nomoney',false,`event.stopPropagation();openShopModal('std',${x.id})`,ok2?'Купить за':'Купить',ok2?price:null);
     }
 
     return`<div class="sitem" onclick="openShopModal('std',${x.id})">
       <div class="sitem-img-wrap">${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
+        ${x.desc?`<div class="sitem-desc">${x.desc}</div>`:''}
       </div>
       ${btn}
     </div>`;
@@ -74,19 +71,23 @@ function rShopItems(){
 
   const customHtml=customShopItems.map(x=>{
     const ok2=S.balance>=x.price;
-    const borderStyle=x.borderColor?`style="border-color:${x.borderColor}!important"`:'';
+    const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW');
+    const borderStyle=isNew
+      ?`style="border-color:rgba(64,135,246,0.5)!important;box-shadow:0 0 0 1px rgba(64,135,246,0.3)"`
+      :(x.borderColor?`style="border-color:${x.borderColor}!important"`:'');
     const tagHtml=x.tag?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
     const cntHtml=x.count?`<div class="sitem-cnt-badge">${x.count} шт.</div>`:'';
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS['shop']||''}</div>`;
     const imgContent=x.imageUrl
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
       :fallbackIco;
-    const btn=_shopBuyBtn(ok2?'':' nomoney',!ok2,`event.stopPropagation();buyCustomItem(${x.id})`,ok2?'Купить за':'Мало монет',ok2?x.price:null);
+    const btnCls=(isNew?' new-item':ok2?'':' nomoney');
+    const btn=_shopBuyBtn(btnCls,false,`event.stopPropagation();openShopModal('custom',${x.id})`,ok2?'Купить за':'Купить',ok2?x.price:null);
     return`<div class="sitem" ${borderStyle} onclick="openShopModal('custom',${x.id})">
       <div class="sitem-img-wrap">${tagHtml}${cntHtml}${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
-        ${x.desc?`<div style="font-size:11px;color:rgba(255,255,255,.4);line-height:1.3;margin-top:-2px">${x.desc}</div>`:''}
+        ${x.desc?`<div class="sitem-desc">${x.desc}</div>`:''}
       </div>
       ${btn}
     </div>`;
@@ -186,8 +187,28 @@ function closeShopModal(){
 
 function doShopModalBuy(type,id){
   closeShopModal();
-  if(type==='std') buyItem(id);
-  else buyCustomItem(id);
+  if(type==='std'){
+    const base=ITEMS.find(i=>i.id===id);if(!base)return;
+    const x={...base,...(_shopItemOverrides[id]||{})};
+    let price=x.price;
+    if(id===3&&S.vipDiscount)price=Math.floor(x.price*0.5);
+    if(x.special==='effect'&&vipStatus()==='active')price=Math.floor(x.price*0.6);
+    if(S.balance<price){toast('Недостаточно монет','r');return;}
+    S.balance-=price;
+    if(x.vipDays){activateVip(x.vipDays);if(id===3&&S.vipDiscount){S.vipDiscount=false;save();}}
+    if(x.crownDays){activateCrownTimed(x.crownDays);}
+    syncB();rShopItems();save();
+    if(x.vipDays)addServerTx('vip_buy','-'+price,'Покупка VIP на '+x.vipDays+' дн.');
+    else if(x.crownDays)addServerTx('crown_buy','-'+price,'Покупка Короны на '+x.crownDays+' дн.');
+    toast(x.vipDays?'👑 VIP на '+x.vipDays+' дн. активирован!':x.crownDays?'👑 Корона на '+x.crownDays+' дн. активирована!':'✅ Куплено!','g');
+  } else {
+    const x=customShopItems.find(i=>i.id===id);if(!x)return;
+    if(S.balance<x.price){toast('Недостаточно монет','r');return;}
+    S.balance-=x.price;
+    syncB();rShopItems();save();
+    addServerTx('shop_buy','-'+x.price,'Покупка: '+x.name);
+    toast('✅ Куплено: '+x.name,'g');
+  }
 }
 
 function buyItem(id){
