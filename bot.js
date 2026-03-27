@@ -3564,6 +3564,243 @@ app.post('/api/admin/shop/:id/image', (req, res) => {
   res.json({ ok: true, imageUrl });
 });
 
+
+/* ══════════════════════════════════════════════
+   STARS SHOP — ПРОДАЖА ЗВЁЗД ЗА USDT (CryptoBot)
+   
+   ИНСТРУКЦИЯ: Вставь этот блок в bot.js
+   ПЕРЕД строкой: const PORT = process.env.PORT || 5000;
+   ══════════════════════════════════════════════ */
+
+/* ── КОНФИГ МАГАЗИНА ЗВЁЗД ─────────────────────────────────────────────── */
+const CRYPTOBOT_TOKEN = process.env.CRYPTOBOT_TOKEN || ''; // токен от @CryptoBot
+const WIZARD_API_KEY  = process.env.WIZARD_API_KEY  || ''; // твой API ключ wizard-bot.com
+
+// Пакеты: stars = кол-во звёзд, price = цена в USDT (твоя цена продажи)
+// Себестоимость ~$0.013/star на Fragment → твоя маржа = price - себестоимость
+const STAR_PACKAGES = [
+  { id: 'pkg_50',    stars: 50,    price: 0.50,  label: '⭐ 50 Stars'   },
+  { id: 'pkg_100',   stars: 100,   price: 0.95,  label: '⭐ 100 Stars'  },
+  { id: 'pkg_500',   stars: 500,   price: 4.50,  label: '⭐ 500 Stars'  },
+  { id: 'pkg_1000',  stars: 1000,  price: 8.50,  label: '⭐ 1000 Stars' },
+];
+
+/* ── CRYPTOBOT API ──────────────────────────────────────────────────────── */
+async function cryptobotCreateInvoice(stars, amountUsdt, userId) {
+  if (!CRYPTOBOT_TOKEN) throw new Error('CRYPTOBOT_TOKEN не установлен');
+  const r = await fetch('https://pay.crypt.bot/api/createInvoice', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Crypto-Pay-API-Token': CRYPTOBOT_TOKEN
+    },
+    body: JSON.stringify({
+      asset: 'USDT',
+      amount: amountUsdt.toFixed(2),
+      description: `${stars} Telegram Stars`,
+      payload: JSON.stringify({ stars, userId: String(userId), type: 'stars_shop' }),
+      expires_in: 3600
+    })
+  });
+  const data = await r.json();
+  if (!data.ok) throw new Error(data.error?.name || 'CryptoBot error');
+  return data.result; // { pay_url, invoice_id, ... }
+}
+
+/* ── WIZARD-BOT API ─────────────────────────────────────────────────────── */
+async function wizardSendStars(telegramId, starsAmount) {
+  if (!WIZARD_API_KEY) throw new Error('WIZARD_API_KEY не установлен');
+  const r = await fetch('https://api.wizard-bot.com/v1/orders/create', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-KEY': WIZARD_API_KEY
+    },
+    body: JSON.stringify({
+      telegram_id: String(telegramId),
+      amount: starsAmount,
+      type: 'stars'
+    })
+  });
+  const data = await r.json();
+  return data;
+}
+
+async function wizardGetProfile() {
+  if (!WIZARD_API_KEY) throw new Error('WIZARD_API_KEY не установлен');
+  const r = await fetch('https://api.wizard-bot.com/v1/user/profile', {
+    headers: { 'X-API-KEY': WIZARD_API_KEY }
+  });
+  return await r.json();
+}
+
+/* ── BOT КОМАНДЫ ────────────────────────────────────────────────────────── */
+
+// /buy — показать пакеты звёзд
+bot.command('buy', async (ctx) => {
+  const keyboard = STAR_PACKAGES.map(p => [{
+    text: `${p.label} — $${p.price}`,
+    callback_data: `stars_buy:${p.id}`
+  }]);
+  await ctx.reply(
+    `⭐ *Купить Telegram Stars*\n\n` +
+    `Stars нужны для подарков и поддержки авторов.\n` +
+    `Оплата через CryptoBot (USDT).\n\n` +
+    `Выбери пакет:`,
+    {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: keyboard }
+    }
+  );
+});
+
+// Обработчик выбора пакета
+bot.action(/^stars_buy:(.+)$/, async (ctx) => {
+  await ctx.answerCbQuery();
+  const pkgId = ctx.match[1];
+  const pkg = STAR_PACKAGES.find(p => p.id === pkgId);
+  if (!pkg) return ctx.reply('❌ Пакет не найден');
+
+  try {
+    const invoice = await cryptobotCreateInvoice(pkg.stars, pkg.price, ctx.from.id);
+    await ctx.editMessageText(
+      `⭐ *${pkg.stars} Telegram Stars*\n\n` +
+      `💵 Цена: *$${pkg.price} USDT*\n\n` +
+      `После оплаты Stars придут автоматически на твой аккаунт.\n` +
+      `⏳ Счёт действителен 60 минут.`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '💳 Оплатить через CryptoBot', url: invoice.pay_url }],
+            [{ text: '◀️ Назад', callback_data: 'stars_buy_menu' }]
+          ]
+        }
+      }
+    );
+  } catch (e) {
+    console.error('CryptoBot invoice error:', e.message);
+    await ctx.reply('❌ Ошибка при создании счёта. Попробуй позже.');
+  }
+});
+
+// Назад в меню покупки
+bot.action('stars_buy_menu', async (ctx) => {
+  await ctx.answerCbQuery();
+  const keyboard = STAR_PACKAGES.map(p => [{
+    text: `${p.label} — $${p.price}`,
+    callback_data: `stars_buy:${p.id}`
+  }]);
+  await ctx.editMessageText(
+    `⭐ *Купить Telegram Stars*\n\nВыбери пакет:`,
+    {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: keyboard }
+    }
+  );
+});
+
+// /wizard_balance — проверить баланс wizard API (только для админа)
+bot.command('wizard_balance', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  try {
+    const profile = await wizardGetProfile();
+    await ctx.reply(
+      `📊 *Wizard API профиль:*\n\n\`\`\`${JSON.stringify(profile, null, 2)}\`\`\``,
+      { parse_mode: 'Markdown' }
+    );
+  } catch (e) {
+    await ctx.reply('❌ Ошибка: ' + e.message);
+  }
+});
+
+/* ── EXPRESS: CRYPTOBOT WEBHOOK ─────────────────────────────────────────── */
+/* 
+  Настрой в @CryptoBot → Мои приложения → Webhooks:
+  URL: https://твой-домен.railway.app/api/cryptobot-webhook
+*/
+app.post('/api/cryptobot-webhook', async (req, res) => {
+  res.sendStatus(200); // отвечаем сразу
+
+  try {
+    const update = req.body;
+    if (update.update_type !== 'invoice_paid') return;
+
+    const invoice = update.payload;
+    if (invoice.status !== 'paid') return;
+
+    // Парсим payload
+    let payload;
+    try { payload = JSON.parse(invoice.payload); } catch { return; }
+    if (payload.type !== 'stars_shop') return; // только наши Stars-платежи
+
+    const { stars, userId } = payload;
+    if (!stars || !userId) return;
+
+    console.log(`✅ Stars покупка: ${stars} для user ${userId}`);
+
+    // Уведомляем что обрабатываем
+    try {
+      await bot.telegram.sendMessage(Number(userId),
+        `✅ Оплата получена! Отправляем ${stars} ⭐ на твой аккаунт...`
+      );
+    } catch {}
+
+    // Отправляем Stars через wizard-bot
+    const order = await wizardSendStars(userId, stars);
+    console.log('Wizard order result:', JSON.stringify(order));
+
+    if (order.ok !== false) {
+      // Успех
+      try {
+        await bot.telegram.sendMessage(Number(userId),
+          `🎉 *${stars} Stars успешно отправлены!*\n\nСпасибо за покупку! ⭐`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch {}
+
+      // Уведомляем админа
+      try {
+        await bot.telegram.sendMessage(ADMIN_ID,
+          `💰 *Новая продажа Stars!*\n\n` +
+          `⭐ Stars: ${stars}\n` +
+          `👤 User ID: ${userId}\n` +
+          `💵 Сумма: $${invoice.amount} USDT`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch {}
+    } else {
+      // Ошибка wizard-bot
+      console.error('Wizard error:', order);
+      try {
+        await bot.telegram.sendMessage(Number(userId),
+          `❌ Ошибка отправки Stars. Обратись в поддержку — деньги не потеряны!`
+        );
+      } catch {}
+      try {
+        await bot.telegram.sendMessage(ADMIN_ID,
+          `⚠️ *Ошибка wizard-bot!*\n\nUser: ${userId}\nStars: ${stars}\nОтвет: ${JSON.stringify(order)}`,
+          { parse_mode: 'Markdown' }
+        );
+      } catch {}
+    }
+
+  } catch (e) {
+    console.error('CryptoBot webhook error:', e.message);
+  }
+});
+
+/* ── EXPRESS: SHOP API для мини-апп (опционально) ───────────────────────── */
+
+// GET /api/stars-shop/packages — список пакетов для фронтенда
+app.get('/api/stars-shop/packages', (req, res) => {
+  res.json({ ok: true, packages: STAR_PACKAGES });
+});
+
+/* ══════════════════════════════════════════════
+   КОНЕЦ БЛОКА STARS SHOP
+   ══════════════════════════════════════════════ */
+
 const PORT = process.env.PORT || 5000;
 
 
