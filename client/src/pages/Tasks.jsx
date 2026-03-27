@@ -86,7 +86,7 @@ export default function Tasks() {
                 <div className={`task-ico task-ico-${task.tc || 'g'}`} dangerouslySetInnerHTML={{ __html: icoSvg }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                    <span className={`task-tag tc-${task.tc || 'g'}`}>{task.tag}</span>
+                    <span className={`task-tag tc-${task.tc || 'g'}${task.tag === 'NEW' || task.tc === 'new' ? ' tc-new' : ''}`} data-tag={task.tag}>{task.tag}</span>
                     {done && <span style={{ fontSize: '11px', color: 'var(--green)' }}>✅ Выполнено</span>}
                   </div>
                   <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '3px' }}>{task.name}</div>

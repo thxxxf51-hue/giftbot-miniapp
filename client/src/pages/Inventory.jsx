@@ -90,7 +90,9 @@ export default function Inventory() {
       <div className="inv-grid" id="inv-list">
         {keys.length === 0 ? (
           <div className="inv-empty">
-            <div className="inv-empty-ico">📦</div>
+            <div className="inv-empty-ico">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" width="64" height="64" style={{stroke:'rgba(255,255,255,0.18)'}}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+            </div>
             <div className="inv-empty-t">Инвентарь пуст</div>
             <div className="inv-empty-s">Открывай кейсы чтобы получать предметы</div>
           </div>

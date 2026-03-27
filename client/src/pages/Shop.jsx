@@ -75,7 +75,7 @@ function ShopItemCard({ item, balance, onBuy }) {
   const canAfford = balance >= item.price;
 
   return (
-    <div className="gc sitem" onClick={onBuy}>
+    <div className={`gc sitem${item.isNew ? ' sitem--new' : ''}`} onClick={onBuy}>
       {item.imageUrl ? (
         <div className="sitem-img" style={{ backgroundImage: `url(${item.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', height: '100px', borderRadius: '10px', marginBottom: '10px' }} />
       ) : (

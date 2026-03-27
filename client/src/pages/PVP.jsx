@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
 import { BalancePill } from '../components/CoinIcon';
 
@@ -7,14 +7,20 @@ export default function PVP() {
   const mountedRef = useRef(false);
 
   useEffect(() => {
-    if (currentPage !== 'pvp') return;
+    if (currentPage !== 'pvp') {
+      ['pvp-duel-wrap', 'pvp-solo-wrap', 'pvp-mines-wrap', 'pvp-bets-wrap'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const menu = document.getElementById('pvp-menu-wrap');
+      if (menu) menu.style.display = 'block';
+      if (typeof window.onPvpPageLeave === 'function') window.onPvpPageLeave();
+      return;
+    }
     if (mountedRef.current) {
       if (typeof window.onPvpPageEnter === 'function') window.onPvpPageEnter();
     }
     mountedRef.current = true;
-    return () => {
-      if (typeof window.onPvpPageLeave === 'function') window.onPvpPageLeave();
-    };
   }, [currentPage]);
 
   return (
@@ -27,28 +33,61 @@ export default function PVP() {
       <div id="pvp-menu-wrap">
         <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--muted2)', marginBottom: '16px' }}>Выбери режим игры</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <PvpModeCard title="Дуэль" desc="Сразись с другими игроками" icon="⚔️" onClick={() => typeof window.pvpOpenDuel === 'function' && window.pvpOpenDuel()} />
-          <PvpModeCard title="Соло" desc="Крути колесо удачи" icon="🎡" onClick={() => typeof window.pvpOpenSolo === 'function' && window.pvpOpenSolo()} />
-          <PvpModeCard title="Мины" desc="Открывай клетки, избегай мин" icon="💣" onClick={() => typeof window.pvpOpenMines === 'function' && window.pvpOpenMines()} />
+          <PvpModeCard title="Дуэль" desc="Сразись с другими игроками" icon="⚔️" onAction={() => typeof window.pvpOpenDuel === 'function' && window.pvpOpenDuel()} />
+          <PvpModeCard title="Соло" desc="Крути колесо удачи" icon="🎡" onAction={() => typeof window.pvpOpenSolo === 'function' && window.pvpOpenSolo()} />
+          <PvpModeCard title="Мины" desc="Открывай клетки, избегай мин" icon="💣" onAction={() => typeof window.pvpOpenMines === 'function' && window.pvpOpenMines()} />
         </div>
       </div>
 
-      <div id="pvp-duel-wrap" style={{ display: 'none' }}>
-      </div>
-      <div id="pvp-solo-wrap" style={{ display: 'none' }}>
-      </div>
+      <div id="pvp-duel-wrap" style={{ display: 'none' }} />
+      <div id="pvp-solo-wrap" style={{ display: 'none' }} />
       <div id="pvp-mines-wrap" style={{ display: 'none' }}>
-        <div id="mines-game-root"></div>
+        <div id="mines-game-root" />
       </div>
-      <div id="pvp-bets-wrap" style={{ display: 'none' }}>
-      </div>
+      <div id="pvp-bets-wrap" style={{ display: 'none' }} />
     </div>
   );
 }
 
-function PvpModeCard({ title, desc, icon, onClick }) {
+function PvpModeCard({ title, desc, icon, onAction }) {
+  const timerRef = useRef(null);
+  const pressedRef = useRef(false);
+  const cardRef = useRef(null);
+
+  const startPress = useCallback(() => {
+    pressedRef.current = false;
+    timerRef.current = setTimeout(() => {
+      pressedRef.current = true;
+      if (cardRef.current) cardRef.current.classList.add('pvp-card--pressed');
+    }, 200);
+  }, []);
+
+  const endPress = useCallback((e) => {
+    clearTimeout(timerRef.current);
+    if (cardRef.current) cardRef.current.classList.remove('pvp-card--pressed');
+    if (!pressedRef.current) {
+      onAction();
+    }
+    pressedRef.current = false;
+  }, [onAction]);
+
+  const cancelPress = useCallback(() => {
+    clearTimeout(timerRef.current);
+    pressedRef.current = false;
+    if (cardRef.current) cardRef.current.classList.remove('pvp-card--pressed');
+  }, []);
+
   return (
-    <div className="gc pvp-card" onClick={onClick} style={{ padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px' }}>
+    <div
+      ref={cardRef}
+      className="gc pvp-card"
+      tabIndex={-1}
+      onPointerDown={startPress}
+      onPointerUp={endPress}
+      onPointerLeave={cancelPress}
+      onPointerCancel={cancelPress}
+      style={{ padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', userSelect: 'none' }}
+    >
       <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
         {icon}
       </div>
