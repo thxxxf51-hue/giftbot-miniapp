@@ -4,7 +4,7 @@
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js",
-    "build:client": "vite build",
+    "build:client": "cp public/index.html /tmp/_idx_bak.html && vite build && cp /tmp/_idx_bak.html public/index.html",
     "dev:client": "vite"
   },
   "dependencies": {
