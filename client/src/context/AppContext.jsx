@@ -177,6 +177,11 @@ export function AppProvider({ children }) {
   }, [updateState]);
 
   const go = useCallback((page) => {
+    ['pvp-duel-wrap', 'pvp-solo-wrap', 'pvp-mines-wrap', 'pvp-bets-wrap'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    if (typeof window.onPvpPageLeave === 'function') window.onPvpPageLeave();
     setCurrentPage(page);
   }, []);
 
