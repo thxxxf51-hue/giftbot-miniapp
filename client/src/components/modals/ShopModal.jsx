@@ -47,26 +47,29 @@ export default function ShopModal() {
   const canAfford = state.balance >= item.price;
   const isNew = !!(item.isNew);
   const icoHtml = ITEM_ICONS[item.icoKey] || '';
-
   const desc = item.desc || item.description || '';
 
   return (
     <div id="shopmo" className="show" onClick={e => e.target === e.currentTarget && close()}>
       <div className="shopmo-box" id="shopmo-content">
 
+        {/* Шапка */}
         <div className="shopmo-confirm-hdr">
           <span className="shopmo-confirm-title">Подтверждение покупки</span>
           <button className="shopmo-confirm-close" onClick={close}>✕</button>
         </div>
 
+        {/* Тело */}
         <div className="shopmo-confirm-body">
           <div className="shopmo-confirm-row">
+            {/* Картинка 85×85 */}
             <div className="shopmo-confirm-thumb">
               {item.imageUrl
                 ? <img src={item.imageUrl} alt={item.name} />
-                : <div dangerouslySetInnerHTML={{ __html: icoHtml }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }} />
+                : <div dangerouslySetInnerHTML={{ __html: icoHtml }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', fontSize: '36px' }} />
               }
             </div>
+            {/* Название, описание, цена */}
             <div className="shopmo-confirm-info">
               <div className="shopmo-confirm-name">{item.name}</div>
               {desc && <div className="shopmo-confirm-desc">{desc}</div>}
@@ -77,12 +80,14 @@ export default function ShopModal() {
             </div>
           </div>
 
+          {/* Недостаточно монет */}
           {!canAfford && (
             <div className="shopmo-confirm-insuf">
               ❌ Недостаточно монет (нужно ещё {(item.price - state.balance).toLocaleString('ru')} 🪙)
             </div>
           )}
 
+          {/* Кнопка покупки */}
           <button
             onClick={buyItem}
             disabled={!canAfford}

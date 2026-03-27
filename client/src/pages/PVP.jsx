@@ -12,8 +12,6 @@ export default function PVP() {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
       });
-      const menu = document.getElementById('pvp-menu-wrap');
-      if (menu) menu.style.display = '';
       if (typeof window.onPvpPageLeave === 'function') window.onPvpPageLeave();
       return;
     }
@@ -33,9 +31,9 @@ export default function PVP() {
       <div id="pvp-menu-wrap">
         <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--muted2)', marginBottom: '16px' }}>Выбери режим игры</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <PvpModeCard title="Дуэль" desc="Сразись с другими игроками" icon="⚔️" onAction={() => typeof window.pvpOpenDuel === 'function' && window.pvpOpenDuel()} />
-          <PvpModeCard title="Соло" desc="Крути колесо удачи" icon="🎡" onAction={() => typeof window.pvpOpenSolo === 'function' && window.pvpOpenSolo()} />
-          <PvpModeCard title="Мины" desc="Открывай клетки, избегай мин" icon="💣" onAction={() => typeof window.pvpOpenMines === 'function' && window.pvpOpenMines()} />
+          <PvpModeCard title="Дуэль" desc="Сразись с другими игроками" icon="⚔️" onClick={() => typeof window.pvpOpenDuel === 'function' && window.pvpOpenDuel()} />
+          <PvpModeCard title="Соло" desc="Крути колесо удачи" icon="🎡" onClick={() => typeof window.pvpOpenSolo === 'function' && window.pvpOpenSolo()} />
+          <PvpModeCard title="Мины" desc="Открывай клетки, избегай мин" icon="💣" onClick={() => typeof window.pvpOpenMines === 'function' && window.pvpOpenMines()} />
         </div>
       </div>
 
@@ -52,7 +50,7 @@ export default function PVP() {
   );
 }
 
-function PvpModeCard({ title, desc, icon, onAction }) {
+function PvpModeCard({ title, desc, icon, onClick }) {
   const timerRef = useRef(null);
   const isLongRef = useRef(false);
   const cardRef = useRef(null);
@@ -64,14 +62,12 @@ function PvpModeCard({ title, desc, icon, onAction }) {
       if (cardRef.current) cardRef.current.classList.add('pvp-card--pressed');
     }, 200);
   }
-
   function onUp() {
     clearTimeout(timerRef.current);
     if (cardRef.current) cardRef.current.classList.remove('pvp-card--pressed');
-    if (!isLongRef.current) onAction();
+    if (!isLongRef.current) onClick();
     isLongRef.current = false;
   }
-
   function onCancel() {
     clearTimeout(timerRef.current);
     isLongRef.current = false;
@@ -79,15 +75,7 @@ function PvpModeCard({ title, desc, icon, onAction }) {
   }
 
   return (
-    <div
-      ref={cardRef}
-      className="gc pvp-card"
-      onPointerDown={onDown}
-      onPointerUp={onUp}
-      onPointerLeave={onCancel}
-      onPointerCancel={onCancel}
-      style={{ padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', userSelect: 'none' }}
-    >
+    <div ref={cardRef} className="gc pvp-card" onPointerDown={onDown} onPointerUp={onUp} onPointerLeave={onCancel} onPointerCancel={onCancel} style={{ padding: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', userSelect: 'none' }}>
       <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
         {icon}
       </div>

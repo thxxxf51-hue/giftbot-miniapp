@@ -25,11 +25,11 @@ export const CASES = [
 ];
 
 export const ITEMS = [
-  { id: 3, icoKey: 'vip7',   name: 'VIP на 7 дней',  price: 3333, vipDays: 7,   desc: 'VIP-статус на 7 дней: выделяйся в топах и чатах, специальный значок в профиле.',     imageUrl: 'https://i.imgur.com/cMSB019.jpg' },
-  { id: 7, icoKey: 'vip30',  name: 'VIP на 30 дней', price: 9999, vipDays: 30,  desc: 'VIP-статус на 30 дней: максимальное выделение, эксклюзивные привилегии.',             imageUrl: 'https://i.imgur.com/2bXKYI7.jpg' },
-  { id: 9, icoKey: 'crown3', name: 'Корона на 3 дня', price: 1199, crownDays: 3, desc: 'Надень корону на аватарку и выделяйся среди друзей — видна всем 3 дня.',             imageUrl: 'https://i.imgur.com/IDK9foe.jpg' },
-  { id: 5, icoKey: 'color',  name: 'Цветной ник',    price: 999,  special: 'color',  desc: 'Измени цвет своего никнейма на любой из доступных вариантов. Навсегда!',        imageUrl: 'https://i.imgur.com/9CX7f2s.jpg' },
-  { id: 8, icoKey: 'effect', name: 'Эффект входа',   price: 5000, special: 'effect', desc: 'Добавь эффектную анимацию при открытии приложения — видна тебе и друзьям.', imageUrl: 'https://i.imgur.com/HGwC5BJ.jpg' },
+  { id: 3, icoKey: 'vip7',   name: 'VIP на 7 дней',  price: 3333, vipDays: 7,   imageUrl: 'https://i.imgur.com/cMSB019.jpg' },
+  { id: 7, icoKey: 'vip30',  name: 'VIP на 30 дней', price: 9999, vipDays: 30,  imageUrl: 'https://i.imgur.com/2bXKYI7.jpg' },
+  { id: 9, icoKey: 'crown3', name: 'Корона на 3 дня', price: 1199, crownDays: 3, imageUrl: 'https://i.imgur.com/IDK9foe.jpg' },
+  { id: 5, icoKey: 'color',  name: 'Цветной ник',    price: 999,  special: 'color',  imageUrl: 'https://i.imgur.com/9CX7f2s.jpg' },
+  { id: 8, icoKey: 'effect', name: 'Эффект входа',   price: 5000, special: 'effect', imageUrl: 'https://i.imgur.com/HGwC5BJ.jpg' },
 ];
 
 export const TASKS = [
