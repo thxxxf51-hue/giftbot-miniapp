@@ -1,4 +1,4 @@
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
 :root{
   --bg:#0B0A10;--glass:rgba(18,18,26,0.92);--gb:rgba(255,255,255,0.07);
   --green:#0FBA82;--green2:#0a9a6e;--gdim:rgba(15,186,130,0.12);--gbor:rgba(15,186,130,0.25);
