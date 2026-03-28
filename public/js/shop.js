@@ -71,7 +71,8 @@ function rShopItems(){
 
   const customHtml=customShopItems.map(x=>{
     const ok2=S.balance>=x.price;
-    const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW');
+    // isNew = tag is 'NEW' OR admin manually set a border color (they use borderColor for new items)
+    const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!x.borderColor;
     const borderStyle=isNew
       ?`style="border-color:rgba(64,135,246,0.5)!important;box-shadow:0 0 0 1px rgba(64,135,246,0.3)"`
       :(x.borderColor?`style="border-color:${x.borderColor}!important"`:'');
@@ -81,7 +82,7 @@ function rShopItems(){
     const imgContent=x.imageUrl
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
       :fallbackIco;
-    const btnCls=(isNew?' new-item':ok2?'':' nomoney');
+    const btnCls=(isNew?' new-item':(ok2?'':' nomoney'));
     const btn=_shopBuyBtn(btnCls,false,`event.stopPropagation();openShopModal('custom',${x.id})`,ok2?'Купить за':'Купить',ok2?x.price:null);
     return`<div class="sitem" ${borderStyle} onclick="openShopModal('custom',${x.id})">
       <div class="sitem-img-wrap">${tagHtml}${cntHtml}${imgContent}</div>
