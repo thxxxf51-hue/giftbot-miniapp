@@ -222,7 +222,8 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 #shop-stabs .stab.active .stab-text{background:linear-gradient(135deg,#fff 0%,#c5f5e0 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 #shop-stabs .stab.active svg{stroke:#fff}
 #shop-stabs .stab:not(.active){color:rgba(160,165,185,0.85)}
-#page-raffles .stabs .stab.active{background:#0FB17B;color:#fff}
+#page-raffles .stabs .stab{border:1px solid #8686A8}
+#page-raffles .stabs .stab.active{background:#0FB17B;color:#fff;border-color:#8686A8}
 #page-raffles .stabs .stab.active svg{stroke:#fff}
 #page-raffles .stabs .stab:not(.active){color:#7E7E9E}
 .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
