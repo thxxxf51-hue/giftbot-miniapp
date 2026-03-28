@@ -69,14 +69,8 @@ function rShopItems(){
     </div>`;
   }).join('');
 
-  const sortedCustom=[...customShopItems].sort((a,b)=>{
-    const aN=(!!(a.tag&&a.tag.toUpperCase()==='NEW')||!!a.borderColor)?1:0;
-    const bN=(!!(b.tag&&b.tag.toUpperCase()==='NEW')||!!b.borderColor)?1:0;
-    return bN-aN;
-  });
-  const customHtml=sortedCustom.map(x=>{
+  function _buildCustomItemHtml(x){
     const ok2=S.balance>=x.price;
-    // isNew = tag is 'NEW' OR admin manually set a border color (they use borderColor for new items)
     const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!x.borderColor;
     const borderStyle=isNew
       ?`style="border-color:rgba(64,135,246,0.5)!important;box-shadow:0 0 0 1px rgba(64,135,246,0.3)"`
@@ -97,9 +91,15 @@ function rShopItems(){
       </div>
       ${btn}
     </div>`;
-  }).join('');
+  }
 
-  el.innerHTML=stdHtml+customHtml;
+  // NEW custom items go first (before all standard items), rest go after standard
+  const newCustomItems=customShopItems.filter(x=>(!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!x.borderColor));
+  const restCustomItems=customShopItems.filter(x=>!(!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!x.borderColor));
+  const newCustomHtml=newCustomItems.map(_buildCustomItemHtml).join('');
+  const restCustomHtml=restCustomItems.map(_buildCustomItemHtml).join('');
+
+  el.innerHTML=newCustomHtml+stdHtml+restCustomHtml;
 }
 
 /* ══ SHOP ITEM MODAL ══ */
