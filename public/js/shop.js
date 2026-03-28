@@ -69,7 +69,12 @@ function rShopItems(){
     </div>`;
   }).join('');
 
-  const customHtml=customShopItems.map(x=>{
+  const sortedCustom=[...customShopItems].sort((a,b)=>{
+    const aN=(!!(a.tag&&a.tag.toUpperCase()==='NEW')||!!a.borderColor)?1:0;
+    const bN=(!!(b.tag&&b.tag.toUpperCase()==='NEW')||!!b.borderColor)?1:0;
+    return bN-aN;
+  });
+  const customHtml=sortedCustom.map(x=>{
     const ok2=S.balance>=x.price;
     // isNew = tag is 'NEW' OR admin manually set a border color (they use borderColor for new items)
     const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!x.borderColor;
@@ -121,7 +126,7 @@ function openShopModal(type,id){
   }
   const ok2=S.balance>=price;
   const need=price-S.balance;
-  const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW');
+  const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!(type==='custom'&&x.borderColor);
 
   // thumbnail
   const thumbHtml=x.imageUrl
@@ -157,6 +162,14 @@ function openShopModal(type,id){
   }
 
   const desc=x.desc||'';
+  const managerBlock=type==='custom'?`
+    <div class="shopmo-manager-notice">
+      <div class="shopmo-manager-text">Менеджер <span style="color:#10B981">(@assate)</span> в ближайшее время свяжется с вами по поводу выдачи товара.</div>
+      <div class="shopmo-manager-warn">
+        <div class="shopmo-manager-warn-ico">⚠️</div>
+        <div class="shopmo-manager-warn-text">Это единственный аккаунт, который сам напишет вам по поводу выдачи товаров, остальные — мошенники.<br>Обязательно установите Telegram @username, чтобы менеджер мог связаться с вами.</div>
+      </div>
+    </div>`:'';
 
   document.getElementById('shopmo-content').innerHTML=`
     <div class="shopmo-confirm-hdr">
@@ -174,6 +187,7 @@ function openShopModal(type,id){
       </div>
       ${insuf}
       <button class="shopmo-confirm-btn ${btnCls}"${btnDisabled}${btnOnclick?` onclick="${btnOnclick}"`:''}>${btnTxt}</button>
+      ${managerBlock}
     </div>`;
 
   mo.dataset.type=type;

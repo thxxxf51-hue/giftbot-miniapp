@@ -2234,3 +2234,8 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .shopmo-confirm-btn--green{background:#0EA876;color:#000}
 .shopmo-confirm-btn--blue{background:#4087F6;color:#fff}
 .shopmo-confirm-btn--nomoney{background:rgba(255,255,255,.1);color:var(--muted);cursor:not-allowed}
+.shopmo-manager-notice{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.shopmo-manager-text{font-size:12px;color:#fff;line-height:1.5;opacity:.85}
+.shopmo-manager-warn{background:#1E1417;border:1px solid #3D2024;border-radius:12px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start}
+.shopmo-manager-warn-ico{font-size:14px;flex-shrink:0;margin-top:1px}
+.shopmo-manager-warn-text{font-size:11px;color:#ff7b7b;line-height:1.55}

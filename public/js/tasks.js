@@ -30,8 +30,11 @@ function renderTasks(){
     const ov=_taskOverrides[t.id]||{};
     return{...t,...ov};
   });
-  // Sort: by order (if set), then new first
+  // Sort: done tasks last, then by order, then new first
   tasksWithOv.sort((a,b)=>{
+    const aDone=S.doneTasks.has(a.id)?1:0;
+    const bDone=S.doneTasks.has(b.id)?1:0;
+    if(aDone!==bDone)return aDone-bDone;
     const ao=a.order!=null?a.order:9999;
     const bo=b.order!=null?b.order:9999;
     if(ao!==bo)return ao-bo;
