@@ -887,9 +887,24 @@ app.post('/api/draws/join', (req, res) => {
     }
   }
 
-  draw.participants.push({ uid: String(userId), name: username ? '@'+username : (firstName||'Аноним') });
+  draw.participants.push({
+    uid: String(userId),
+    name: username ? '@'+username : (firstName||'Аноним'),
+    firstName: firstName || null,
+    username: username || null
+  });
   saveDB();
   res.json({ ok: true, count: draw.participants.length });
+});
+
+app.get('/api/draws/:id/participants', (req, res) => {
+  const draw = DB.draws[req.params.id];
+  if (!draw) return res.json({ ok: false, error: 'not found' });
+  const list = draw.participants.map(p => ({
+    firstName: p.firstName || (p.name && !p.name.startsWith('@') ? p.name : null),
+    username: p.username || (p.name && p.name.startsWith('@') ? p.name.slice(1) : null)
+  }));
+  res.json({ ok: true, participants: list, count: list.length });
 });
 
 app.post('/api/draws/check-tg-subs', async (req, res) => {
