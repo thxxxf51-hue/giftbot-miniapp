@@ -850,7 +850,7 @@ app.get('/api/draws', (req, res) => {
       winnersCount: d.winnersCount || 1, isMoney: isMoney(d.prize),
       requireTicket: d.requireTicket || false,
       conditions: d.conditions || [],
-      description: d.description || ''
+      description: d.description || d.desc || ''
     }));
   res.json({ ok: true, draws: active });
 });
@@ -865,6 +865,8 @@ app.get('/api/draws/finished', (req, res) => {
       winners: d.winners || [],
       finishedAt: d.finishedAt,
       winnersCount: d.winnersCount || 1,
+      description: d.description || d.desc || '',
+      conditions: d.conditions || [],
     }));
   res.json({ ok: true, draws: list });
 });
