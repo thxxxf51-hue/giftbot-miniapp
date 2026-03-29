@@ -56,47 +56,4 @@ if (status) {
 exec('git push origin main --force');
 console.log('Pushed to main repo (giftbot-miniapp) successfully!');
 
-// Admin repo: push using clean temp copy
-if (ADMIN_TOKEN && ADMIN_REPO_URL) {
-  const adminRepoPath = ADMIN_REPO_URL.replace('https://github.com/', '').replace(/\.git$/, '');
-  const tmpDir = path.join(os.tmpdir(), 'giftbot-admin-' + Date.now());
-  console.log('Pushing to admin repo: ' + adminRepoPath + '...');
-  try {
-    execSync('mkdir -p "' + tmpDir + '"', { stdio: 'pipe' });
-    // Copy files manually excluding big/unnecessary folders
-    const ignore = new Set(['.git', 'node_modules', 'attached_assets', '.local', '.upm', '.cache']);
-    function copyDir(src, dest) {
-      if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
-      for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-        if (ignore.has(entry.name)) continue;
-        const s = path.join(src, entry.name), d = path.join(dest, entry.name);
-        if (entry.isDirectory()) copyDir(s, d);
-        else fs.copyFileSync(s, d);
-      }
-    }
-    copyDir(__dirname, tmpDir);
-    function t(cmd) {
-      try {
-        const o = execSync(cmd, { cwd: tmpDir, encoding: 'utf8', stdio: ['pipe','pipe','pipe'] });
-        if (o && o.trim()) console.log(o.trim());
-      } catch(e) {
-        console.log(String(e.stderr || e.stdout || e.message || '').trim());
-      }
-    }
-    t('git init');
-    t('git config user.email "bot@giftbot.app"');
-    t('git config user.name "GiftBot Deploy"');
-    t('git add -A');
-    t('git commit -m "' + MSG.replace(/"/g, "'") + '"');
-    t('git branch -M main');
-    t('git remote add origin https://' + ADMIN_TOKEN + '@github.com/' + adminRepoPath + '.git');
-    t('git push origin main --force');
-    console.log('Pushed to admin repo successfully!');
-  } catch(err) {
-    console.error('Admin repo push error:', String(err.message || err).trim());
-  } finally {
-    try { execSync('rm -rf "' + tmpDir + '"', { stdio: 'pipe' }); } catch(e) {}
-  }
-} else {
-  console.log('ADMIN_GITHUB_REPO or GITHUB_ADMIN_TOKEN not set — skipping admin repo push');
-}
+// Admin repo push is managed separately — not pushed automatically here
