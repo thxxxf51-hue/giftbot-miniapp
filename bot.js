@@ -3349,6 +3349,7 @@ app.post('/api/admin/draws/:id/conditions', (req, res) => {
   if (!draw.conditions) draw.conditions = [];
   let cond;
   if (type==='tg') { cond = { type:'tg', channel:(channel||'').replace('@',''), name: name||channel, url:`https://t.me/${(channel||'').replace('@','')}` }; }
+  else if (type==='chat') { cond = { type:'chat', channel:(channel||'').replace('@',''), name: name||channel, url:`https://t.me/${(channel||'').replace('@','')}` }; }
   else if (type==='custom') { cond = { type:'custom', text: text||'' }; }
   else return res.status(400).json({ error: 'Unknown condition type' });
   draw.conditions.push(cond);

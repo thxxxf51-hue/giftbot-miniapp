@@ -854,7 +854,10 @@ async function loadAdmDraws() {
         </div>
         <div class="adm-input-group"><div class="adm-label">${AICO.desc} Название/описание</div><input class="adm-input" id="adraw-desc" placeholder="Описание розыгрыша"></div>
         <div class="adm-input-group"><div class="adm-label">${AICO.img} Картинка по URL</div><input class="adm-input" id="adraw-img" placeholder="https://..."></div>
-        <div class="adm-input-group"><div class="adm-label">${AICO.broadcast} Канал-условие (необязательно)</div><input class="adm-input" id="adraw-cond-chan" placeholder="@channel"></div>
+        <div class="adm-input-group">
+          <div class="adm-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">${AICO.broadcast} Условия участия <button class="adm-btn adm-btn-sm" onclick="admAddDrawCond()" style="padding:3px 10px;font-size:11px;height:auto">+ Добавить</button></div>
+          <div id="adraw-conds-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
         <div class="adm-check-row"><div class="adm-check-label">${AICO.ticket} Только по билету</div><button class="adm-toggle" id="adraw-ticket-toggle" onclick="this.classList.toggle('on')"></button></div>
         <button class="adm-btn adm-btn-primary" onclick="admCreateDraw()">${AICO.plus} Создать розыгрыш</button>
       </div>
@@ -951,19 +954,41 @@ async function admSaveDrawEdit(id) {
   else toast(r.error||'Ошибка', 'r');
 }
 
+function admAddDrawCond(){
+  const list=document.getElementById('adraw-conds-list');if(!list)return;
+  const row=document.createElement('div');
+  row.className='adraw-cond-row';
+  row.style.cssText='display:flex;gap:6px;align-items:center';
+  row.innerHTML=`
+    <select class="adm-select" style="flex:0 0 120px;font-size:12px;padding:7px 8px">
+      <option value="tg">📢 Канал</option>
+      <option value="chat">💬 Чат</option>
+    </select>
+    <input class="adm-input" placeholder="@username" style="flex:1;margin-bottom:0">
+    <button onclick="this.parentNode.remove()" style="background:rgba(255,80,80,.15);border:1px solid rgba(255,80,80,.3);color:#ff5050;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer;flex-shrink:0">✕</button>`;
+  list.appendChild(row);
+}
+
 async function admCreateDraw() {
   const prize = document.getElementById('adraw-prize')?.value.trim();
   const timeMs = parseInt(document.getElementById('adraw-time')?.value||'3600000');
   const winnersCount = parseInt(document.getElementById('adraw-winners')?.value||'1');
   const imageUrl = document.getElementById('adraw-img')?.value.trim()||null;
   const desc = document.getElementById('adraw-desc')?.value.trim()||null;
-  const chanCond = document.getElementById('adraw-cond-chan')?.value.trim()||null;
   const requireTicket = document.getElementById('adraw-ticket-toggle')?.classList.contains('on');
   if (!prize) { toast('Укажи приз', 'r'); return; }
   const r = await admApi('/draws', 'POST', { prize, timeMs, winnersCount, requireTicket, imageUrl });
   if (r.ok) {
     if (desc) await admApi(`/draws/${r.id}/desc`, 'PATCH', { desc });
-    if (chanCond) await admApi(`/draws/${r.id}/conditions`, 'POST', { type:'tg', channel: chanCond.replace('@',''), name: chanCond });
+    const condRows = document.querySelectorAll('#adraw-conds-list .adraw-cond-row');
+    for (const row of condRows) {
+      const type = row.querySelector('select').value;
+      const channel = row.querySelectorAll('input')[0]?.value.trim()||'';
+      if (channel) {
+        const ch = channel.replace('@','');
+        await admApi(`/draws/${r.id}/conditions`, 'POST', { type, channel: ch, name: channel });
+      }
+    }
     toast(`Розыгрыш #${r.id} создан`, 'g');
     loadAdmDraws();
   } else toast(r.error||'Ошибка', 'r');

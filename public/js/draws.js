@@ -35,6 +35,16 @@ function _drawTimeLeft(endsAt){
   return`${left} мин`;
 }
 
+function _drawFallbackDiv(iconSize){
+  const s=iconSize||'36px';
+  return`<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a2e1a,#0d1f14);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:${s};height:${s};opacity:.35"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>`;
+}
+
+function _drawImgHtml(url,iconSize){
+  if(!url)return _drawFallbackDiv(iconSize);
+  return`<img src="${url}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.onerror=null;this.parentNode.innerHTML=_drawFallbackDiv()">`;
+}
+
 function renderDraws(draws){
   const active=draws.filter(d=>d.endsAt>Date.now());
   const cont=document.getElementById('raffles-active');if(!cont)return;
@@ -53,12 +63,9 @@ function renderDraws(draws){
     const el=document.createElement('div');
     el.className='draw-card-v2';
     el.onclick=()=>openDrawDetail(draw);
-    const imgHtml=draw.imageUrl
-      ?`<img src="${draw.imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block">`
-      :`<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a2e1a,#0d1f14);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:36px;height:36px;opacity:.4"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>`;
     el.innerHTML=`
       <div class="draw-card-img">
-        ${imgHtml}
+        ${_drawImgHtml(draw.imageUrl,'36px')}
         ${isJoined?'<div class="draw-card-badge">✓ Участвуете</div>':''}
         <div class="draw-card-overlay">
           <div class="draw-card-title">${draw.prize}${draw.isMoney?` ${COIN}`:''}</div>
@@ -92,13 +99,14 @@ function openDrawDetail(draw){
   const isJoined=(S.joinedDraws||[]).includes(draw.id);
   const conds=draw.conditions||[];
   const tgConds=conds.filter(c=>c.type==='tg');
+  const chatConds=conds.filter(c=>c.type==='chat');
   const kickConds=conds.filter(c=>c.type==='kick');
   const customConds=conds.filter(c=>c.type==='custom');
   const COIN=`<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
   document.getElementById('draw-detail-title').textContent=draw.prize+(draw.isMoney?' монет':'');
   let html='';
   if(draw.imageUrl){
-    html+=`<img src="${draw.imageUrl}" style="width:100%;border-radius:14px;margin-bottom:14px;object-fit:cover;max-height:190px;display:block">`;
+    html+=`<img src="${draw.imageUrl}" style="width:100%;border-radius:14px;margin-bottom:14px;object-fit:cover;max-height:190px;display:block" onerror="this.style.display='none'">`;
   }
   if(draw.description){
     html+=`<div class="draw-desc-text">${draw.description.replace(/\n/g,'<br>')}</div>`;
@@ -113,7 +121,7 @@ function openDrawDetail(draw){
     <div class="draw-stat-box"><div class="draw-stat-val">${wc}</div><div class="draw-stat-lbl">Победителей</div></div>
   </div>`;
   if(conds.length>0){
-    html+=`<div class="draw-reqs-block"><div class="draw-reqs-title">Требования для участия</div>`;
+    html+=`<div class="draw-reqs-block"><div class="draw-reqs-title">Условия участия</div>`;
     if(tgConds.length>0){
       html+=`<div class="draw-reqs-subtitle">Telegram каналы</div>`;
       tgConds.forEach((c,i)=>{
@@ -122,13 +130,27 @@ function openDrawDetail(draw){
         html+=`<div class="draw-req-row">
           <div class="draw-req-status ${st?'ok':'no'}">${st?'✓':'✗'}</div>
           <div class="draw-req-name">${c.name||c.channel}</div>
-          ${!st?`<a class="draw-req-sub-btn" onclick="(window.tg?tg.openTelegramLink('${url}'):window.open('${url}','_blank'));event.preventDefault()">Подписаться ↗</a>`:''}
+          ${!st?`<a class="draw-req-sub-btn" onclick="(window.tg?tg.openTelegramLink('${url}'):window.open('${url}','_blank'));event.preventDefault()">Подписаться</a>`:''}
         </div>`;
       });
       html+=`<button class="draw-check-btn" id="draw-tg-check-btn" onclick="checkDrawSubsTG(${draw.id})">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;flex-shrink:0"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         Проверить подписки
       </button>`;
+    }
+    if(chatConds.length>0){
+      if(tgConds.length)html+=`<div style="height:6px"></div>`;
+      html+=`<div class="draw-reqs-subtitle">Telegram чаты</div>`;
+      chatConds.forEach(c=>{
+        const url=c.url||`https://t.me/${(c.channel||'').replace('@','')}`;
+        html+=`<div class="draw-req-row">
+          <div class="draw-req-status no">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <div class="draw-req-name">${c.name||c.channel}</div>
+          <a class="draw-req-sub-btn" onclick="(window.tg?tg.openTelegramLink('${url}'):window.open('${url}','_blank'));event.preventDefault()">Вступить</a>
+        </div>`;
+      });
     }
     if(kickConds.length>0){
       html+=`<div class="draw-reqs-subtitle" style="margin-top:10px">Kick каналы</div>`;
@@ -137,12 +159,12 @@ function openDrawDetail(draw){
         html+=`<div class="draw-req-row">
           <div class="draw-req-status no">↗</div>
           <div class="draw-req-name">${c.name||c.channel}</div>
-          <a class="draw-req-sub-btn" onclick="window.open('${url}','_blank');event.preventDefault()">Перейти ↗</a>
+          <a class="draw-req-sub-btn" onclick="window.open('${url}','_blank');event.preventDefault()">Перейти</a>
         </div>`;
       });
     }
     if(customConds.length>0){
-      if(tgConds.length||kickConds.length)html+=`<div class="draw-reqs-subtitle" style="margin-top:10px">Другие условия</div>`;
+      if(tgConds.length||chatConds.length||kickConds.length)html+=`<div class="draw-reqs-subtitle" style="margin-top:10px">Другие условия</div>`;
       customConds.forEach(c=>{
         html+=`<div class="draw-req-row"><div class="draw-req-status no">!</div><div class="draw-req-name">${c.text||''}</div></div>`;
       });
@@ -274,9 +296,7 @@ function _renderPartsPanel(panel,participants,winnerNames){
     <div class="dpp-header">Участники розыгрыша:</div>
     <div class="dpp-list">
       ${participants.map(p=>{
-        const fn=p.firstName||(p.name&&!p.name.startsWith('@')?p.name:null);
-        const un=p.username||(p.name&&p.name.startsWith('@')?p.name.slice(1):null);
-        const label=fn&&un?`${fn} @${un}`:fn||un?`${fn||''}${un?'@'+un:''}`:'Аноним';
+        const label=p.firstName||(p.name&&!p.name.startsWith('@')?p.name:null)||'Участник';
         const isW=wSet.has(p.name||'');
         return`<div class="dpp-row${isW?' dpp-row--winner':''}">
           ${ICON}
@@ -310,17 +330,13 @@ function renderFinishedDraws(draws){
     const el=document.createElement('div');
     el.className='fin-card-v2';
     el.onclick=()=>openDpMo(draw);
-    const imgHtml=draw.imageUrl
-      ?`<img src="${draw.imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block">`
-      :`<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a2e1a,#0d1f14);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;opacity:.3"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>`;
-    const title=draw.prize+(draw.isMoney?' монет':'');
     el.innerHTML=`
       <div class="fin-card-img">
-        ${imgHtml}
+        ${_drawImgHtml(draw.imageUrl,'28px')}
         <div class="fin-card-badge">Завершён</div>
       </div>
       <div class="fin-card-info">
-        <div class="fin-card-title">${title}</div>
+        <div class="fin-card-title">${draw.prize}${draw.isMoney?' монет':''}</div>
       </div>
       <div class="fin-card-footer">
         <span class="fin-card-status">Завершён</span>
@@ -352,9 +368,9 @@ function renderHomeDraws(draws){
     const m=Math.floor((leftMs%3600000)/60000);
     const timeStr=leftMs>0?`${h}ч ${String(m).padStart(2,'0')}м`:'Завершается';
     const imgHtml=d.imageUrl
-      ?`<img src="${d.imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:13px 13px 0 0">`
+      ?`<img src="${d.imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:13px 13px 0 0" onerror="this.onerror=null;this.style.display='none';this.parentNode.style.background='linear-gradient(135deg,#0d1f14,#1a2e1a)'">`
       :`<div style="width:100%;height:100%;background:linear-gradient(135deg,#0d1f14,#1a2e1a);display:flex;align-items:center;justify-content:center;border-radius:13px 13px 0 0"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:36px;height:36px;opacity:.3"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>`;
-    return `<div class="h-draw-card" onclick="openHomeDrawCard(${i})">
+    return `<div class="h-draw-card" onclick="go('raffles')">
       <div class="h-draw-card-img">${imgHtml}</div>
       <div class="h-draw-card-body">
         <div class="h-draw-card-title">${d.prize}${d.isMoney?' монет':''}</div>
@@ -368,10 +384,7 @@ function renderHomeDraws(draws){
 }
 
 function openHomeDrawCard(idx){
-  const draw=_homeDrawsCache[idx];
-  if(!draw)return;
   go('raffles');
-  setTimeout(()=>openDrawDetail(draw),120);
 }
 
 /* ── Finished draw detail modal (dp-mo, NO TABS) ── */
@@ -396,7 +409,7 @@ function openDpMo(draw){
 
   /* image */
   if(draw.imageUrl){
-    html+=`<img src="${draw.imageUrl}" style="width:100%;border-radius:13px;object-fit:cover;max-height:200px;display:block;margin-bottom:12px">`;
+    html+=`<img src="${draw.imageUrl}" style="width:100%;border-radius:13px;object-fit:cover;max-height:200px;display:block;margin-bottom:12px" onerror="this.style.display='none'">`;
   }
 
   /* description */
@@ -404,7 +417,7 @@ function openDpMo(draw){
     html+=`<div class="draw-desc-text">${draw.description.replace(/\n/g,'<br>')}</div>`;
   }
 
-  /* prize */
+  /* prize — vertical layout */
   html+=`<div class="dpm-prize-block">
     <div class="dpm-prize-lbl">ПРИЗ</div>
     <div class="dpm-prize-val">${draw.prize}${draw.isMoney?` ${COIN}`:''}</div>
@@ -429,11 +442,16 @@ function openDpMo(draw){
   /* requirements */
   if(conds.length>0){
     html+=`<div class="dpm-reqs-block">
-      <div class="dpm-block-lbl">Требования для участия</div>
-      ${conds.map(c=>`<div class="dpm-req-row">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;opacity:.5;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span>${c.name||c.channel||c.text||''}</span>
-      </div>`).join('')}
+      <div class="dpm-block-lbl">Условия участия</div>
+      ${conds.map(c=>{
+        const isCh=c.type==='tg'||c.type==='chat';
+        const ico=c.type==='chat'
+          ?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;opacity:.55;flex-shrink:0"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>`
+          :c.type==='tg'
+          ?`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;opacity:.55;flex-shrink:0"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>`
+          :`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;opacity:.5;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+        return`<div class="dpm-req-row">${ico}<span>${c.name||c.channel||c.text||''}</span></div>`;
+      }).join('')}
     </div>`;
   }
 
@@ -443,11 +461,14 @@ function openDpMo(draw){
       <svg viewBox="0 0 24 24" fill="none" stroke="#3fbb6d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;margin-right:4px"><path d="M8 21h8M12 17v4M7 4H4v3c0 2.21 1.79 4 4 4M17 4h3v3c0 2.21-1.79 4-4 4M12 17c-3.87 0-7-3.13-7-7V4h14v6c0 3.87-3.13 7-7 7z"/></svg>
       Победители
     </div>
-    ${winners.length?winners.map((w,i)=>`<div class="dpm-winner-row">
-      <span class="dpm-winner-medal">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👑'}</span>
-      <span class="dpm-winner-name">${w.name}</span>
-      ${draw.isMoney?`<span class="dpm-winner-amt">+${Math.floor(parseInt(draw.prize)/wc)} ${COIN}</span>`:''}
-    </div>`).join('')
+    ${winners.length?winners.map((w,i)=>{
+      const wName=w.firstName||(w.name&&!w.name.startsWith('@')?w.name:null)||'Победитель';
+      return`<div class="dpm-winner-row">
+        <span class="dpm-winner-medal">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'👑'}</span>
+        <span class="dpm-winner-name">${wName}</span>
+        ${draw.isMoney?`<span class="dpm-winner-amt">+${Math.floor(parseInt(draw.prize)/wc)} ${COIN}</span>`:''}
+      </div>`;
+    }).join('')
     :`<div style="font-size:12px;color:var(--muted2);padding:4px 0">Победители не определены</div>`}
   </div>`;
 
@@ -494,7 +515,6 @@ function toggleDpmParts(){
   const winnerNames=(_dpDraw.winners||[]).map(w=>w.name);
   _renderPartsPanel(panel,parts.map(p=>({
     firstName:p.firstName||(p.name&&!p.name.startsWith('@')?p.name:null),
-    username:p.username||(p.name&&p.name.startsWith('@')?p.name.slice(1):null),
     name:p.name
   })),winnerNames);
   panel.style.display='block';
