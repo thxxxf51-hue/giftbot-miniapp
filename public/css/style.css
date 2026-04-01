@@ -211,7 +211,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .tdone{background:var(--gdim);color:var(--green);border-radius:7px;padding:3px 8px;font-size:11px;font-weight:700;flex-shrink:0;position:relative;z-index:1}
 .twip{background:rgba(255,200,0,.1);color:#f4c430;border:1px solid rgba(255,200,0,.2);border-radius:7px;padding:3px 8px;font-size:10px;font-weight:700;flex-shrink:0;position:relative;z-index:1;white-space:nowrap}
 
-.stabs{display:flex;gap:5px;margin-bottom:12px;background:rgba(0,0,0,.3);border-radius:11px;padding:3px}
+.stabs{display:flex;gap:5px;margin-bottom:12px;background:#12121a;border-radius:11px;padding:3px}
 .stab{flex:1;padding:8px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
 .stab svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0;vertical-align:middle}
 .stab.active{background:var(--glass);color:var(--text)}
@@ -316,8 +316,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .draw-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0}
 .draw-card-v2{border-radius:15px;overflow:hidden;background:var(--glass);border:1px solid var(--gb);cursor:pointer;transition:transform .12s,opacity .12s;position:relative}
 .draw-card-v2:active{transform:scale(.96);opacity:.9}
-.draw-card-img{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;background:linear-gradient(135deg,#1a2e1a,#0d1f14)}
-.draw-img-fallback{display:flex;align-items:center;justify-content:center}
+.draw-card-img{position:relative;width:100%;aspect-ratio:1/1;overflow:hidden}
 .draw-card-badge{position:absolute;top:7px;right:7px;background:rgba(46,204,113,.9);color:#000;font-size:9px;font-weight:800;padding:3px 7px;border-radius:20px;white-space:nowrap;z-index:2;letter-spacing:.2px}
 .draw-card-ticket{position:absolute;top:7px;left:7px;font-size:13px;z-index:2}
 .draw-card-overlay{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 100%);padding:22px 9px 8px;z-index:1}
@@ -336,7 +335,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,'SF P
 .draw-detail-body::-webkit-scrollbar{display:none}
 .draw-desc-text{font-size:13px;color:rgba(255,255,255,.7);line-height:1.6;margin-bottom:14px}
 .draw-prize-block{background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.2);border-radius:13px;padding:12px 14px;margin-bottom:12px}
-.draw-prize-lbl{font-size:10px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
+.draw-prize-lbl{font-size:10px;font-weight:800;color:#8888aa;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px}
 .draw-prize-val{font-size:18px;font-weight:900;color:var(--green)}
 .draw-stats-row{display:flex;gap:8px;margin-bottom:14px}
 .draw-stat-box{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:9px 6px;text-align:center}
@@ -2247,37 +2246,52 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .nrico{display:flex;align-items:center;justify-content:center;font-size:0}
 .nrt{font-size:15px;font-weight:700;color:#8789a6}
 
-/* ══ Draw card timer colors (page Розыгрыши) ══ */
-.draw-card-time{background:#122626;color:#10b07b;padding:4px 8px;border-radius:8px;display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700}
+/* ══ Draw card footer ══ */
 .draw-card-footer{display:flex;align-items:center;justify-content:space-between;padding:6px 9px 8px;gap:6px}
+.draw-card-time{color:#10ac79;font-size:10px;font-weight:700;text-align:center;flex:1}
 .draw-card-parts{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:rgba(255,255,255,.5)}
 
-/* ══ HOME draw compact card ══ */
-.h-draw-card{background:var(--glass);border:1px solid var(--gb);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .12s,opacity .12s;margin-bottom:10px}
-.h-draw-card:active{transform:scale(.97);opacity:.9}
-.h-draw-card-img{width:100%;height:150px;overflow:hidden;position:relative}
-.h-draw-card-img img,.h-draw-card-img>div{width:100%;height:100%}
-.h-draw-card-body{padding:10px 13px 11px;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.h-draw-card-title{font-size:14px;font-weight:700;color:#fff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.h-draw-card-timer{display:flex;align-items:center;gap:5px;padding:6px 10px;background:#122626;border:1px solid #0c3e31;border-radius:8px;font-size:11px;font-weight:700;color:#10b07b;white-space:nowrap;flex-shrink:0}
-
-/* ══ Finished draws grid (2-col compact) ══ */
+/* ══ Finished card footer ══ */
 .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fin-card-v2{border-radius:14px;overflow:hidden;background:var(--glass);border:1px solid var(--gb);cursor:pointer;transition:transform .12s,opacity .12s;display:flex;flex-direction:column}
 .fin-card-v2:active{transform:scale(.97);opacity:.9}
-.fin-card-img{position:relative;width:100%;height:120px;overflow:hidden;flex-shrink:0}
-.fin-card-img img,.fin-card-img>div{width:100%;height:100%}
-.fin-card-badge{position:absolute;top:7px;right:7px;background:rgba(0,0,0,.75);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;white-space:nowrap;backdrop-filter:blur(4px)}
-.fin-card-info{padding:8px 9px 0;flex:1}
+.fin-card-img{position:relative;width:100%;height:110px;overflow:hidden;flex-shrink:0}
+.fin-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.fin-card-img>div{width:100%;height:100%}
+.fin-card-badge-top{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);color:#fff;font-size:9px;font-weight:600;padding:3px 8px;border-radius:12px;white-space:nowrap}
+.fin-card-info{padding:7px 9px 0;flex:1}
 .fin-card-title{font-size:12px;font-weight:700;color:#fff;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.fin-card-footer{display:flex;align-items:center;justify-content:space-between;padding:7px 9px 8px;background:#122626;margin-top:7px}
-.fin-card-status{font-size:10px;font-weight:700;color:#10b07b}
-.fin-card-count{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:rgba(255,255,255,.5)}
+.fin-card-footer{display:flex;align-items:center;justify-content:space-between;padding:7px 10px 8px;background:#122626;margin-top:6px}
+.fin-card-status{font-size:11px;font-weight:700;color:#10ac79}
+.fin-card-count{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:rgba(255,255,255,.55)}
 
-/* ══ Finished draw detail (no tabs) ══ */
-.dpm-prize-block{background:#0b1f1c;border:1px solid #0c3e31;border-radius:13px;padding:13px 15px;margin-bottom:10px;display:flex;flex-direction:column;align-items:flex-start}
-.dpm-prize-lbl{font-size:10px;font-weight:800;color:#10b981;letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px}
-.dpm-prize-val{font-size:16px;font-weight:900;color:#10b981;display:flex;align-items:center;gap:6px}
+/* ══ ПРИЗ block ══ */
+.draw-prize-block{background:#0b1f1c;border:1px solid #0c3e31;border-radius:13px;padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
+.draw-prize-lbl{font-size:10px;font-weight:800;color:#8888aa;letter-spacing:.6px;text-transform:uppercase}
+.draw-prize-val{font-size:17px;font-weight:900;color:#10b981;display:flex;align-items:center;gap:6px}
+
+/* ══ Description ══ */
+.draw-desc-block{border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px 13px;margin-bottom:12px}
+.draw-desc-text{font-size:13px;color:#8888aa;line-height:1.55;margin:0}
+
+/* ══ Requirements ══ */
+.draw-req-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);flex-shrink:0}
+.draw-req-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.draw-req-row:last-child{border-bottom:none}
+.draw-req-name{flex:1;font-size:13px;color:rgba(255,255,255,.8)}
+.draw-req-sub-btn{font-size:11px;font-weight:700;color:#fff;background:rgba(46,204,113,.18);border:1px solid rgba(46,204,113,.3);border-radius:8px;padding:4px 10px;cursor:pointer;white-space:nowrap;text-decoration:none;flex-shrink:0}
+.draw-sub-warn{display:flex;align-items:center;gap:8px;padding:10px 13px;background:rgba(255,96,96,.08);border:1px solid rgba(255,96,96,.2);border-radius:11px;font-size:13px;font-weight:600;color:#ff6b6b;margin-bottom:10px}
+
+/* ══ HOME draw compact card ══ */
+.h-draw-card{background:var(--glass);border:1px solid var(--gb);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .12s,opacity .12s;margin-bottom:10px;display:inline-block;width:100%}
+.h-draw-card:active{transform:scale(.97);opacity:.9}
+.h-draw-card-img{width:100%;height:140px;overflow:hidden;position:relative}
+.h-draw-card-img img,.h-draw-card-img>div{width:100%;height:100%;object-fit:cover}
+.h-draw-card-body{padding:9px 12px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.h-draw-card-title{font-size:13px;font-weight:700;color:#fff;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h-draw-card-timer{display:flex;align-items:center;gap:5px;padding:5px 9px;background:#122626;border:1px solid #0c3e31;border-radius:8px;font-size:11px;font-weight:700;color:#10ac79;white-space:nowrap;flex-shrink:0}
+
+/* ══ Finished draw modal ══ */
 .dpm-stats-row{display:flex;gap:8px;margin-bottom:10px}
 .dpm-stat-box{flex:1;background:var(--glass);border:1px solid var(--gb);border-radius:11px;padding:10px 10px 9px;text-align:center}
 .dpm-stat-lbl{font-size:10px;color:#8888aa;margin-bottom:4px;font-weight:600}
@@ -2292,25 +2306,19 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .dpm-winner-medal{font-size:16px;flex-shrink:0}
 .dpm-winner-name{flex:1;font-size:13px;font-weight:700;color:#3fbb6d}
 .dpm-winner-amt{font-size:11px;font-weight:700;color:#10b981;display:flex;align-items:center;gap:3px}
-.dpm-parts-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--gb);background:#1a1a28;color:rgba(255,255,255,.75);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
+.dpm-parts-btn{width:100%;padding:13px;border-radius:12px;border:1px solid var(--gb);background:#1a1a28;color:rgba(255,255,255,.75);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;display:flex;align-items:center;justify-content:flex-start;gap:7px;transition:background .15s}
 .dpm-parts-btn:active{background:rgba(30,30,50,.9)}
 .dpm-share-btn{width:100%;padding:12px;border-radius:12px;border:1px solid #0c3e31;background:#0a1c1a;color:#10b981;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .15s}
 .dpm-share-btn:active{opacity:.7}
 
-/* ══ Participants panel — each user in own box ══ */
-.draw-parts-panel,.dpm-parts-panel-wrap{background:var(--glass);border:1px solid var(--gb);border-radius:13px;margin-bottom:8px;overflow:hidden}
+/* ══ Participants panel ══ */
+.draw-parts-panel{background:var(--glass);border:1px solid var(--gb);border-radius:13px;margin-bottom:8px;overflow:hidden}
 .dpp-header{font-weight:700;font-size:13px;color:rgba(255,255,255,.75);padding:12px 14px 8px}
-.dpp-list{max-height:220px;overflow-y:auto;padding:0 10px 10px;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:6px}
+.dpp-list{max-height:220px;overflow-y:auto;padding:0 10px 10px;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
 .dpp-list::-webkit-scrollbar{width:3px}
 .dpp-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:3px}
 .dpp-row{display:flex;align-items:center;gap:9px;padding:9px 11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px}
-.dpp-row--winner{background:rgba(63,187,109,.06);border-color:rgba(63,187,109,.15)}
 .dpp-name{flex:1;font-size:13px;font-weight:600;color:rgba(255,255,255,.88);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dpp-medal{font-size:13px;flex-shrink:0}
-
-/* draw-parts-btn arrow fix */
 .draw-parts-btn{width:100%;padding:11px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:#1a1a28;color:rgba(255,255,255,.7);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px;display:flex;align-items:center;justify-content:flex-start;gap:7px;transition:background .15s}
 .draw-parts-btn:active{background:rgba(30,30,50,.9)}
-
-/* draw-prize-block color fix */
-.draw-prize-lbl{font-size:10px;font-weight:800;color:#10b981!important;letter-spacing:.6px;text-transform:uppercase;margin-bottom:4px}
+.draw-join-btn:disabled{opacity:.4;cursor:default}
