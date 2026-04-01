@@ -208,7 +208,10 @@ function getUser(uid) {
   return DB.users[uid];
 }
 
-function isAdmin(uid) { return Number(uid) === ADMIN_ID; }
+function isAdmin(uid) {
+  const envId = process.env.ADMIN_ID ? Number(process.env.ADMIN_ID) : null;
+  return Number(uid) === ADMIN_ID || (envId && Number(uid) === envId);
+}
 function isMoney(prize) { return /^\d+$/.test(String(prize).trim()); }
 
 /* ══ HELPERS ══ */
@@ -2149,8 +2152,13 @@ bot.command('notiflist', async (ctx) => {
   ctx.reply(`📋 Активных: ${notifs.length}\n\n${lines}\n\n🗑 Удалить: /deln ID\n🗑 Очистить все: /clearnotifs`);
 });
 
+const _broadcastLock = new Set();
 bot.command('broadcast', async (ctx) => {
   if (!isAdmin(ctx.from.id)) return;
+  const updateId = ctx.update.update_id;
+  if (_broadcastLock.has(updateId)) return;
+  _broadcastLock.add(updateId);
+  setTimeout(() => _broadcastLock.delete(updateId), 300000);
   const text = ctx.message.text.replace('/broadcast', '').trim();
   if (!text) return ctx.reply(
     'Формат: /broadcast ТЕКСТ\n\nПример:\n/broadcast 🎁 Новый розыгрыш! Открывай приложение и участвуй!'
@@ -4050,9 +4058,25 @@ async function startServer() {
     console.log('ℹ️ GITHUB_PERSONAL_ACCESS_TOKEN не задан — резервное копирование отключено');
   }
 
-  // Авто-сброс режима тех. работ при каждом деплое/рестарте
-  DB.repairMode = false;
+  // repairMode сохраняется между рестартами (не сбрасываем автоматически)
+  if (DB.repairMode === undefined) DB.repairMode = false;
   saveDB();
+
+  // Восстанавливаем таймеры розыгрышей после рестарта
+  const now = Date.now();
+  const activeDraws = Object.values(DB.draws).filter(d => !d.finished);
+  for (const draw of activeDraws) {
+    if (draw.endsAt <= now) {
+      // Уже должен был завершиться — завершаем немедленно
+      console.log(`⏰ Завершаем просроченный розыгрыш #${draw.id}`);
+      setTimeout(() => finishDraw(draw.id), 1000);
+    } else {
+      // Перепланируем таймер
+      const delay = draw.endsAt - now;
+      console.log(`⏰ Восстанавлен таймер розыгрыша #${draw.id}, осталось ${Math.ceil(delay/60000)} мин`);
+      setTimeout(() => finishDraw(draw.id), delay);
+    }
+  }
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server on port ${PORT}`);
