@@ -1952,12 +1952,85 @@ bot.command('ddelete', (ctx) => {
   if (parts.length < 2) return ctx.reply('Формат: /ddelete #ID\nПример: /ddelete #3');
   const id = parseInt((parts[1] || '').replace('#', ''));
   if (!id) return ctx.reply('❌ Неверный ID');
-  if (DB.draws[id] && !DB.draws[id].finished) return ctx.reply(`❌ Розыгрыш #${id} ещё активен. Удалять можно только завершённые.`);
-  if (!DB.finished[id]) return ctx.reply(`❌ Завершённый розыгрыш #${id} не найден.`);
-  delete DB.finished[id];
-  ctx.reply(`✅ Розыгрыш #${id} удалён из архива.`);
+  if (DB.draws[id]) {
+    delete DB.draws[id];
+    saveDB();
+    return ctx.reply(`✅ Активный розыгрыш #${id} удалён.`);
+  }
+  if (DB.finished && DB.finished[id]) {
+    delete DB.finished[id];
+    saveDB();
+    return ctx.reply(`✅ Завершённый розыгрыш #${id} удалён из архива.`);
+  }
+  ctx.reply(`❌ Розыгрыш #${id} не найден ни в активных, ни в завершённых.`);
 });
 
+
+bot.command('dreroll', async (ctx) => {
+  if (!isAdmin(ctx.from.id)) return;
+  const parts = ctx.message.text.trim().split(/\s+/);
+  // Format: /dreroll #drawId @username_or_id
+  if (parts.length < 3) return ctx.reply(
+    'Формат: /dreroll #ID @юзернейм\nили: /dreroll #ID 123456789\n\n' +
+    'Убирает указанного победителя и заменяет случайным другим участником.'
+  );
+  const drawId = parseInt((parts[1] || '').replace('#', ''));
+  const target = (parts[2] || '').replace('@', '').toLowerCase();
+  if (!drawId || !target) return ctx.reply('❌ Укажи ID розыгрыша и юзернейм/ID пользователя');
+
+  const draw = DB.finished && DB.finished[drawId];
+  if (!draw) return ctx.reply(`❌ Завершённый розыгрыш #${drawId} не найден.`);
+  if (!draw.winners || !draw.winners.length) return ctx.reply('❌ У этого розыгрыша нет победителей.');
+
+  // Find the winner to reroll
+  const winnerIdx = draw.winners.findIndex(w => {
+    const uname = (w.name || '').replace('@', '').toLowerCase();
+    const uid = String(w.uid || '');
+    return uname === target || uid === target;
+  });
+  if (winnerIdx === -1) return ctx.reply(`❌ Победитель "${target}" не найден в розыгрыше #${drawId}.`);
+
+  const removedWinner = draw.winners[winnerIdx];
+
+  // Find eligible replacements: participants who are NOT already winners
+  const winnerUids = new Set(draw.winners.map(w => String(w.uid)));
+  const eligible = (draw.participants || []).filter(p => !winnerUids.has(String(p.uid)));
+
+  if (!eligible.length) {
+    return ctx.reply('❌ Нет доступных участников для замены — все уже победители.');
+  }
+
+  // Pick random replacement
+  const newWinner = eligible[Math.floor(Math.random() * eligible.length)];
+  draw.winners[winnerIdx] = newWinner;
+  saveDB();
+
+  const moneyPrize = isMoney(draw.prize);
+  const amountEach = moneyPrize ? Math.floor(parseInt(draw.prize) / (draw.winnersCount || 1)) : 0;
+
+  // Notify new winner
+  if (newWinner.uid) {
+    try {
+      if (moneyPrize) {
+        const u = getUser(newWinner.uid);
+        u.serverBalance = (u.serverBalance !== undefined ? u.serverBalance : (u.balance || 0)) + amountEach;
+        await bot.telegram.sendMessage(Number(newWinner.uid),
+          `🎉 Ты победил в розыгрыше!\n🏆 Приз: ${amountEach} монет\n\n💰 Открой приложение — монеты уже на балансе!`
+        );
+      } else {
+        await bot.telegram.sendMessage(Number(newWinner.uid),
+          `🎉 Ты победил в розыгрыше!\n🏆 Приз: ${draw.prize}\n\nАдминистратор скоро свяжется!`
+        );
+      }
+    } catch {}
+  }
+
+  ctx.reply(
+    `✅ Реролл выполнен в розыгрыше #${drawId}\n\n` +
+    `❌ Убран: ${removedWinner.name}\n` +
+    `✅ Новый победитель: ${newWinner.name}${newWinner.uid ? ` (ID: ${newWinner.uid})` : ''}`
+  );
+});
 
 /* ══ ADMIN: /sprom — рассылка промокода с картинкой ══ */
 bot.command('sprom', async (ctx) => {
