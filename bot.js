@@ -1813,6 +1813,10 @@ bot.on('photo', async (ctx) => {
   // Использование: прикрепи фото и напиши в подписи:
   // /broadcast_photo Текст сообщения
   if (caption.startsWith('/broadcast_photo')) {
+    const photoUpdateId = ctx.update.update_id;
+    if (_broadcastLock.has(photoUpdateId)) return;
+    _broadcastLock.add(photoUpdateId);
+    setTimeout(() => _broadcastLock.delete(photoUpdateId), 300000);
     const text = caption.replace('/broadcast_photo', '').trim();
     if (!text) return ctx.reply('Добавь текст после команды.\nПример: /broadcast_photo 🎁 Новый розыгрыш!');
     const fileId = ctx.message.photo[ctx.message.photo.length - 1].file_id;
@@ -2166,22 +2170,27 @@ bot.command('broadcast', async (ctx) => {
   const userIds = Object.keys(DB.users);
   if (!userIds.length) return ctx.reply('❌ Нет пользователей в базе');
   const statusMsg = await ctx.reply(`📤 Начинаю рассылку...\n👥 Получателей: ${userIds.length}`);
-  let sent = 0, failed = 0, blocked = 0;
-  for (const uid of userIds) {
-    try {
-      await bot.telegram.sendMessage(Number(uid), text, {
-        reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
-      });
-      sent++;
-    } catch (e) {
-      if (e.description?.includes('blocked') || e.description?.includes('deactivated')) blocked++;
-      else failed++;
+  // Рассылка асинхронно — не блокируем webhook ответ
+  setImmediate(async () => {
+    let sent = 0, failed = 0, blocked = 0;
+    for (const uid of userIds) {
+      try {
+        await bot.telegram.sendMessage(Number(uid), text, {
+          reply_markup: { inline_keyboard: [[{ text: '🎁 Открыть SatApp Gifts', web_app: { url: APP_URL } }]] }
+        });
+        sent++;
+      } catch (e) {
+        if (e.description?.includes('blocked') || e.description?.includes('deactivated')) blocked++;
+        else failed++;
+      }
+      await new Promise(r => setTimeout(r, 55));
     }
-    await new Promise(r => setTimeout(r, 50));
-  }
-  await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
-    `✅ Рассылка завершена!\n\n📤 Отправлено: ${sent}\n🚫 Заблокировали бота: ${blocked}\n❌ Ошибки: ${failed}\n👥 Всего в базе: ${userIds.length}`
-  );
+    try {
+      await bot.telegram.editMessageText(ctx.chat.id, statusMsg.message_id, undefined,
+        `✅ Рассылка завершена!\n\n📤 Отправлено: ${sent}\n🚫 Заблокировали бота: ${blocked}\n❌ Ошибки: ${failed}\n👥 Всего в базе: ${userIds.length}`
+      );
+    } catch {}
+  });
 });
 
 // /broadcast_vip ТЕКСТ — отправить только VIP пользователям
@@ -2528,7 +2537,6 @@ bot.command('bans', (ctx) => {
 });
 
 bot.command('repair', async (ctx) => {
-  if (ctx.chat.type !== 'private') return;
   if (!isAdmin(ctx.from.id)) return;
   DB.repairMode = !DB.repairMode;
   saveDB();
@@ -3553,6 +3561,7 @@ app.post('/api/admin/broadcast', async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: 'Missing text' });
   const userIds = Object.keys(DB.users);
+  res.json({ ok: true, queued: userIds.length });
   let sent = 0, failed = 0;
   for (const uid of userIds) {
     try {
@@ -3561,9 +3570,9 @@ app.post('/api/admin/broadcast', async (req, res) => {
       });
       sent++;
     } catch { failed++; }
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise(r => setTimeout(r, 55));
   }
-  res.json({ ok: true, sent, failed, total: userIds.length });
+  console.log(`Broadcast done: sent=${sent} failed=${failed} total=${userIds.length}`);
 });
 
 /* ══ ADMIN: SHOP ITEMS ══ */
