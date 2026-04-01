@@ -1702,7 +1702,7 @@ bot.command('addcond', (ctx) => {
     return ctx.reply(`✅ Условия розыгрыша #${drawId} очищены`);
   }
 
-  if (type === 'tg') {
+  if (type === 'tg' || type === 'chat') {
     const channel = parts[3] || '';
     const name = parts.slice(4).join(' ') || channel.replace('@', '');
     const url = `https://t.me/${channel.replace('@', '')}`;
@@ -1733,6 +1733,7 @@ bot.command('addcond', (ctx) => {
   ctx.reply(
     'Формат:\n' +
     '/addcond ID tg @channel Название канала\n' +
+    '/addcond ID chat @channel Название канала\n' +
     '/addcond ID kick channel Название URL\n' +
     '/addcond ID custom Текст условия\n' +
     '/addcond ID clear — удалить все условия'
