@@ -317,7 +317,7 @@ function renderFinishedDraws(draws){
       ?`<img src="${draw.imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block">`
       :`<div style="width:100%;height:100%;background:linear-gradient(135deg,#1a2e1a,#0d1f14);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;opacity:.3"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg></div>`;
     el.innerHTML=`
-      <div class="fin-card-img">${imgHtml}<div class="fin-card-badge-top">Завершён</div></div>
+      <div class="fin-card-img">${imgHtml}</div>
       <div class="fin-card-info"><div class="fin-card-title">${draw.prize}${draw.isMoney?' монет':''}</div></div>
       <div class="fin-card-footer">
         <span class="fin-card-status">Завершён</span>
