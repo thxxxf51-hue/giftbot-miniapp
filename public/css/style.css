@@ -2258,7 +2258,7 @@ body.theme-light .ppu-ac-dot.ppu-ac-sel{border-color:rgba(0,0,0,.35);box-shadow:
 .fin-card-img{position:relative;width:100%;height:110px;overflow:hidden;flex-shrink:0}
 .fin-card-img img{width:100%;height:100%;object-fit:cover;display:block}
 .fin-card-img>div{width:100%;height:100%}
-.fin-card-badge-top{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);color:#fff;font-size:9px;font-weight:600;padding:3px 8px;border-radius:12px;white-space:nowrap}
+.fin-card-badge-top{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.72);color:#fff;font-size:9px;font-weight:600;padding:3px 8px;border-radius:12px;white-space:nowrap;z-index:3}
 .fin-card-info{padding:7px 9px 0;flex:1}
 .fin-card-title{font-size:12px;font-weight:700;color:#fff;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .fin-card-footer{display:flex;align-items:center;justify-content:space-between;padding:7px 10px 8px;background:#122626;margin-top:6px}
