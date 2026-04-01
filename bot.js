@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const Jimp = require('jimp');
 
-const BOT_TOKEN = process.env.BOT_TOKEN || process.env.ADMIN_BOT_TOKEN;
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 6151671553;
 const APP_URL = process.env.APP_URL || (process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : '');
 const GITHUB_TOKEN = process.env.GITHUB_PERSONAL_TOKEN || process.env.GITHUB_ACCESS_TOKEN || process.env.GITHUB_PERSONAL_ACCESS_TOKEN || '';
@@ -914,13 +914,21 @@ app.post('/api/draws/check-tg-subs', async (req, res) => {
   if (!drawId || !userId) return res.json({ ok: false, error: 'missing params' });
   const draw = DB.draws[drawId];
   if (!draw) return res.json({ ok: false, error: 'Розыгрыш не найден' });
-  const tgConds = (draw.conditions || []).filter(c => c.type === 'tg');
+  const tgConds = (draw.conditions || []).filter(c => c.type === 'tg' || c.type === 'tg_chat');
   if (!tgConds.length) return res.json({ ok: true, status: [] });
   const status = [];
   for (const c of tgConds) {
-    const ch = c.channel || '';
-    const subscribed = await checkSub(userId, ch);
-    status.push(subscribed);
+    const ch = (c.channel || '').replace('@','');
+    let ok = false;
+    try {
+      const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=@${ch}&user_id=${userId}`);
+      const d = await r.json();
+      if (d.ok) {
+        const s = d.result?.status;
+        ok = s && s !== 'left' && s !== 'kicked';
+      }
+    } catch {}
+    status.push(ok);
   }
   res.json({ ok: true, status });
 });
@@ -1702,13 +1710,24 @@ bot.command('addcond', (ctx) => {
     return ctx.reply(`✅ Условия розыгрыша #${drawId} очищены`);
   }
 
-  if (type === 'tg' || type === 'chat') {
+  if (type === 'tg') {
     const channel = parts[3] || '';
     const name = parts.slice(4).join(' ') || channel.replace('@', '');
     const url = `https://t.me/${channel.replace('@', '')}`;
     draw.conditions.push({ type: 'tg', channel, name, url });
     saveDB();
     return ctx.reply(`✅ Условие добавлено к #${drawId}:\n📢 Telegram: ${name} (${channel})\nВсего условий: ${draw.conditions.length}`);
+  }
+
+  if (type === 'chat') {
+    const channel = (parts[3] || '').replace('@','');
+    const name = parts.slice(4).join(' ') || channel;
+    const url = channel.startsWith('http') ? channel : `https://t.me/${channel}`;
+    draw.conditions.push({ type: 'tg_chat', channel, name, url });
+    saveDB();
+    return ctx.reply(`✅ Условие добавлено к #${drawId}:
+💬 Вступить в чат: ${name}
+Всего условий: ${draw.conditions.length}`);
   }
 
   if (type === 'kick') {
@@ -1733,7 +1752,6 @@ bot.command('addcond', (ctx) => {
   ctx.reply(
     'Формат:\n' +
     '/addcond ID tg @channel Название канала\n' +
-    '/addcond ID chat @channel Название канала\n' +
     '/addcond ID kick channel Название URL\n' +
     '/addcond ID custom Текст условия\n' +
     '/addcond ID clear — удалить все условия'
@@ -3349,11 +3367,22 @@ app.post('/api/admin/draws/:id/conditions', (req, res) => {
   const { type, channel, text, name } = req.body;
   if (!draw.conditions) draw.conditions = [];
   let cond;
-  if (type==='tg') { cond = { type:'tg', channel:(channel||'').replace('@',''), name: name||channel, url:`https://t.me/${(channel||'').replace('@','')}` }; }
-  else if (type==='chat') { cond = { type:'chat', channel:(channel||'').replace('@',''), name: name||channel, url:`https://t.me/${(channel||'').replace('@','')}` }; }
+  if (type==='tg'||type==='tg_chat') { cond = { type, channel:(channel||'').replace('@',''), name: name||channel, url:`https://t.me/${(channel||'').replace('@','')}` }; }
   else if (type==='custom') { cond = { type:'custom', text: text||'' }; }
   else return res.status(400).json({ error: 'Unknown condition type' });
   draw.conditions.push(cond);
+  saveDB();
+  res.json({ ok: true, conditions: draw.conditions });
+});
+
+app.delete('/api/admin/draws/:id/conditions/:idx', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const idx = parseInt(req.params.idx);
+  const draw = DB.draws[id];
+  if (!draw) return res.status(404).json({ error: 'Draw not found' });
+  if (!draw.conditions || !draw.conditions[idx]) return res.status(404).json({ error: 'Condition not found' });
+  draw.conditions.splice(idx, 1);
   saveDB();
   res.json({ ok: true, conditions: draw.conditions });
 });
@@ -3394,7 +3423,8 @@ app.post('/api/admin/draws/:id/image', (req, res) => {
     const uploadsDir = path.join(__dirname, 'public', 'uploads');
     fs.mkdirSync(uploadsDir, { recursive: true });
     fs.writeFileSync(path.join(uploadsDir, filename), Buffer.from(imageBase64, 'base64'));
-    draw.imageUrl = `/uploads/${filename}`;
+    const baseUrl = APP_URL || (req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto']+'://'+req.headers['host'] : 'http://localhost:3000');
+    draw.imageUrl = `${baseUrl}/uploads/${filename}`;
     saveDB();
     res.json({ ok: true, imageUrl: draw.imageUrl });
   } catch (e) {
