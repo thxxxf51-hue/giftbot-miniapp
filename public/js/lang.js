@@ -38,8 +38,8 @@ const TRANSLATIONS = {
     'shop-tab-items':   '🛒 Магазин',
     'shop-tab-cases':   '📦 Кейсы',
     /* Raffles */
-    'raf-tab-active':   '🎁 Активные',
-    'raf-tab-done':     '🏆 Завершённые',
+    'raf-tab-active':   ' Активные',
+    'raf-tab-done':     ' Завершённые',
     /* Profile */
     'pro-lbl-balance':  'Баланс монет',
     'pro-lbl-stars':    'Баланс Stars',
@@ -131,8 +131,8 @@ const TRANSLATIONS = {
     'shop-tab-items':   '🛒 Shop',
     'shop-tab-cases':   '📦 Cases',
     /* Raffles */
-    'raf-tab-active':   '🎁 Active',
-    'raf-tab-done':     '🏆 Finished',
+    'raf-tab-active':   ' Active',
+    'raf-tab-done':     ' Finished',
     /* Profile */
     'pro-lbl-balance':  'Coin balance',
     'pro-lbl-stars':    'Stars balance',

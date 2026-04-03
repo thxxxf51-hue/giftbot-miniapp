@@ -208,7 +208,7 @@ function openEffectPicker() {
     } else {
       // not owned — needs purchase
       const canAfford = S.balance >= price;
-      btnHtml = `<button class="efx-buy-btn${canAfford ? '' : ' nomoney'}" ${canAfford ? `onclick="confirmBuyEffect('${e.id}')"` : 'disabled'}>${canAfford ? price + ' 🪙' : 'Мало монет'}</button>`;
+      btnHtml = `<button class="efx-buy-btn${canAfford ? '' : ' nomoney'}" ${canAfford ? `onclick="confirmBuyEffect('${e.id}')"` : 'disabled'}>${canAfford ? price + ' <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>' : 'Мало монет'}</button>`;
     }
 
     return `<div class="efx-card${isCurrent ? ' efx-current' : ''}${isOwned && !isCurrent ? ' efx-owned' : ''}">
@@ -285,7 +285,7 @@ function confirmBuyEffect(effectId) {
     openGenMo(
       `${ef.ico} ${ef.name}`,
       `Спишется ${price} монет. Активен ${isVip ? '48' : '24'} ч.\nОстанется в коллекции навсегда.`,
-      `✨ Купить — ${price} 🪙`,
+      `✨ Купить — ${price} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`,
       () => {
         S.balance -= price;
         S.entryEffect = effectId;

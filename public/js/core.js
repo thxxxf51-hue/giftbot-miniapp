@@ -151,7 +151,7 @@ function renderInv(){
   const el=document.getElementById('inv-list');if(!el)return;
   const keys=Object.keys(S.inventory).filter(k=>S.inventory[k]>0);
   if(!keys.length){
-    el.innerHTML=`<div class="inv-empty"><div class="inv-empty-ico">📦</div><div class="inv-empty-t">Инвентарь пуст</div><div class="inv-empty-s">Открывай кейсы чтобы получать предметы</div></div>`;
+    el.innerHTML=`<div class="inv-empty"><div class="inv-empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="#363545" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" width="56" height="56"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div class="inv-empty-t">Инвентарь пуст</div><div class="inv-empty-s">Открывай кейсы чтобы получать предметы</div></div>`;
     return;
   }
   el.innerHTML=keys.map(k=>{
@@ -222,7 +222,7 @@ function openInvActionMo(key, cnt) {
           (isCrown ? '👑 Надеть' : '✨ Активировать') +
         '</button>' +
         '<button onclick="doSellItem(\''+key+'\','+sellPrice+')" class="inv-act-btn inv-act-sell">' +
-          '💰 Обменять за ' + sellPrice + ' 🪙' +
+          '💰 Обменять за ' + sellPrice + '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>' +
         '</button>' +
       '</div>';
   }

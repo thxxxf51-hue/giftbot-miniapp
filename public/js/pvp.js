@@ -164,7 +164,7 @@ function _renderLobby(g) {
   const lBtn = $('pvp-leave-btn');
 
   if (cnEl)  cnEl.textContent  = g.players.length + ' / 10';
-  if (totEl) totEl.textContent = g.totalBet.toLocaleString('ru') + ' 🪙';
+  if (totEl) totEl.textContent = g.totalBet.toLocaleString('ru') + ' <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>';
 
   clearTimeout(_pvpCdTimer);
   const tick = () => {
@@ -191,7 +191,7 @@ function _renderLobby(g) {
         <div class="pvp-player-bar-wrap"><div class="pvp-player-bar" style="width:${pct}%;background:${PVP_COLORS[i%10]}"></div></div>
       </div>
       <div class="pvp-player-right">
-        <div class="pvp-player-bet">${p.bet.toLocaleString('ru')} 🪙</div>
+        <div class="pvp-player-bet">${p.bet.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></div>
         <div class="pvp-player-pct">${pct}%</div>
       </div>
     </div>`;
@@ -207,14 +207,14 @@ function _renderIngamePlayers(g) {
   const el  = $('pvp-ingame-players');
   const tot = $('pvp-ingame-total');
   if (!el) return;
-  if (tot) tot.textContent = 'Банк: ' + g.totalBet.toLocaleString('ru') + ' 🪙';
+  if (tot) tot.textContent = 'Банк: ' + g.totalBet.toLocaleString('ru') + ' <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>';
   el.innerHTML = g.players.map((p, i) => {
     const pct = ((p.bet / g.totalBet) * 100).toFixed(1);
     const isMe = p.uid === UID;
     return `<div style="display:flex;align-items:center;gap:8px;padding:3px 0">
       <div style="width:8px;height:8px;border-radius:50%;background:${PVP_COLORS[i%10]};flex-shrink:0"></div>
       <div style="font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${isMe ? '👤 Вы' : (p.username ? '@'+p.username : p.firstName)}</div>
-      <div style="font-size:11px;color:var(--muted2)">${p.bet.toLocaleString('ru')} 🪙</div>
+      <div style="font-size:11px;color:var(--muted2)">${p.bet.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></div>
       <div style="font-size:11px;font-weight:700;color:${PVP_COLORS[i%10]};min-width:38px;text-align:right">${pct}%</div>
     </div>`;
   }).join('');
@@ -490,13 +490,13 @@ function _showResult(g) {
   if (un) un.textContent = w.username ? '@' + w.username : '';
 
   const won = $('pvp-res-won');
-  if (won) { won.textContent = 'Выиграл ' + g.totalBet.toLocaleString('ru') + ' 🪙'; won.style.color = isMe ? 'var(--green)' : wCol; }
+  if (won) { won.textContent = 'Выиграл ' + g.totalBet.toLocaleString('ru') + ' <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>'; won.style.color = isMe ? 'var(--green)' : wCol; }
 
   const ch = $('pvp-res-chance');
   if (ch) ch.textContent = 'Шанс ' + chancePct + '%';
 
   const bank = $('pvp-res-bank');
-  if (bank) bank.textContent = g.totalBet.toLocaleString('ru') + ' 🪙';
+  if (bank) bank.textContent = g.totalBet.toLocaleString('ru') + ' <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>';
 
   const pl = $('pvp-res-players');
   if (pl) pl.textContent = g.players.length + ' ' + (g.players.length === 1 ? 'участник' : g.players.length < 5 ? 'участника' : 'участников');
@@ -508,7 +508,7 @@ function _showResult(g) {
       badge.style.background = 'rgba(46,204,113,.12)';
       badge.style.border = '1px solid rgba(46,204,113,.3)';
       badge.style.color = 'var(--green)';
-      badge.textContent = '🏆 Вы победили! +' + g.totalBet.toLocaleString('ru') + ' 🪙';
+      badge.textContent = '🏆 Вы победили! +' + g.totalBet.toLocaleString('ru') + ' <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>';
     } else {
       badge.style.display = 'block';
       badge.style.background = 'rgba(255,255,255,.04)';

@@ -162,7 +162,7 @@ function rRefList() {
         <div style="font-size:13px;font-weight:600">${r.name||'Пользователь'}</div>
         <div style="font-size:10px;color:var(--muted2)">${r.date||''}</div>
       </div>
-      <div style="color:var(--green);font-size:12px;font-weight:700">+1000 🪙</div>
+      <div style="color:var(--green);font-size:12px;font-weight:700">+1000 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></div>
     </div>`).join('');
   setTimeout(_loadAvatars, 50);
 }

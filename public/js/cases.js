@@ -146,8 +146,8 @@ function updateCostDisplay(){
   const total=curC.price*curSpinCount;
   const el=document.getElementById('cm-cost');
   if(el)el.textContent=curSpinCount>1
-    ?`Стоимость: ${total.toLocaleString('ru')} 🪙 (${curSpinCount} прокрута)`
-    :`Стоимость: ${curC.price} 🪙`;
+    ?`Стоимость: ${total.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> (${curSpinCount} прокрута)`
+    :`Стоимость: ${curC.price} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
 }
 
 function updateCmBtnState(){
@@ -155,7 +155,7 @@ function updateCmBtnState(){
   const btn=document.getElementById('cm-btn');
   btn.disabled=S.balance<total;
   const lack=total-S.balance;
-  btn.textContent=S.balance<total?`Не хватает ${lack.toLocaleString('ru')} 🪙`:'🎰 Открыть';
+  btn.textContent=S.balance<total?`Не хватает ${lack.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`:'🎰 Открыть';
 }
 
 function buildReel(trackId,drops){
@@ -275,7 +275,7 @@ function spinCase(){
         <div class="multi-win-row">
           <span class="multi-win-ico">${DROP_ICONS[s.icoKey]||''}</span>
           <span class="multi-win-name">${s.n}</span>
-          <span class="multi-win-val">×${s.count}${s.totalCoins>0?' · +'+s.totalCoins.toLocaleString('ru')+' 🪙':''}</span>
+          <span class="multi-win-val">×${s.count}${s.totalCoins>0?' · +'+s.totalCoins.toLocaleString('ru')+'<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>':''}</span>
         </div>`).join('');
       document.getElementById('cm-spin').style.display='none';
       const r=document.getElementById('cres');r.classList.add('show');
