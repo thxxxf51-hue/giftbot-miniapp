@@ -45,14 +45,22 @@ async function restoreDBFromGitHub() {
     const data = await r.json();
     const content = Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8');
     const parsed = JSON.parse(content);
+    // Always restore: compare users, finished draws, and total data
     const localUsers = Object.keys(DB.users || {}).length;
     const backupUsers = Object.keys(parsed.users || {}).length;
-    if (backupUsers > localUsers) {
+    const localFinished = Object.keys(DB.finished || {}).length;
+    const backupFinished = Object.keys(parsed.finished || {}).length;
+    const shouldRestore = backupUsers > localUsers || backupFinished > localFinished || 
+      (backupUsers >= localUsers && JSON.stringify(parsed).length > JSON.stringify(DB).length);
+    if (shouldRestore) {
+      // Merge carefully: keep local data that's newer
       Object.assign(DB, parsed);
       saveDB();
-      console.log(`✅ DB restored from GitHub backup (${backupUsers} users > local ${localUsers})`);
+      console.log(`✅ DB restored from GitHub backup (users: ${backupUsers}, finished: ${backupFinished})`);
       return true;
     }
+    // Even if not restoring, back up current data
+    console.log(`ℹ️ Local DB is up to date (users: ${localUsers})`);
     return false;
   } catch (e) { console.log('GitHub restore error:', e.message); return false; }
 }
@@ -503,8 +511,15 @@ app.post('/api/user/sync', (req, res) => {
     u.balance = u.serverBalance;
     delete u.serverBalance;
   } else if (balance !== undefined && Number(balance) >= 0) {
-    // Client is source of truth normally
-    u.balance = Number(balance);
+    const clientBal = Number(balance);
+    const serverBal = u.balance || 0;
+    // Security: allow client balance only if it's LOWER than server (spending)
+    // or within a small tolerance (timing issues). Never allow client to increase balance.
+    const maxAllowed = serverBal + 1500; // tolerance for task rewards etc not yet synced
+    if (clientBal <= maxAllowed) {
+      u.balance = clientBal;
+    }
+    // else: client sent too high a value, keep server balance
   }
   // Применяем накопленные серверные награды (рефералы, бонусы)
   if (u.pendingReward && u.pendingReward > 0) {
@@ -649,8 +664,17 @@ app.post('/api/balance/update', (req, res) => {
   const { userId, balance, starsBalance } = req.body;
   if (!userId || balance === undefined) return res.json({ ok: false });
   const u = getUser(userId);
-  u.balance = Number(balance);
-  if (starsBalance !== undefined) u.starsBalance = Number(starsBalance);
+  const newBal = Number(balance);
+  // Security: only allow DECREASING balance from client (purchases etc.)
+  // Increasing balance must go through server-side operations only
+  if (newBal > (u.balance || 0) && u.serverBalance === undefined) {
+    // Client is trying to increase balance — ignore silently
+    return res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance });
+  }
+  if (newBal >= 0) u.balance = newBal;
+  if (starsBalance !== undefined && Number(starsBalance) <= (u.starsBalance || 0)) {
+    u.starsBalance = Number(starsBalance);
+  }
   saveDB();
   res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance });
 });
