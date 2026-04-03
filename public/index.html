@@ -79,7 +79,7 @@
   <div class="cpbox">
     <div class="cphdr"><div class="cptitle">🌈 Цвет ника</div><button class="cpclose" onclick="document.getElementById('cpmo').classList.remove('show')">✕</button></div>
     <div class="cpgrid" id="cp-grid"></div>
-    <button class="cpbuy" id="cp-btn" onclick="buyColor()">Купить — 250 🪙</button>
+    <button class="cpbuy" id="cp-btn" onclick="buyColor()">Купить — 250 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></button>
   </div>
 </div>
 
@@ -234,7 +234,7 @@
         <div class="stars-bal-lbl">Ваш баланс Stars</div>
         <div class="stars-bal-val">⭐ <span id="sm-bal">0</span></div>
       </div>
-      <div style="font-size:10px;color:var(--muted2);text-align:right;line-height:1.5">1 ⭐ = 100 🪙</div>
+      <div style="font-size:10px;color:var(--muted2);text-align:right;line-height:1.5">1 ⭐ = 100 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></div>
     </div>
     <div class="stars-tabs">
       <button class="stars-tab-btn active" id="stars-tab-topup" onclick="switchStarsTab('topup')">⭐ Пополнить</button>
@@ -289,7 +289,7 @@
 
     <!-- EXCHANGE PANEL -->
     <div id="stars-exchange-panel" style="display:none;padding:0 16px 8px">
-      <div style="font-size:12px;color:var(--muted2);margin:12px 0 8px;text-align:center;line-height:1.6">Обменяй Stars на монеты<br><span style="color:var(--star);font-weight:700">1 ⭐ = 100 🪙</span></div>
+      <div style="font-size:12px;color:var(--muted2);margin:12px 0 8px;text-align:center;line-height:1.6">Обменяй Stars на монеты<br><span style="color:var(--star);font-weight:700">1 ⭐ = 100 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></span></div>
       <div style="background:rgba(255,215,0,.07);border:1px solid rgba(255,215,0,.2);border-radius:12px;padding:12px;margin-bottom:10px">
         <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Сколько Stars обменять?</div>
         <input id="exch-input" type="number" min="1" placeholder="Введите кол-во Stars"
@@ -501,9 +501,9 @@
 <!-- RAFFLES -->
 <div class="page" id="page-raffles">
   <div class="phdr"><div class="ptitle" data-i18n="title-raffles">Розыгрыши</div><div class="bpill"><svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg><span id="b-raffles">0</span></div></div>
-  <div class="stabs" style="margin-bottom:12px">
-    <button class="stab active" id="rtab-active" onclick="raffleTab('active',this)"><svg class="thin" viewBox="0 0 24 24" fill="none"><path d="M12 7V20M12 7H8.46429C7.94332 7 7.4437 6.78929 7.07533 6.41421C6.70695 6.03914 6.5 5.53043 6.5 5C6.5 4.46957 6.70695 3.96086 7.07533 3.58579C7.4437 3.21071 7.94332 3 8.46429 3C11.2143 3 12 7 12 7ZM12 7H15.5357C16.0567 7 16.5563 6.78929 16.9247 6.41421C17.293 6.03914 17.5 5.53043 17.5 5C17.5 4.46957 17.293 3.96086 16.9247 3.58579C16.5563 3.21071 16.0567 3 15.5357 3C12.7857 3 12 7 12 7ZM5 12H19V17.8C19 18.9201 19 19.4802 18.782 19.908C18.5903 20.2843 18.2843 20.5903 17.908 20.782C17.4802 21 16.9201 21 15.8 21H8.2C7.07989 21 6.51984 21 6.09202 20.782C5.71569 20.5903 5.40973 20.2843 5.21799 19.908C5 19.4802 5 18.9201 5 17.8V12ZM4.6 12H19.4C19.9601 12 20.2401 12 20.454 11.891C20.6422 11.7951 20.7951 11.6422 20.891 11.454C21 11.2401 21 10.9601 21 10.4V8.6C21 8.03995 21 7.75992 20.891 7.54601C20.7951 7.35785 20.6422 7.20487 20.454 7.10899C20.2401 7 19.9601 7 19.4 7H4.6C4.03995 7 3.75992 7 3.54601 7.10899C3.35785 7.20487 3.20487 7.35785 3.10899 7.54601C3 7.75992 3 8.03995 3 8.6V10.4C3 10.9601 3 11.2401 3.10899 11.454C3.35785 11.7951 3.53601 11.6422 3.54601 11.891C3.75992 12 4.03995 12 4.6 12Z" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Активные</button>
-    <button class="stab" id="rtab-finished" onclick="raffleTab('finished',this)"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4H4v3c0 2.21 1.79 4 4 4M17 4h3v3c0 2.21-1.79 4-4 4M12 17c-3.87 0-7-3.13-7-7V4h14v6c0 3.87-3.13 7-7 7z"/></svg> Завершённые</button>
+  <div class="stabs" id="raf-stabs" style="margin-bottom:12px">
+    <button class="stab active" id="rtab-active" onclick="raffleTab('active',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M20 12v10H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg><span class="stab-text" data-i18n="raf-tab-active"> Активные</span></button>
+    <button class="stab" id="rtab-finished" onclick="raffleTab('finished',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M8 21h8M12 17v4M7 4H4v3c0 2.21 1.79 4 4 4M17 4h3v3c0 2.21-1.79 4-4 4M12 17c-3.87 0-7-3.13-7-7V4h14v6c0 3.87-3.13 7-7 7z"/></svg><span class="stab-text" data-i18n="raf-tab-done"> Завершённые</span></button>
   </div>
   <div id="raffles-active">
     <div class="raff-empty" id="raffles-empty">
@@ -870,7 +870,7 @@
       <div style="font-size:18px;flex-shrink:0">📋</div>
       <div>
         <div style="font-size:12px;font-weight:700;margin-bottom:3px" data-i18n="pvp-howto">Как играть</div>
-        <div style="font-size:11px;color:var(--muted2);line-height:1.6">Минимальная ставка: <span style="color:var(--green);font-weight:700">50 🪙</span><br>Игроков: <span style="color:var(--green);font-weight:700">2–10</span><br>Шанс выиграть = доля ставки в банке<br>Победитель забирает весь банк</div>
+        <div style="font-size:11px;color:var(--muted2);line-height:1.6">Минимальная ставка: <span style="color:var(--green);font-weight:700">50 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></span><br>Игроков: <span style="color:var(--green);font-weight:700">2–10</span><br>Шанс выиграть = доля ставки в банке<br>Победитель забирает весь банк</div>
       </div>
     </div>
     <div class="gc" style="padding:13px 14px;margin-bottom:10px">
@@ -904,7 +904,7 @@
         </div>
         <div style="text-align:right">
           <div style="font-size:10px;color:var(--muted2)">Банк</div>
-          <div id="pvp-total" style="font-size:18px;font-weight:900;color:var(--green)">0 🪙</div>
+          <div id="pvp-total" style="font-size:18px;font-weight:900;color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> 0</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -1005,7 +1005,7 @@
       <!-- prize button -->
       <button id="solo-prize-btn" onclick="soloOpenPrizePicker()" style="width:100%;height:48px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.65);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit">
         <span data-i18n="solo-choose-prize">Выбрать приз</span>
-        <span id="solo-prize-val" style="font-weight:800">500 🪙</span>
+        <span id="solo-prize-val" style="font-weight:800">500 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg></span>
         <span style="font-size:9px;opacity:.4">▼</span>
       </button>
       <!-- prize grid -->
