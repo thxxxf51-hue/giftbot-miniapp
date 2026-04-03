@@ -118,7 +118,7 @@ function soloRenderUI(){
 
   const btn=document.getElementById('solo-spin-btn');
   if(btn){
-    btn.textContent=_soloSpinning?'⏳ Крутится...':`Крутить за ${cost.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
+    btn.innerHTML=_soloSpinning?'⏳ Крутится...':`Крутить за ${cost.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
     btn.style.background=canAfford&&!_soloSpinning?`linear-gradient(135deg,${c1},${c1}cc)`:'rgba(255,255,255,.07)';
     btn.style.color=canAfford&&!_soloSpinning?'#000':'rgba(255,255,255,.25)';
     btn.style.boxShadow=canAfford&&!_soloSpinning?`0 4px 22px ${c1}55`:'none';
@@ -215,7 +215,7 @@ function soloSpin(){
       const ico=win
         ?'<img src="/icons/check-circle.svg" width="16" height="16" style="display:block;flex-shrink:0">'
         :'<img src="/icons/x-circle.svg" width="16" height="16" style="display:block;flex-shrink:0">';
-      toast(win?`+${prize.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> Победа!`:'Не повезло',win?'g':'r',ico);
+      toast(win?`+${prize.toLocaleString('ru')} монет Победа!`:'Не повезло',win?'g':'r',ico);
     }
   }
   requestAnimationFrame(frame);
