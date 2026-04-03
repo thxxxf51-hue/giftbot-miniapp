@@ -166,7 +166,7 @@ function openTopWins(){
         list.innerHTML = `
           <div style="display:flex;flex-direction:column;align-items:center;padding:28px 0;gap:10px">
             <div style="font-size:36px;opacity:.4">🏆</div>
-            <div style="font-size:13px;color:rgba(255,255,255,.3);text-align:center;line-height:1.5">Пока нет выигрышей<br>больше 30 000 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> за сегодня</div>
+            <div style="font-size:13px;color:rgba(255,255,255,.3);text-align:center;line-height:1.5">Пока нет выигрышей<br>больше 30 000 <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> за сегодня</div>
           </div>`;
         return;
       }
@@ -205,7 +205,7 @@ function openTopWins(){
       list.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;padding:28px 0;gap:10px">
           <div style="font-size:36px;opacity:.4">🏆</div>
-          <div style="font-size:13px;color:rgba(255,255,255,.3);text-align:center;line-height:1.5">Пока нет выигрышей<br>больше 30 000 <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> за сегодня</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.3);text-align:center;line-height:1.5">Пока нет выигрышей<br>больше 30 000 <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> за сегодня</div>
         </div>`;
     });
 }
