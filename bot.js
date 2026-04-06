@@ -90,7 +90,7 @@ if (!BOT_TOKEN) { console.error('BOT_TOKEN not set!'); process.exit(1); }
 
 const bot = new Telegraf(BOT_TOKEN);
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
@@ -3705,11 +3705,11 @@ app.get('/api/admin/shop', (req, res) => {
 
 app.post('/api/admin/shop', (req, res) => {
   if (!adminCheck(req, res)) return;
-  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl, stock } = req.body;
   if (!name || !price) return res.status(400).json({ error: 'name и price обязательны' });
   if (!DB.customShopItems) DB.customShopItems = [];
   const id = Date.now();
-  const item = { id, name, price: Number(price), desc: desc||'', tag: tag||'', tagColor: tagColor||'', borderColor: borderColor||'', imageUrl: imageUrl||'' };
+  const item = { id, name, price: Number(price), desc: desc||'', tag: tag||'', tagColor: tagColor||'', borderColor: borderColor||'', imageUrl: imageUrl||'', stock: (stock!==undefined&&stock!==null&&stock!=='') ? Number(stock) : null };
   DB.customShopItems.push(item);
   saveDB();
   res.json({ ok: true, item });
@@ -3752,7 +3752,8 @@ app.post('/api/admin/shop/:id/image', (req, res) => {
   const fpath = require('path').join(__dirname, 'public', 'uploads', fname);
   require('fs').mkdirSync(require('path').join(__dirname, 'public', 'uploads'), { recursive: true });
   require('fs').writeFileSync(fpath, Buffer.from(imageBase64, 'base64'));
-  const imageUrl = `/uploads/${fname}`;
+  const baseUrl = APP_URL || (req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto']+'://'+req.headers['host'] : 'http://localhost:3000');
+  const imageUrl = `${baseUrl}/uploads/${fname}`;
   if (DB.customShopItems) {
     const id = Number(req.params.id);
     const item = DB.customShopItems.find(i => i.id === id);
