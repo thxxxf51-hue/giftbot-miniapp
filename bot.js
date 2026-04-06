@@ -698,6 +698,31 @@ app.get('/api/shop/custom', (req, res) => {
   res.json(DB.customShopItems || []);
 });
 
+app.post('/api/shop/buy-custom', async (req, res) => {
+  const { userId, itemId } = req.body;
+  if (!userId || !itemId) return res.json({ ok: false, error: 'missing params' });
+  const u = getUser(userId);
+  const item = (DB.customShopItems||[]).find(i => i.id === Number(itemId));
+  if (!item) return res.json({ ok: false, error: 'Товар не найден' });
+  // Stock check
+  if (item.stock !== null && item.stock !== undefined && item.stock <= 0) {
+    return res.json({ ok: false, error: 'Нет в наличии' });
+  }
+  // Balance check
+  if (u.balance < item.price) return res.json({ ok: false, error: 'Недостаточно монет' });
+  // Deduct balance
+  u.balance -= item.price;
+  u.serverBalance = u.balance;
+  // Decrement stock
+  if (item.stock !== null && item.stock !== undefined) {
+    item.stock = Math.max(0, item.stock - 1);
+  }
+  // Record transaction
+  addTx(userId, 'shop_buy', '-' + item.price, 'Покупка: ' + item.name);
+  saveDB();
+  res.json({ ok: true, balance: u.balance, stock: item.stock });
+});
+
 app.post('/api/promo', (req, res) => {
   const { code, userId, isVip } = req.body;
   const c = (code||'').toUpperCase().trim();
@@ -2564,8 +2589,7 @@ bot.command('ban', async (ctx) => {
     return ctx.reply(`❌ Не понял время: "${timeStr}"\n\nПримеры: 1 час / 7 дней / 1 неделя / 0 (навсегда)`);
   }
 
-  const { reason } = req.body;
-  const banData = { until, bannedAt: Date.now(), reason: reason||'' };
+  const banData = { until, bannedAt: Date.now() };
   DB.bans[username] = banData;
 
   // Если пользователь уже в базе — баним и по uid
@@ -3566,41 +3590,6 @@ app.post('/api/admin/draws/:id/reroll', async (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/admin/draws/finished/:id/reroll-winner', async (req, res) => {
-  if (!adminCheck(req, res)) return;
-  const id = parseInt(req.params.id);
-  const draw = DB.finished && DB.finished[id];
-  if (!draw) return res.status(404).json({ error: 'Finished draw not found' });
-  const { target } = req.body;
-  if (!target) return res.status(400).json({ error: 'target required' });
-  const t = (target||'').replace('@','').toLowerCase();
-  const winnerIdx = (draw.winners||[]).findIndex(w =>
-    (w.name||'').replace('@','').toLowerCase() === t || String(w.uid) === t
-  );
-  if (winnerIdx === -1) return res.status(404).json({ error: 'Winner not found' });
-  const removed = draw.winners[winnerIdx];
-  const winnerUids = new Set((draw.winners||[]).map(w => String(w.uid)));
-  const eligible = (draw.participants||[]).filter(p => !winnerUids.has(String(p.uid)));
-  if (!eligible.length) return res.status(400).json({ error: 'No eligible replacements' });
-  const newWinner = eligible[Math.floor(Math.random() * eligible.length)];
-  draw.winners[winnerIdx] = newWinner;
-  saveDB();
-  const moneyPrize = isMoney(draw.prize);
-  const amtEach = moneyPrize ? Math.floor(parseInt(draw.prize) / (draw.winnersCount||1)) : 0;
-  if (newWinner.uid) {
-    try {
-      if (moneyPrize) {
-        const u = getUser(newWinner.uid);
-        u.serverBalance = (u.serverBalance||u.balance||0) + amtEach;
-        await bot.telegram.sendMessage(Number(newWinner.uid), `🎉 Ты победил в розыгрыше!\n🏆 Приз: ${amtEach} монет\n💰 Открой приложение — монеты уже на балансе!`);
-      } else {
-        await bot.telegram.sendMessage(Number(newWinner.uid), `🎉 Ты победил в розыгрыше!\n🏆 Приз: ${draw.prize}\nАдминистратор свяжется с тобой!`);
-      }
-    } catch {}
-  }
-  res.json({ ok: true, removed: removed.name, newWinner: newWinner.name });
-});
-
 // Extend/shorten draw end time
 app.patch('/api/admin/draws/:id/time', (req, res) => {
   if (!adminCheck(req, res)) return;
@@ -3716,11 +3705,11 @@ app.get('/api/admin/shop', (req, res) => {
 
 app.post('/api/admin/shop', (req, res) => {
   if (!adminCheck(req, res)) return;
-  const { name, price, desc, tag, tagColor, borderColor, imageUrl, stock } = req.body;
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
   if (!name || !price) return res.status(400).json({ error: 'name и price обязательны' });
   if (!DB.customShopItems) DB.customShopItems = [];
   const id = Date.now();
-  const item = { id, name, price: Number(price), desc: desc||'', tag: tag||'', tagColor: tagColor||'', borderColor: borderColor||'', imageUrl: imageUrl||'', stock: stock !== undefined ? Number(stock) : null };
+  const item = { id, name, price: Number(price), desc: desc||'', tag: tag||'', tagColor: tagColor||'', borderColor: borderColor||'', imageUrl: imageUrl||'' };
   DB.customShopItems.push(item);
   saveDB();
   res.json({ ok: true, item });
@@ -3732,7 +3721,7 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   const id = Number(req.params.id);
   const idx = DB.customShopItems.findIndex(i => i.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Item not found' });
-  const { name, price, desc, tag, tagColor, borderColor, imageUrl, stock } = req.body;
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
   const item = DB.customShopItems[idx];
   if (name !== undefined) item.name = name;
   if (price !== undefined) item.price = Number(price);
@@ -3741,7 +3730,6 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   if (tagColor !== undefined) item.tagColor = tagColor;
   if (borderColor !== undefined) item.borderColor = borderColor;
   if (imageUrl !== undefined) item.imageUrl = imageUrl;
-  if (stock !== undefined) item.stock = stock !== null ? Number(stock) : null;
   saveDB();
   res.json({ ok: true, item });
 });
@@ -4074,8 +4062,7 @@ app.post('/api/admin/ban', async (req, res) => {
   if (!adminCheck(req, res)) return;
   const { targetUid, username, duration } = req.body;
   const until = (!duration || duration === '0' || Number(duration) === 0) ? 0 : Date.now() + Number(duration);
-  const { reason } = req.body;
-  const banData = { until, bannedAt: Date.now(), reason: reason||'' };
+  const banData = { until, bannedAt: Date.now() };
   const un = (username||'').replace('@','').toLowerCase();
   if (un) DB.bans[un] = banData;
   if (targetUid) DB.bansByUid[String(targetUid)] = banData;
@@ -4083,8 +4070,7 @@ app.post('/api/admin/ban', async (req, res) => {
   const uid = targetUid || findUidByUsername(un);
   if (uid) {
     const durStr = until === 0 ? 'навсегда' : `до ${new Date(until).toLocaleString('ru-RU')}`;
-    const reasonMsg = banData.reason ? `\n📝 Причина: ${banData.reason}` : '';
-    try { await bot.telegram.sendMessage(Number(uid), `🚫 Вы заблокированы в боте.\n⏱ Срок: ${durStr}${reasonMsg}`); } catch {}
+    try { await bot.telegram.sendMessage(Number(uid), `🚫 Вы заблокированы в боте.\n⏱ Срок: ${durStr}`); } catch {}
   }
   res.json({ ok: true, until });
 });
