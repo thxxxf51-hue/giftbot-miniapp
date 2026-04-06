@@ -70,15 +70,14 @@ function rShopItems(){
   }).join('');
 
   function _buildCustomItemHtml(x){
+    const stockLeft=x.stock!==null&&x.stock!==undefined?Number(x.stock):null;
     const ok2=(S.balance>=x.price)&&(stockLeft===null||stockLeft>0);
     const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!x.borderColor;
     const borderStyle=isNew
       ?`style="border-color:rgba(64,135,246,0.5)!important;box-shadow:0 0 0 1px rgba(64,135,246,0.3)"`
       :(x.borderColor?`style="border-color:${x.borderColor}!important"`:'');
-    const tagHtml=x.tag?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
-    const stockLeft=x.stock!==null&&x.stock!==undefined?x.stock:null;
-    const cntHtml=stockLeft!==null?`<div class="sitem-cnt-badge">${stockLeft>0?stockLeft+' шт.':'Нет в наличии'}</div>`:(x.count?`<div class="sitem-cnt-badge">${x.count} шт.</div>`:'');
-    const ok2stockOk=stockLeft===null||stockLeft>0;;
+    const tagHtml=x.tag&&x.tag.toUpperCase()!=='NEW'?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
+    const cntHtml=stockLeft!==null?`<div class="sitem-cnt-badge" style="background:rgba(0,0,0,0.55);color:#fff;border:none;font-size:9px;font-weight:700;padding:3px 7px;border-radius:20px;position:absolute;top:6px;right:6px;z-index:3;white-space:nowrap">${stockLeft>0?stockLeft+' шт.':'Нет'}</div>`:(x.count?`<div class="sitem-cnt-badge">${x.count} шт.</div>`:'');
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS['shop']||''}</div>`;
     const imgContent=x.imageUrl
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
@@ -86,7 +85,7 @@ function rShopItems(){
     const btnCls=(isNew?' new-item':(ok2?'':' nomoney'));
     const btn=_shopBuyBtn(btnCls,false,`event.stopPropagation();openShopModal('custom',${x.id})`,ok2?'Купить за':'Купить',ok2?x.price:null);
     return`<div class="sitem" ${borderStyle} onclick="openShopModal('custom',${x.id})">
-      <div class="sitem-img-wrap">${tagHtml}${cntHtml}${imgContent}</div>
+      <div class="sitem-img-wrap" style="position:relative">${tagHtml}${cntHtml}${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
         ${x.desc?`<div class="sitem-desc">${x.desc}</div>`:''}
