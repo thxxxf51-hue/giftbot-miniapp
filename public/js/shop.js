@@ -77,15 +77,16 @@ function rShopItems(){
       ?`style="border-color:rgba(64,135,246,0.5)!important;box-shadow:0 0 0 1px rgba(64,135,246,0.3)"`
       :(x.borderColor?`style="border-color:${x.borderColor}!important"`:'');
     const tagHtml=x.tag?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
-    const cntHtml=stockLeft!==null?`<div class="sitem-cnt-badge">${stockLeft>0?stockLeft+' шт.':'Нет'}</div>`:(x.count?`<div class="sitem-cnt-badge">${x.count} шт.</div>`:'');
+    const cntHtml=stockLeft!==null?`<div class="sitem-cnt-badge" style="top:6px;right:6px;z-index:10">${stockLeft>0?stockLeft+' шт.':'Нет'}</div>`:(x.count?`<div class="sitem-cnt-badge" style="top:6px;right:6px">${x.count} шт.</div>`:'');
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS['shop']||''}</div>`;
     const imgContent=x.imageUrl
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
       :fallbackIco;
     const btnCls=(isNew?' new-item':(ok2?'':' nomoney'));
     const btn=_shopBuyBtn(btnCls,false,`event.stopPropagation();openShopModal('custom',${x.id})`,ok2?'Купить за':'Купить',ok2?x.price:null);
-    return`<div class="sitem" ${borderStyle} onclick="openShopModal('custom',${x.id})">
-      <div class="sitem-img-wrap">${tagHtml}${cntHtml}${imgContent}</div>
+    return`<div class="sitem" ${borderStyle} style="position:relative" onclick="openShopModal('custom',${x.id})">
+      ${cntHtml}
+      <div class="sitem-img-wrap">${tagHtml}${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
         ${x.desc?`<div class="sitem-desc">${x.desc}</div>`:''}
