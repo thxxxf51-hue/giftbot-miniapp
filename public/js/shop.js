@@ -70,13 +70,15 @@ function rShopItems(){
   }).join('');
 
   function _buildCustomItemHtml(x){
-    const ok2=S.balance>=x.price;
+    const ok2=(S.balance>=x.price)&&(stockLeft===null||stockLeft>0);
     const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!x.borderColor;
     const borderStyle=isNew
       ?`style="border-color:rgba(64,135,246,0.5)!important;box-shadow:0 0 0 1px rgba(64,135,246,0.3)"`
       :(x.borderColor?`style="border-color:${x.borderColor}!important"`:'');
     const tagHtml=x.tag?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
-    const cntHtml=x.count?`<div class="sitem-cnt-badge">${x.count} шт.</div>`:'';
+    const stockLeft=x.stock!==null&&x.stock!==undefined?x.stock:null;
+    const cntHtml=stockLeft!==null?`<div class="sitem-cnt-badge">${stockLeft>0?stockLeft+' шт.':'Нет в наличии'}</div>`:(x.count?`<div class="sitem-cnt-badge">${x.count} шт.</div>`:'');
+    const ok2stockOk=stockLeft===null||stockLeft>0;;
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS['shop']||''}</div>`;
     const imgContent=x.imageUrl
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
