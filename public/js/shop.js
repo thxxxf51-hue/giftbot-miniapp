@@ -77,16 +77,16 @@ function rShopItems(){
       ?`style="border-color:rgba(64,135,246,0.5)!important;box-shadow:0 0 0 1px rgba(64,135,246,0.3)"`
       :(x.borderColor?`style="border-color:${x.borderColor}!important"`:'');
     const tagHtml=x.tag?`<div class="sitem-tag-badge" style="background:${x.tagColor||'#e53935'}">${x.tag}</div>`:'';
-    const cntHtml=stockLeft!==null?`<div class="sitem-cnt-badge" style="top:6px;right:6px;z-index:10">${stockLeft>0?stockLeft+' шт.':'Нет'}</div>`:(x.count?`<div class="sitem-cnt-badge" style="top:6px;right:6px">${x.count} шт.</div>`:'');
+    const cntHtml=stockLeft!==null?`<div style="position:absolute;top:6px;right:6px;z-index:20;background:rgba(0,0,0,0.65);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;pointer-events:none;white-space:nowrap;backdrop-filter:blur(4px)">${stockLeft>0?stockLeft+' шт. в наличии':'Нет в наличии'}</div>`:(x.count?`<div style="position:absolute;top:6px;right:6px;z-index:20;background:rgba(0,0,0,0.65);color:#fff;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;pointer-events:none;white-space:nowrap">${x.count} шт.</div>`:'');
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS['shop']||''}</div>`;
     const imgContent=x.imageUrl
       ?`<img src="${x.imageUrl}" alt="${x.name}" onerror="this.style.display='none';var fb=this.nextElementSibling;if(fb)fb.style.display='flex'">${fallbackIco}`
       :fallbackIco;
     const btnCls=(isNew?' new-item':(ok2?'':' nomoney'));
     const btn=_shopBuyBtn(btnCls,false,`event.stopPropagation();openShopModal('custom',${x.id})`,ok2?'Купить за':'Купить',ok2?x.price:null);
-    return`<div class="sitem" ${borderStyle} style="position:relative" onclick="openShopModal('custom',${x.id})">
+    return`<div class="sitem" ${borderStyle} style="position:relative;overflow:visible" onclick="openShopModal('custom',${x.id})">
       ${cntHtml}
-      <div class="sitem-img-wrap">${tagHtml}${imgContent}</div>
+      <div class="sitem-img-wrap" style="overflow:visible">${tagHtml}${imgContent}</div>
       <div class="sitem-body">
         <div class="sname">${x.name}</div>
         ${x.desc?`<div class="sitem-desc">${x.desc}</div>`:''}
