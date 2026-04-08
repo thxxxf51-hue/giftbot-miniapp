@@ -45,22 +45,16 @@ async function restoreDBFromGitHub() {
     const data = await r.json();
     const content = Buffer.from(data.content.replace(/\n/g, ''), 'base64').toString('utf8');
     const parsed = JSON.parse(content);
-    // Always restore: compare users, finished draws, and total data
-    const localUsers = Object.keys(DB.users || {}).length;
+    // ALWAYS restore from GitHub - it is the source of truth after redeploy
     const backupUsers = Object.keys(parsed.users || {}).length;
-    const localFinished = Object.keys(DB.finished || {}).length;
     const backupFinished = Object.keys(parsed.finished || {}).length;
-    const shouldRestore = backupUsers > localUsers || backupFinished > localFinished || 
-      (backupUsers >= localUsers && JSON.stringify(parsed).length > JSON.stringify(DB).length);
-    if (shouldRestore) {
-      // Merge carefully: keep local data that's newer
+    if (backupUsers > 0 || backupFinished > 0) {
       Object.assign(DB, parsed);
       saveDB();
-      console.log(`✅ DB restored from GitHub backup (users: ${backupUsers}, finished: ${backupFinished})`);
+      console.log(`✅ DB restored from GitHub backup (users: ${backupUsers}, finished draws: ${backupFinished})`);
       return true;
     }
-    // Even if not restoring, back up current data
-    console.log(`ℹ️ Local DB is up to date (users: ${localUsers})`);
+    console.log('ℹ️ GitHub backup is empty, keeping local DB');
     return false;
   } catch (e) { console.log('GitHub restore error:', e.message); return false; }
 }
@@ -377,6 +371,8 @@ async function finishDraw(id) {
   DB.finished[id] = { ...draw };
   delete DB.draws[id];
   saveDB();
+  // Immediately back up to GitHub so finished draw survives redeploy
+  setImmediate(() => backupDBToGitHub().catch(() => {}));
 
   // Уведомление админу
   const winList = winners.map(w => `${w.name} (ID: ${w.uid})`).join('\n');
@@ -4227,5 +4223,13 @@ async function startServer() {
 startServer();
 
 app.post(`/bot${BOT_TOKEN}`, (req, res) => { bot.handleUpdate(req.body, res); });
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+process.once('SIGINT', async () => {
+  console.log('SIGINT — saving DB to GitHub before exit...');
+  try { await backupDBToGitHub(); } catch(e) { console.log('backup error:', e.message); }
+  bot.stop('SIGINT');
+});
+process.once('SIGTERM', async () => {
+  console.log('SIGTERM — saving DB to GitHub before exit...');
+  try { await backupDBToGitHub(); } catch(e) { console.log('backup error:', e.message); }
+  bot.stop('SIGTERM');
+});
