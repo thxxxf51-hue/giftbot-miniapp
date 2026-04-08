@@ -245,12 +245,20 @@ function buyItem(id){
 
 function buyCustomItem(id){
   const x=customShopItems.find(i=>i.id===id);if(!x)return;
-  if(S.balance<x.price)return;
+  const stockLeft=x.stock!==null&&x.stock!==undefined?Number(x.stock):null;
+  if(S.balance<x.price){toast('Недостаточно монет','r');return;}
+  if(stockLeft!==null&&stockLeft<=0){toast('Нет в наличии','r');return;}
   openGenMo(`Купить ${x.name}?`,x.desc||`Спишется ${x.price} монет`,`🛒 Купить — ${x.price} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`,async()=>{
-    S.balance-=x.price;
-    syncB();rShopItems();closeGenMo();
-    addServerTx('shop_buy','-'+x.price,'Покупка: '+x.name);
-    toast('✅ Куплено: '+x.name,'g');
+    closeGenMo();
+    try{
+      const r=await fetch('/api/shop/buy-custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,itemId:id})});
+      const d=await r.json();
+      if(!d.ok){toast(d.error||'Ошибка','r');return;}
+      S.balance=d.balance;
+      if(d.stock!==undefined&&d.stock!==null){x.stock=d.stock;}
+      syncB();rShopItems();
+      toast('✅ Куплено: '+x.name,'g');
+    }catch{toast('Ошибка соединения','r');}
   });
 }
 
