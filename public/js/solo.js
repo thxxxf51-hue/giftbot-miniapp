@@ -206,8 +206,8 @@ function soloSpin(){
     else{
       _soloCountdown=0;
       _soloSpinning=false;
-      if(win){S.balance+=prize;syncB();
-        // Записываем чистую прибыль (prize - cost) в глобальную статистику
+      if(win){
+        fetch('/api/game/win',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,amount:prize,game:'Соло'})}).then(r=>r.json()).then(d=>{if(d.balance!==undefined){S.balance=d.balance;save();}}).catch(()=>{S.balance+=prize;syncB();});
         const _net=prize-cost;
         if(_net>0)fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:_net})}).catch(()=>{});
       }

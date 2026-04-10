@@ -145,7 +145,7 @@ function updateReelLayout(){
 function updateCostDisplay(){
   const total=curC.price*curSpinCount;
   const el=document.getElementById('cm-cost');
-  if(el)el.textContent=curSpinCount>1
+  if(el)el.innerHTML=curSpinCount>1
     ?`Стоимость: ${total.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg> (${curSpinCount} прокрута)`
     :`Стоимость: ${curC.price} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
 }
@@ -222,15 +222,21 @@ function spinCase(){
   document.querySelectorAll('.spin-cnt-btn').forEach(b=>b.disabled=true);
 
   if(curSpinCount===1){
-    spinReel('rtrack',curC.drops,(winner)=>{
+    spinReel('rtrack',curC.drops,async(winner)=>{
       spinning=false;
       let coins=winner.coins||0;
       if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();toast(`⚡ Бонус применён!`,'g');}
-      if(coins>0){S.balance+=coins;syncB();}
       if(winner.vipDays)activateVip(winner.vipDays);
       if(winner.crownDays)activateCrownTimed(winner.crownDays);
       if(winner.legendDays)activateLegendTimed(winner.legendDays);
       if(winner.inv)addInv(winner.inv,winner.cnt||1);
+      // Send to server — server credits coins and returns authoritative balance
+      try{
+        const r=await fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:1,coinsWon:coins})});
+        const d=await r.json();
+        if(d.balance!==undefined){S.balance=d.balance;save();}
+        else if(coins>0){S.balance+=coins;syncB();}
+      }catch{if(coins>0){S.balance+=coins;syncB();}}
       document.getElementById('cm-spin').style.display='none';
       const r=document.getElementById('cres');r.classList.add('show');
       document.getElementById('cr-ico').innerHTML=DROP_ICONS[winner.icoKey]||winner.n;
@@ -263,7 +269,12 @@ function spinCase(){
         if(w.legendDays)activateLegendTimed(w.legendDays);
         if(w.inv)addInv(w.inv,w.cnt||1);
       }
-      if(totalCoins>0){S.balance+=totalCoins;syncB();}
+      // Server credits coins and returns authoritative balance
+      if(totalCoins>0){
+        fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:doneCount,coinsWon:totalCoins})})
+          .then(r=>r.json()).then(d=>{if(d.balance!==undefined){S.balance=d.balance;save();}else{S.balance+=totalCoins;syncB();}})
+          .catch(()=>{S.balance+=totalCoins;syncB();});
+      }
       const summary={};
       for(const w of actualWinners){
         const key=(w.icoKey||w.n)+'__'+w.n;

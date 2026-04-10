@@ -194,7 +194,7 @@ function minesOpenCell(idx) {
     if (_minesOpened === MINES_GRID - _minesCount) {
       _minesPlaying = false;
       const win = Math.round(_minesBet * _minesMult);
-      S.balance += win; syncB();
+      fetch('/api/game/win',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,amount:win,game:'Мины'})}).then(r=>r.json()).then(d=>{if(d.balance!==undefined){S.balance=d.balance;save();}}).catch(()=>{S.balance+=win;syncB();});
       _recordBigWin(win);
       const _minesNet = win - _minesBet;
       if(_minesNet>0)fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:_minesNet})}).catch(()=>{});
@@ -207,7 +207,7 @@ function minesCashOut() {
   if (!_minesPlaying || _minesOpened === 0) return;
   _minesPlaying = false;
   const win = Math.round(_minesBet * _minesMult);
-  S.balance += win; syncB();
+  fetch('/api/game/win',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,amount:win,game:'Мины'})}).then(r=>r.json()).then(d=>{if(d.balance!==undefined){S.balance=d.balance;save();}}).catch(()=>{S.balance+=win;syncB();});
   _recordBigWin(win);
   const _net = win - _minesBet;
   if(_net>0)fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:_net})}).catch(()=>{});
