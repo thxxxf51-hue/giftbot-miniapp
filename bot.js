@@ -1354,6 +1354,19 @@ setInterval(async function() {
 
 
 /* ══ CUSTOM TASKS API ══ */
+// Game win — server credits winnings to prevent balance restriction bypass
+app.post('/api/game/win', (req, res) => {
+  const { userId, amount, game } = req.body;
+  if (!userId || !amount || amount <= 0) return res.json({ ok: false, error: 'invalid' });
+  const u = getUser(String(userId));
+  const win = Math.min(Number(amount), 5000000); // sanity cap 5M
+  u.balance = (u.balance || 0) + win;
+  u.serverBalance = u.balance;
+  addTx(String(userId), 'game_win', '+' + win, (game || 'Игра') + ': выигрыш');
+  saveDB();
+  res.json({ ok: true, balance: u.balance });
+});
+
 app.post('/api/task/complete', async (req, res) => {
   const { userId, taskId } = req.body;
   if (!userId || taskId === undefined) return res.json({ ok: false, error: 'missing params' });
@@ -1407,12 +1420,20 @@ app.get('/api/global-stats', (req, res) => {
 });
 
 app.post('/api/case/open', (req, res) => {
-  const { caseId, count } = req.body;
+  const { userId, caseId, count, coinsWon } = req.body;
   if (!caseId) return res.json({ ok: false });
   if (!DB.caseOpens) DB.caseOpens = {};
   DB.caseOpens[caseId] = (DB.caseOpens[caseId] || 0) + (parseInt(count) || 1);
+  // Award coins server-side so balance survives security restrictions
+  if (userId && coinsWon && coinsWon > 0) {
+    const u = getUser(String(userId));
+    u.balance = (u.balance || 0) + Number(coinsWon);
+    u.serverBalance = u.balance;
+    addTx(String(userId), 'case_win', '+' + coinsWon, 'Выигрыш в кейсе');
+  }
   saveDB();
-  res.json({ ok: true, opens: DB.caseOpens[caseId] });
+  const bal = userId ? (getUser(String(userId)).balance) : undefined;
+  res.json({ ok: true, opens: DB.caseOpens[caseId], balance: bal });
 });
 
 app.get('/api/case/stats', (req, res) => {
