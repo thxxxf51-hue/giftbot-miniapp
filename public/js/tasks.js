@@ -264,20 +264,29 @@ async function verifyTask(t){
   }
 }
 
-function completeTask(id){
+async function completeTask(id){
   S.doneTasks.add(id);
   const t=TASKS.find(x=>x.id===id);
-  if(t){
-    S.balance+=t.rew;
-    syncB();
-    // Save tx only on server — no local copy to avoid duplicates
-    _sendTxToServer('task_reward', `+${t.rew}`, 'Задание выполнено').then(()=>loadTxList());
-    // Записываем в глобальную статистику
-    fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:t.rew})}).catch(()=>{});
-  }
   closeGenMo();renderTasks();
   const coinSvg=`<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;display:block"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
-  toast(`+${t?.rew||0} монет!`,'g',coinSvg);
+  try{
+    // Server awards reward — bypasses client balance restriction
+    const r=await fetch('/api/task/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,taskId:id})});
+    const d=await r.json();
+    if(d.ok){
+      S.balance=d.balance;
+      save();syncB();
+      fetch('/api/global-earned/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:d.reward||0})}).catch(()=>{});
+      loadTxList();
+      toast(`+${d.reward||t?.rew||0} монет!`,'g',coinSvg);
+    }else{
+      toast(d.error||'Ошибка задания','r');
+    }
+  }catch{
+    // Fallback: client-side (no connection)
+    if(t){S.balance+=t.rew;syncB();}
+    toast(`+${t?.rew||0} монет!`,'g',coinSvg);
+  }
 }
 
 /* Send tx to server */
