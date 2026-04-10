@@ -661,14 +661,21 @@ app.post('/api/balance/update', (req, res) => {
   if (!userId || balance === undefined) return res.json({ ok: false });
   const u = getUser(userId);
   const newBal = Number(balance);
-  // Security: only allow DECREASING balance from client (purchases etc.)
-  // Increasing balance must go through server-side operations only
-  if (newBal > (u.balance || 0) && u.serverBalance === undefined) {
-    // Client is trying to increase balance — ignore silently
-    return res.json({ ok: true, balance: u.balance, starsBalance: u.starsBalance });
+  // If server has authoritative balance pending, use that instead
+  if (u.serverBalance !== undefined) {
+    u.balance = u.serverBalance;
+    delete u.serverBalance;
+  } else if (newBal >= 0) {
+    // Only allow client to DECREASE balance (purchases) — not increase
+    // Exception: allow up to serverBalance + 3000 tolerance for task/case rewards
+    const maxAllowed = (u.balance || 0) + 3000;
+    if (newBal <= maxAllowed) {
+      u.balance = newBal;
+    }
+    // else: ignore suspiciously high increase
   }
-  if (newBal >= 0) u.balance = newBal;
-  if (starsBalance !== undefined && Number(starsBalance) <= (u.starsBalance || 0)) {
+  if (starsBalance !== undefined && Number(starsBalance) >= 0) {
+    // Allow stars changes freely - they're controlled by purchases
     u.starsBalance = Number(starsBalance);
   }
   saveDB();
@@ -1347,6 +1354,34 @@ setInterval(async function() {
 
 
 /* ══ CUSTOM TASKS API ══ */
+app.post('/api/task/complete', async (req, res) => {
+  const { userId, taskId } = req.body;
+  if (!userId || taskId === undefined) return res.json({ ok: false, error: 'missing params' });
+  const u = getUser(userId);
+  const tid = Number(taskId);
+  if (!u.doneTasks) u.doneTasks = [];
+  // Don't double-reward
+  if (u.doneTasks.includes(tid)) return res.json({ ok: false, error: 'already done', balance: u.balance });
+  // Find task reward
+  const allTasks = [
+    {id:1, rew:100}, {id:4, rew:1000}, {id:6, rew:200}, {id:7, rew:2000},
+    ...((DB.customTasks || []).map(t => ({ id: t.id, rew: t.rew || 0 })))
+  ];
+  // Apply task overrides
+  const overrides = DB.taskOverrides || {};
+  const taskDef = allTasks.find(t => t.id === tid);
+  const rew = taskDef ? (overrides[tid]?.rew ?? taskDef.rew) : 0;
+  // Mark done and credit
+  u.doneTasks.push(tid);
+  if (rew > 0) {
+    u.balance = (u.balance || 0) + rew;
+    u.serverBalance = u.balance;
+    addTx(userId, 'task_reward', '+' + rew, 'Задание выполнено');
+  }
+  saveDB();
+  res.json({ ok: true, balance: u.balance, reward: rew });
+});
+
 app.get('/api/tasks/custom', (req, res) => {
   res.json(DB.customTasks || []);
 });
@@ -3552,13 +3587,9 @@ app.post('/api/admin/draws/:id/image', (req, res) => {
   const { imageBase64, mimeType } = req.body;
   if (!imageBase64) return res.status(400).json({ error: 'No image data' });
   try {
-    const ext = (mimeType || 'image/jpeg').includes('png') ? 'png' : 'jpg';
-    const filename = `draw_${id}_${Date.now()}.${ext}`;
-    const uploadsDir = path.join(__dirname, 'public', 'uploads');
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    fs.writeFileSync(path.join(uploadsDir, filename), Buffer.from(imageBase64, 'base64'));
-    const baseUrl = APP_URL || (req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto']+'://'+req.headers['host'] : 'http://localhost:3000');
-    draw.imageUrl = `${baseUrl}/uploads/${filename}`;
+    const mime = mimeType || 'image/jpeg';
+    // Store as data URL in DB — survives redeploys (no filesystem dependency)
+    draw.imageUrl = `data:${mime};base64,${imageBase64}`;
     saveDB();
     res.json({ ok: true, imageUrl: draw.imageUrl });
   } catch (e) {
@@ -3743,13 +3774,9 @@ app.post('/api/admin/shop/:id/image', (req, res) => {
   if (!adminCheck(req, res)) return;
   const { imageBase64, mimeType } = req.body;
   if (!imageBase64) return res.status(400).json({ error: 'imageBase64 required' });
-  const ext = (mimeType||'image/jpeg').split('/')[1].replace('jpeg','jpg');
-  const fname = `shop_${req.params.id}_${Date.now()}.${ext}`;
-  const fpath = require('path').join(__dirname, 'public', 'uploads', fname);
-  require('fs').mkdirSync(require('path').join(__dirname, 'public', 'uploads'), { recursive: true });
-  require('fs').writeFileSync(fpath, Buffer.from(imageBase64, 'base64'));
-  const baseUrl = APP_URL || (req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto']+'://'+req.headers['host'] : 'http://localhost:3000');
-  const imageUrl = `${baseUrl}/uploads/${fname}`;
+  const mime = mimeType || 'image/jpeg';
+  // Store as data URL in DB — survives redeploys (no filesystem dependency)
+  const imageUrl = `data:${mime};base64,${imageBase64}`;
   if (DB.customShopItems) {
     const id = Number(req.params.id);
     const item = DB.customShopItems.find(i => i.id === id);
