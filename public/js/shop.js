@@ -45,6 +45,8 @@ function rShopItems(){
     const isVip=vipStatus()==='active';
     if(x.special==='effect'&&isVip)price=Math.floor(x.price*0.6);
     const ok2=S.balance>=price;
+  const _customStock = (type==='custom' && x.stock!==null && x.stock!==undefined) ? Number(x.stock) : null;
+  const _stockOk = _customStock===null || _customStock>0;
 
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS[x.icoKey]||''}</div>`;
     const _imgCls=x.imageUrl?` sitem-img--id${x.id}`:'';
@@ -154,6 +156,8 @@ function openShopModal(type,id){
   } else if(x.special==='effect'){
     btnCls=isNew?'shopmo-confirm-btn--blue':'shopmo-confirm-btn--green';
     btnTxt='Выбрать эффект';btnOnclick=`closeShopModal();openEffectPicker()`;
+  } else if(!_stockOk){
+    btnCls='shopmo-confirm-btn--nomoney';btnTxt='Нет в наличии';btnDisabled=' disabled';btnOnclick='';
   } else if(!ok2){
     btnCls='shopmo-confirm-btn--nomoney';btnTxt=`Мало монет (нужно ещё ${need.toLocaleString('ru')})`;btnDisabled=' disabled';btnOnclick='';
   } else {
@@ -219,11 +223,21 @@ function doShopModalBuy(type,id){
     toast(x.vipDays?'👑 VIP на '+x.vipDays+' дн. активирован!':x.crownDays?'👑 Корона на '+x.crownDays+' дн. активирована!':'✅ Куплено!','g');
   } else {
     const x=customShopItems.find(i=>i.id===id);if(!x)return;
+    const sLeft=x.stock!==null&&x.stock!==undefined?Number(x.stock):null;
     if(S.balance<x.price){toast('Недостаточно монет','r');return;}
-    S.balance-=x.price;
-    syncB();rShopItems();save();
-    addServerTx('shop_buy','-'+x.price,'Покупка: '+x.name);
-    toast('✅ Куплено: '+x.name,'g');
+    if(sLeft!==null&&sLeft<=0){toast('Нет в наличии','r');return;}
+    // Call server — decrements stock and credits balance properly
+    fetch('/api/shop/buy-custom',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,itemId:id})})
+      .then(r=>r.json())
+      .then(d=>{
+        if(!d.ok){toast(d.error||'Ошибка','r');return;}
+        S.balance=d.balance;
+        if(d.stock!==undefined&&d.stock!==null){x.stock=d.stock;}
+        else if(sLeft!==null){x.stock=Math.max(0,sLeft-1);}
+        save();syncB();rShopItems();
+        toast('✅ Куплено: '+x.name,'g');
+      })
+      .catch(()=>{toast('Ошибка соединения','r');});
   }
 }
 
