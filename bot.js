@@ -723,16 +723,6 @@ app.post('/api/shop/buy-custom', async (req, res) => {
   // Record transaction
   addTx(userId, 'shop_buy', '-' + item.price, 'Покупка: ' + item.name);
   saveDB();
-  // Notify admin if item has stock tracking
-  if (item.stock !== null && item.stock !== undefined) {
-    const uname = u.username ? '@' + u.username : (u.firstName || 'Пользователь');
-    const stockInfo = item.stock > 0 ? `, осталось: ${item.stock} шт.` : ', товар закончился';
-    setImmediate(() => {
-      bot.telegram.sendMessage(ADMIN_ID,
-        `🛒 ${uname} купил товар "${item.name}"${stockInfo}`
-      ).catch(() => {});
-    });
-  }
   res.json({ ok: true, balance: u.balance, stock: item.stock });
 });
 
@@ -3777,7 +3767,7 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   const id = Number(req.params.id);
   const idx = DB.customShopItems.findIndex(i => i.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Item not found' });
-  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl, stock } = req.body;
   const item = DB.customShopItems[idx];
   if (name !== undefined) item.name = name;
   if (price !== undefined) item.price = Number(price);
@@ -3786,6 +3776,7 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   if (tagColor !== undefined) item.tagColor = tagColor;
   if (borderColor !== undefined) item.borderColor = borderColor;
   if (imageUrl !== undefined) item.imageUrl = imageUrl;
+  if (stock !== undefined) item.stock = (stock === null || stock === '' || Number(stock) === 0) ? null : Number(stock);
   saveDB();
   res.json({ ok: true, item });
 });
