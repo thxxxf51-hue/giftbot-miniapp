@@ -1362,7 +1362,6 @@ app.post('/api/game/win', (req, res) => {
   const win = Math.min(Number(amount), 5000000); // sanity cap 5M
   u.balance = (u.balance || 0) + win;
   u.serverBalance = u.balance;
-  addTx(String(userId), 'game_win', '+' + win, (game || 'Игра') + ': выигрыш');
   saveDB();
   res.json({ ok: true, balance: u.balance });
 });
@@ -1429,7 +1428,6 @@ app.post('/api/case/open', (req, res) => {
     const u = getUser(String(userId));
     u.balance = (u.balance || 0) + Number(coinsWon);
     u.serverBalance = u.balance;
-    addTx(String(userId), 'case_win', '+' + coinsWon, 'Выигрыш в кейсе');
   }
   saveDB();
   const bal = userId ? (getUser(String(userId)).balance) : undefined;
