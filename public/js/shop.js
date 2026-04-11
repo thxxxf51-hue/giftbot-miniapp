@@ -45,8 +45,6 @@ function rShopItems(){
     const isVip=vipStatus()==='active';
     if(x.special==='effect'&&isVip)price=Math.floor(x.price*0.6);
     const ok2=S.balance>=price;
-  const _customStock = (type==='custom' && x.stock!==null && x.stock!==undefined) ? Number(x.stock) : null;
-  const _stockOk = _customStock===null || _customStock>0;
 
     const fallbackIco=`<div class="sico-fb">${ITEM_ICONS[x.icoKey]||''}</div>`;
     const _imgCls=x.imageUrl?` sitem-img--id${x.id}`:'';
@@ -129,6 +127,8 @@ function openShopModal(type,id){
   }
   const ok2=S.balance>=price;
   const need=price-S.balance;
+  const _customStock=(type==='custom'&&x.stock!==null&&x.stock!==undefined)?Number(x.stock):null;
+  const _stockOk=_customStock===null||_customStock>0;
   const isNew=!!(x.tag&&x.tag.toUpperCase()==='NEW')||!!(type==='custom'&&x.borderColor);
 
   // thumbnail
