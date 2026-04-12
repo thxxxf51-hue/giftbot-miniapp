@@ -507,7 +507,10 @@ app.post('/api/user/sync', (req, res) => {
     u.balance = u.serverBalance;
     delete u.serverBalance;
   } else if (balance !== undefined && Number(balance) >= 0) {
-    u.balance = Number(balance);
+    // Server is source of truth. Only init new user balance from client.
+    if (u.balance === undefined || u.balance === null) {
+      u.balance = Number(balance);
+    }
   }
   // Применяем накопленные серверные награды (рефералы, бонусы)
   if (u.pendingReward && u.pendingReward > 0) {
@@ -653,14 +656,16 @@ app.post('/api/balance/update', (req, res) => {
   if (!userId || balance === undefined) return res.json({ ok: false });
   const u = getUser(userId);
   const newBal = Number(balance);
-  // If server has authoritative balance (pgive, task, game win), apply it first
+  // If server has authoritative balance pending, use that instead
   if (u.serverBalance !== undefined) {
     u.balance = u.serverBalance;
     delete u.serverBalance;
   } else if (newBal >= 0) {
+    // Accept any value from client - games handle balance client-side
     u.balance = newBal;
   }
   if (starsBalance !== undefined && Number(starsBalance) >= 0) {
+    // Allow stars changes freely - they're controlled by purchases
     u.starsBalance = Number(starsBalance);
   }
   saveDB();
@@ -2815,6 +2820,7 @@ function startPvpSpin() {
         if (prize > 0) {
           const winnerUser = getUser(doneGame.winner.uid);
           winnerUser.balance = (winnerUser.balance || 0) + prize;
+          winnerUser.serverBalance = winnerUser.balance; // protect from sync overwrite
           doneGame.collected = true;
         }
       }
