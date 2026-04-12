@@ -511,7 +511,7 @@ app.post('/api/user/sync', (req, res) => {
     const serverBal = u.balance || 0;
     // Security: allow client balance only if it's LOWER than server (spending)
     // or within a small tolerance (timing issues). Never allow client to increase balance.
-    const maxAllowed = serverBal + 1500; // tolerance for task rewards etc not yet synced
+    const maxAllowed = serverBal + 50000; // tolerance for game wins, task rewards etc
     if (clientBal <= maxAllowed) {
       u.balance = clientBal;
     }
@@ -2939,6 +2939,7 @@ app.post('/api/pvp/collect', (req, res) => {
   if (prize <= 0) return res.json({ ok: false, error: 'Приз = 0' });
 
   u.balance += prize;
+  u.serverBalance = u.balance; // prevent sync from overwriting this win
   g.collected = true;
   saveDB();
 
@@ -3767,7 +3768,7 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   const id = Number(req.params.id);
   const idx = DB.customShopItems.findIndex(i => i.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Item not found' });
-  const { name, price, desc, tag, tagColor, borderColor, imageUrl, stock } = req.body;
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
   const item = DB.customShopItems[idx];
   if (name !== undefined) item.name = name;
   if (price !== undefined) item.price = Number(price);
@@ -3776,7 +3777,6 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   if (tagColor !== undefined) item.tagColor = tagColor;
   if (borderColor !== undefined) item.borderColor = borderColor;
   if (imageUrl !== undefined) item.imageUrl = imageUrl;
-  if (stock !== undefined) item.stock = (stock === null || stock === '' || Number(stock) === 0) ? null : Number(stock);
   saveDB();
   res.json({ ok: true, item });
 });
