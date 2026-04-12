@@ -507,15 +507,7 @@ app.post('/api/user/sync', (req, res) => {
     u.balance = u.serverBalance;
     delete u.serverBalance;
   } else if (balance !== undefined && Number(balance) >= 0) {
-    const clientBal = Number(balance);
-    const serverBal = u.balance || 0;
-    // Security: allow client balance only if it's LOWER than server (spending)
-    // or within a small tolerance (timing issues). Never allow client to increase balance.
-    const maxAllowed = serverBal + 50000; // tolerance for game wins, task rewards etc
-    if (clientBal <= maxAllowed) {
-      u.balance = clientBal;
-    }
-    // else: client sent too high a value, keep server balance
+    u.balance = Number(balance);
   }
   // Применяем накопленные серверные награды (рефералы, бонусы)
   if (u.pendingReward && u.pendingReward > 0) {
@@ -661,21 +653,14 @@ app.post('/api/balance/update', (req, res) => {
   if (!userId || balance === undefined) return res.json({ ok: false });
   const u = getUser(userId);
   const newBal = Number(balance);
-  // If server has authoritative balance pending, use that instead
+  // If server has authoritative balance (pgive, task, game win), apply it first
   if (u.serverBalance !== undefined) {
     u.balance = u.serverBalance;
     delete u.serverBalance;
   } else if (newBal >= 0) {
-    // Only allow client to DECREASE balance (purchases) — not increase
-    // Exception: allow up to serverBalance + 3000 tolerance for task/case rewards
-    const maxAllowed = (u.balance || 0) + 3000;
-    if (newBal <= maxAllowed) {
-      u.balance = newBal;
-    }
-    // else: ignore suspiciously high increase
+    u.balance = newBal;
   }
   if (starsBalance !== undefined && Number(starsBalance) >= 0) {
-    // Allow stars changes freely - they're controlled by purchases
     u.starsBalance = Number(starsBalance);
   }
   saveDB();
@@ -2939,7 +2924,6 @@ app.post('/api/pvp/collect', (req, res) => {
   if (prize <= 0) return res.json({ ok: false, error: 'Приз = 0' });
 
   u.balance += prize;
-  u.serverBalance = u.balance; // prevent sync from overwriting this win
   g.collected = true;
   saveDB();
 
