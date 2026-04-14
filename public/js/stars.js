@@ -107,6 +107,9 @@ function updateStarsPayBtn() {
 
 async function initiateStarsPayment() {
   if (!starsAmount || starsAmount < 1) { toast('Укажите количество Stars', 'r'); return; }
+  // Reset previous pending invoice so second payment works fresh
+  _pendingInvoiceId = null;
+  document.getElementById('stars-check-area').classList.remove('show');
   const btn = document.getElementById('stars-pay-btn');
   btn.disabled = true; btn.innerHTML = '⏳ Создаём счёт...';
   try {
@@ -117,7 +120,14 @@ async function initiateStarsPayment() {
     const d = await r.json();
     if (d.ok && d.invoiceLink) {
       _pendingInvoiceId = d.invoiceId;
-      if (tg && tg.openInvoice) { tg.openInvoice(d.invoiceLink, (s) => { if (s === 'paid') checkStarsPayment(); }); }
+      if (tg && tg.openInvoice) {
+        tg.openInvoice(d.invoiceLink, (s) => {
+          if (s === 'paid') {
+            // Wait briefly for webhook to process then check
+            setTimeout(() => checkStarsPayment(), 1500);
+          }
+        });
+      }
       else window.open(d.invoiceLink, '_blank');
       document.getElementById('stars-check-area').classList.add('show');
     } else { toast(d.error || '❌ Ошибка создания счёта', 'r'); }

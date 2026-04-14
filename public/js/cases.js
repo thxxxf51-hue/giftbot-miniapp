@@ -166,6 +166,23 @@ function buildReel(trackId,drops){
   track.style.transition='none';track.style.transform='translateX(0)';
 }
 
+/* ── Weighted drop selection ── */
+function _pickWeightedDrop(drops){
+  const hasWeights=drops.some(d=>d.w);
+  if(!hasWeights)return drops[Math.floor(Math.random()*drops.length)];
+  const total=drops.reduce((s,d)=>s+(d.w||1),0);
+  let r=Math.random()*total;
+  for(const d of drops){r-=(d.w||1);if(r<=0)return d;}
+  return drops[drops.length-1];
+}
+
+function _buildWeightedReel(drops,count){
+  // Build reel items biased toward weighted drops
+  const items=[];
+  for(let i=0;i<count;i++)items.push(_pickWeightedDrop(drops));
+  return items;
+}
+
 function spinReelRandom(trackId,drops,delayMs,duration,onDone){
   const track=document.getElementById(trackId);
   if(!track)return;
@@ -196,17 +213,29 @@ function spinReel(trackId,drops,onWin){
   const firstItem=track.querySelector('.ritem');
   const itemW=firstItem ? firstItem.offsetWidth+5 : IW;
   const total=drops.length*10;
-  const winIdx=Math.floor(total/2)+Math.floor(Math.random()*drops.length);
+  const winner=_pickWeightedDrop(drops);
+  const baseWinIdx=Math.floor(total/2)+Math.floor(Math.random()*drops.length);
+  // Place winner at target index
+  const reelItems=track.querySelectorAll('.ritem');
+  if(reelItems[baseWinIdx]){
+    // update that slot's display to winner
+    const ico=reelItems[baseWinIdx].querySelector('.rico');
+    const nm=reelItems[baseWinIdx].querySelector('.rname');
+    const vl=reelItems[baseWinIdx].querySelector('.rval');
+    if(ico)ico.innerHTML=DROP_ICONS[winner.icoKey]||'⭐';
+    if(nm)nm.textContent=winner.n;
+    if(vl)vl.textContent=winner.v;
+  }
   const cw=track.parentElement.clientWidth;
-  const tx=-(winIdx*itemW-cw/2+itemW/2);
+  const tx=-(baseWinIdx*itemW-cw/2+itemW/2);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     track.style.transition='transform 5s cubic-bezier(0.1,0.82,0.05,1)';
     track.style.transform=`translateX(${tx}px)`;
   }));
   setTimeout(()=>{
     document.querySelectorAll(`#${trackId} .ritem`).forEach(el=>el.classList.remove('win'));
-    document.getElementById(`${trackId}-${winIdx}`)?.classList.add('win');
-    setTimeout(()=>onWin(drops[winIdx%drops.length]),600);
+    document.getElementById(`${trackId}-${baseWinIdx}`)?.classList.add('win');
+    setTimeout(()=>onWin(winner),600);
   },5000);
 }
 
@@ -225,24 +254,28 @@ function spinCase(){
     spinReel('rtrack',curC.drops,async(winner)=>{
       spinning=false;
       let coins=winner.coins||0;
+      const starsWon=winner.stars||0;
       if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();toast(`⚡ Бонус применён!`,'g');}
       if(winner.vipDays)activateVip(winner.vipDays);
       if(winner.crownDays)activateCrownTimed(winner.crownDays);
       if(winner.legendDays)activateLegendTimed(winner.legendDays);
       if(winner.inv)addInv(winner.inv,winner.cnt||1);
-      // Send to server — server credits coins and returns authoritative balance
       try{
-        const r=await fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:1,coinsWon:coins})});
+        const r=await fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:1,coinsWon:coins,starsWon:starsWon})});
         const d=await r.json();
-        if(d.balance!==undefined){S.balance=d.balance;save();}
-        else if(coins>0){S.balance+=coins;syncB();}
+        if(d.balance!==undefined){S.balance=d.balance;save();}else if(coins>0){S.balance+=coins;syncB();}
+        if(starsWon>0&&d.starsBalance!==undefined){S.starsBalance=d.starsBalance;syncB();}
       }catch{if(coins>0){S.balance+=coins;syncB();}}
       document.getElementById('cm-spin').style.display='none';
-      const r=document.getElementById('cres');r.classList.add('show');
-      document.getElementById('cr-ico').innerHTML=DROP_ICONS[winner.icoKey]||winner.n;
-      document.getElementById('cr-t').textContent='Вы получили: '+winner.n;
-      document.getElementById('cr-s').innerHTML=`<span>${coins>0?'+'+coins.toLocaleString('ru')+' монет':winner.v}</span>`;
-      toast('🎉 '+winner.n+'!','g');
+      if(starsWon>0){
+        _showStarsWinModal(starsWon,curC);
+      }else{
+        const r=document.getElementById('cres');r.classList.add('show');
+        document.getElementById('cr-ico').innerHTML=DROP_ICONS[winner.icoKey]||winner.n;
+        document.getElementById('cr-t').textContent='Вы получили: '+winner.n;
+        document.getElementById('cr-s').innerHTML=`<span>${coins>0?'+'+coins.toLocaleString('ru')+' монет':winner.v}</span>`;
+        toast('⭐ Выпало: '+winner.n+'!','g');
+      }
       if(!S.doneTasks.has(6))completeTask(6);
       rShopItems();
     });
@@ -259,11 +292,12 @@ function spinCase(){
       doneCount++;
       if(doneCount<VISUAL_COUNT)return;
       spinning=false;
-      let totalCoins=0;
+      let totalCoins=0;let totalStars=0;
       for(const w of actualWinners){
         let coins=w.coins||0;
         if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();}
         totalCoins+=coins;
+        if(w.stars&&w.stars>0){totalStars+=(w.stars||0);}
         if(w.vipDays)activateVip(w.vipDays);
         if(w.crownDays)activateCrownTimed(w.crownDays);
         if(w.legendDays)activateLegendTimed(w.legendDays);
@@ -271,8 +305,8 @@ function spinCase(){
       }
       // Server credits coins and returns authoritative balance
       if(totalCoins>0){
-        fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:doneCount,coinsWon:totalCoins})})
-          .then(r=>r.json()).then(d=>{if(d.balance!==undefined){S.balance=d.balance;save();}else{S.balance+=totalCoins;syncB();}})
+        fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:doneCount,coinsWon:totalCoins,starsWon:totalStars})})
+          .then(r=>r.json()).then(d=>{if(d.balance!==undefined){S.balance=d.balance;save();}else{S.balance+=totalCoins;syncB();}if(totalStars>0&&d.starsBalance!==undefined){S.starsBalance=d.starsBalance;syncB();}})
           .catch(()=>{S.balance+=totalCoins;syncB();});
       }
       const summary={};
@@ -349,4 +383,73 @@ function spinMega(){
     toast('🎉 '+winner.n+'!','g');
     syncB();renderInv();
   });
+}
+
+/* ── Stars Win Modal ── */
+function _showStarsWinModal(starsCount, caseObj){
+  const orderNum = Math.floor(1000+Math.random()*9000);
+  const canRetry = S.balance >= (caseObj?caseObj.price:0);
+  const mo = document.createElement('div');
+  mo.id = 'stars-win-mo';
+  mo.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  mo.innerHTML = `
+    <div style="width:100%;max-width:480px;background:#0a090f;border-radius:20px 20px 0 0;overflow:hidden;animation:slideUp .3s cubic-bezier(.4,0,.2,1)">
+      <!-- Header -->
+      <div style="background:#0a1416;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:17px;font-weight:800;color:#fff">Результат</div>
+        <button onclick="this.closest('#stars-win-mo').remove();_enableCaseClose()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <!-- Body -->
+      <div style="padding:20px 18px 24px">
+        <!-- Prize icon -->
+        <div style="text-align:center;margin-bottom:14px">
+          <div style="font-size:56px;line-height:1;margin-bottom:8px">⭐</div>
+          <div style="font-size:22px;font-weight:800;color:#fff">${starsCount} Звёзд</div>
+        </div>
+        <!-- Description -->
+        <div style="font-size:14px;color:#7f7d97;text-align:center;margin-bottom:14px;line-height:1.5">
+          Поздравляем! Модераторы свяжутся с тобой и зачислят ${starsCount} Telegram Stars на твой аккаунт
+        </div>
+        <!-- Tag -->
+        <div style="display:flex;justify-content:center;margin-bottom:16px">
+          <span style="display:inline-flex;align-items:center;gap:5px;background:#0e231e;border:1px solid #1a3d34;color:#28aa80;font-size:11px;font-weight:700;padding:5px 13px;border-radius:20px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+            Товар — ожидайте доставки
+          </span>
+        </div>
+        <!-- Order -->
+        <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>
+          Вы выиграли! Заказ #${orderNum}
+        </div>
+        <!-- Notice -->
+        <div style="background:#1d1417;border:1px solid #381f27;border-radius:12px;padding:12px 13px;margin-bottom:16px;display:flex;align-items:flex-start;gap:8px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;margin-top:1px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          <div style="font-size:12px;color:#ff8a9a;line-height:1.5">
+            Напишите в комментариях канала <a href="https://t.me/broketalking" onclick="event.stopPropagation();if(window.tg&&tg.openTelegramLink)tg.openTelegramLink('https://t.me/broketalking');else window.open('https://t.me/broketalking','_blank');return false;" style="color:#ff6b6b;font-weight:800">@broketalking</a> для получения приза. Это единственный способ получения товара.
+          </div>
+        </div>
+        <!-- CTA button -->
+        <button onclick="if(window.tg&&tg.openTelegramLink)tg.openTelegramLink('https://t.me/broketalking');else window.open('https://t.me/broketalking','_blank')" style="width:100%;padding:14px;border-radius:12px;border:none;background:#0ea776;color:#000;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit">
+          Написать в комментарии
+        </button>
+        <!-- Close + Retry -->
+        <div style="display:flex;gap:8px">
+          <button onclick="this.closest('#stars-win-mo').remove();_enableCaseClose()" style="flex:1;padding:13px;border-radius:12px;border:1px solid #1b3935;background:#1b1a2a;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+            Закрыть
+          </button>
+          <button onclick="this.closest('#stars-win-mo').remove();_enableCaseClose();if(${canRetry?'true':'false'}){document.getElementById('cres').classList.remove('show');document.getElementById('cm-spin').style.display='';updateCostDisplay();updateCmBtnState();document.querySelectorAll('.spin-cnt-btn').forEach(b=>b.disabled=false);}else{toast('Недостаточно монет','r');}" style="flex:1;padding:13px;border-radius:12px;border:none;background:${canRetry?'#0ea776':'rgba(255,255,255,.1)'};color:${canRetry?'#000':'rgba(255,255,255,.4)'};font-size:13px;font-weight:600;cursor:${canRetry?'pointer':'default'};font-family:inherit" ${canRetry?'':'disabled'}>
+            Ещё раз
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(mo);
+  // Prevent case modal close button from working while this is open
+  const closeBtn = document.querySelector('.cmclose');
+  if(closeBtn) closeBtn.disabled = true;
+}
+function _enableCaseClose(){
+  const closeBtn = document.querySelector('.cmclose');
+  if(closeBtn) closeBtn.disabled = false;
 }
