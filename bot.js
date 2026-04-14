@@ -760,7 +760,7 @@ app.post('/api/stars/create-invoice', async (req, res) => {
       body: JSON.stringify({
         title: '⭐ Пополнение Stars',
         description: `Зачисление ${stars} Stars на баланс SatApp Gifts`,
-        payload: JSON.stringify({ userId: String(userId), amount: stars }),
+        payload: JSON.stringify({ userId: String(userId), amount: stars, invoiceId: 'inv_' + (DB.invoiceCounter + 1) + '_' + Date.now() }),
         currency: 'XTR',              // XTR = Telegram Stars
         prices: [{ label: 'Stars', amount: stars }],
       })
@@ -810,7 +810,8 @@ app.post('/api/stars/check', (req, res) => {
       return res.json({ ok: true, credited: true, starsBalance: u.starsBalance, amount: inv.amount });
     }
 
-    // Проверяем — оплачен ли (флаг устанавливается в pre_checkout + successful_payment)
+    // Not marked paid yet — return pending so user can manually check or wait
+    // serverBalance will be updated when webhook fires
     return res.json({ ok: true, pending: true });
   }
 
@@ -847,13 +848,18 @@ bot.on('message', async (ctx, next) => {
       u.starsBalance = (u.starsBalance || 0) + stars;
       addTx(userId, 'stars_buy', '+'+stars, 'Пополнение Stars');
 
-      // Помечаем инвойс как оплаченный
-      for (const inv of Object.values(DB.starsInvoices)) {
-        if (String(inv.userId) === userId && inv.amount === stars && !inv.paid) {
-          const age = Date.now() - inv.createdAt;
-          if (age < 3600000) { // не старше 1 часа
-            inv.paid = true;
-            break;
+      // Помечаем инвойс как оплаченный — ищем по invoiceId из payload или по userId+amount
+      let markedInv = false;
+      if (payload.invoiceId && DB.starsInvoices[payload.invoiceId]) {
+        DB.starsInvoices[payload.invoiceId].paid = true;
+        markedInv = true;
+      }
+      if (!markedInv) {
+        // fallback: старые платежи без invoiceId в payload
+        for (const inv of Object.values(DB.starsInvoices)) {
+          if (String(inv.userId) === userId && inv.amount === stars && !inv.paid) {
+            const age = Date.now() - inv.createdAt;
+            if (age < 3600000) { inv.paid = true; break; }
           }
         }
       }
@@ -3715,6 +3721,24 @@ app.post('/api/admin/backup', async (req, res) => {
 
 
 
+/* ══ CASES OVERRIDES ══ */
+app.patch('/api/admin/cases/:id', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const { price, photo, drops } = req.body;
+  if (!DB.caseOverrides) DB.caseOverrides = {};
+  if (!DB.caseOverrides[id]) DB.caseOverrides[id] = {};
+  if (price !== undefined) DB.caseOverrides[id].price = Number(price);
+  if (photo !== undefined) DB.caseOverrides[id].photo = photo;
+  if (drops !== undefined) DB.caseOverrides[id].drops = drops;
+  saveDB();
+  res.json({ ok: true, override: DB.caseOverrides[id] });
+});
+
+app.get('/api/cases/overrides', (req, res) => {
+  res.json(DB.caseOverrides || {});
+});
+
 app.post('/api/admin/broadcast', async (req, res) => {
   if (!adminCheck(req, res)) return;
   const { text } = req.body;
@@ -3758,7 +3782,7 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   const id = Number(req.params.id);
   const idx = DB.customShopItems.findIndex(i => i.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Item not found' });
-  const { name, price, desc, tag, tagColor, borderColor, imageUrl, stock } = req.body;
+  const { name, price, desc, tag, tagColor, borderColor, imageUrl } = req.body;
   const item = DB.customShopItems[idx];
   if (name !== undefined) item.name = name;
   if (price !== undefined) item.price = Number(price);
@@ -3767,7 +3791,6 @@ app.patch('/api/admin/shop/:id', (req, res) => {
   if (tagColor !== undefined) item.tagColor = tagColor;
   if (borderColor !== undefined) item.borderColor = borderColor;
   if (imageUrl !== undefined) item.imageUrl = imageUrl;
-  if (stock !== undefined) item.stock = (stock === null || Number(stock) === 0) ? null : Number(stock);
   saveDB();
   res.json({ ok: true, item });
 });
