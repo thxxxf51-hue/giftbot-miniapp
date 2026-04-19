@@ -48,10 +48,11 @@ async function restoreDBFromGitHub() {
     // ALWAYS restore from GitHub - it is the source of truth after redeploy
     const backupUsers = Object.keys(parsed.users || {}).length;
     const backupFinished = Object.keys(parsed.finished || {}).length;
-    if (backupUsers > 0 || backupFinished > 0) {
+    const backupDraws = Object.keys(parsed.draws || {}).length;
+    if (backupUsers > 0 || backupFinished > 0 || backupDraws > 0) {
       Object.assign(DB, parsed);
       saveDB();
-      console.log(`✅ DB restored from GitHub backup (users: ${backupUsers}, finished draws: ${backupFinished})`);
+      console.log(`✅ DB restored from GitHub backup (users: ${backupUsers}, active draws: ${backupDraws}, finished: ${backupFinished})`);
       return true;
     }
     console.log('ℹ️ GitHub backup is empty, keeping local DB');
@@ -3991,7 +3992,7 @@ bot.action(/^stars_buy:(.+)$/, async (ctx) => {
 
   try {
     const invoice = await cryptobotCreateInvoice(pkg.stars, pkg.usd, ctx.from.id);
-    await ctx.editMessageText(
+    await safeEdit(ctx,
       `⭐ *${pkg.stars} Telegram Stars*\n\n` +
       `💰 Цена: *${pkg.rub}₽* (~$${pkg.usd})\n\n` +
       `В CryptoBot можешь выбрать любую крипту — USDT, TON, BTC и другие.\n\n` +
@@ -4013,9 +4014,34 @@ bot.action(/^stars_buy:(.+)$/, async (ctx) => {
 });
 
 // Назад в меню
+
+/* Safe edit: works for both text and photo messages */
+async function safeEdit(ctx, text, extra) {
+  try {
+    await ctx.editMessageText(text, extra);
+  } catch (e) {
+    if (e.description && e.description.includes('no text in the message')) {
+      // Message has a photo — edit caption instead
+      try {
+        await ctx.editMessageCaption(text, extra);
+      } catch (e2) {
+        // Last resort: send new message
+        try {
+          await ctx.reply(text, extra);
+          await ctx.deleteMessage().catch(() => {});
+        } catch {}
+      }
+    } else if (e.description && e.description.includes('message is not modified')) {
+      // Ignore — same content
+    } else {
+      throw e;
+    }
+  }
+}
+
 bot.action('stars_buy_menu', async (ctx) => {
   await ctx.answerCbQuery();
-  await ctx.editMessageText(
+  await safeEdit(ctx,
     `⭐ *Купить Telegram Stars*\n\nВыбери пакет:`,
     {
       parse_mode: 'Markdown',
