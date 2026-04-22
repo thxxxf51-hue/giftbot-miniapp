@@ -174,7 +174,9 @@ function soloSpin(){
   S.balance-=cost;syncB();
   _soloSpinning=true;soloClosePrizePicker();soloRenderUI();
 
-  const win=Math.random()*100<pct;
+  const serverRtp=0.30; // 30% win RTP
+  const adjPct=pct*serverRtp*2; // scale down: user sees % but server applies RTP
+  const win=Math.random()*100<Math.min(pct,adjPct);
   const extraSpins=(5+Math.floor(Math.random()*4))*Math.PI*2;
   const winAngle=(pct/100)*Math.PI*2;
 

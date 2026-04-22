@@ -203,7 +203,7 @@ function showVerifyBtn(t){
 
   function renderVerify(error){
     const errHtml=error
-      ?`<div style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.3);border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#ff5555;font-size:14px;font-weight:700">${_X_SVG} ${error}</div>`
+      ?`<div style="background:rgba(255,60,60,.12);border:1px solid rgba(255,60,60,.3);border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:#ff5555;font-size:13px;font-weight:600"><span style="flex-shrink:0;width:16px;height:16px;display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span> ${error}</div>`
       :'';
     box.innerHTML=`
       <div class="tm-hdr">

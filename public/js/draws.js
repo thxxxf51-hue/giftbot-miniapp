@@ -156,12 +156,16 @@ function openDrawDetail(draw){
     html+=`<div class="draw-joined-status">${ICON_CHECK_GRN} Вы уже участвуете в этом розыгрыше</div>`;
   }else{
     const isTkt=draw.requireTicket;
+    const isVipOnly=draw.vipOnly||false;
+    const ticketPrice=draw.ticketPrice||null;
     const hasTgConds=tgConds.length>0;
-    /* блокируем если условия есть и не проверены / не выполнены */
     const condsFailed=hasTgConds&&(_subCheckResult===null||_subCheckResult.some(s=>s!==true));
     const btnDisabled=condsFailed?'disabled':'';
     const btnTitle=condsFailed&&_subCheckResult===null?'Сначала проверьте подписки':condsFailed?'Выполните все условия':'';
-    html+=`<button class="${isTkt?'draw-join-btn draw-join-btn--ticket':'draw-join-btn'}" id="draw-join-btn" onclick="joinDrawDetail(${draw.id})" ${btnDisabled} title="${btnTitle}">${isTkt?'Участвовать (нужен билет)':'Участвовать'}</button>`;
+    if(isVipOnly){html+=`<div style="font-size:11px;color:#F4C430;text-align:center;margin-bottom:6px">👑 Только для VIP участников</div>`;}
+    let btnLabel='Участвовать';
+    if(isTkt){btnLabel=ticketPrice?`Купить билет за ${ticketPrice.toLocaleString('ru')} монет`:'Участвовать (нужен билет)';}
+    html+=`<button class="${isTkt?'draw-join-btn draw-join-btn--ticket':'draw-join-btn'}" id="draw-join-btn" onclick="joinDrawDetail(${draw.id})" ${btnDisabled} title="${btnTitle}">${btnLabel}</button>`;
     if(condsFailed){
       html+=`<div style="font-size:11px;color:var(--muted2);text-align:center;margin-top:-4px;margin-bottom:8px">${_subCheckResult===null?'Проверьте подписки перед участием':'Выполните все условия'}</div>`;
     }
@@ -237,11 +241,13 @@ async function joinDrawDetail(drawId){
   if(btn){btn.disabled=true;btn.textContent='Участвуем...';}
   const draw=_activeDraw||{};
   const requireTicket=draw.requireTicket||false;
-  /* Повторная проверка условий на сервере — бот проверит */
+  const isVipOnly=draw.vipOnly||false;
+  const ticketPrice=draw.ticketPrice||null;
   try{
-    if(requireTicket){
-      const tickets=S.inventory&&S.inventory['ticket']||0;
-      if(tickets<1){if(btn){btn.disabled=false;btn.textContent='Участвовать (нужен билет)';}toast('Нет билета. Купи в магазине!','r');return;}
+    if(isVipOnly){const vipOk=S.vipExpiry&&S.vipExpiry>Date.now();if(!vipOk){toast('👑 Только для VIP участников','r');if(btn){btn.disabled=false;}return;}}
+    if(requireTicket&&ticketPrice&&ticketPrice>0){
+      if(S.balance<ticketPrice){toast('Недостаточно монет для билета','r');if(btn)btn.disabled=false;return;}
+      // Confirm and buy
     }
     const r=await fetch('/api/draws/join',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({drawId,userId:UID,username:TGU.username,firstName:TGU.first_name,useTicket:true})});
@@ -249,12 +255,12 @@ async function joinDrawDetail(drawId){
     if(d.ok){
       if(!S.joinedDraws)S.joinedDraws=[];
       if(!S.joinedDraws.includes(drawId))S.joinedDraws.push(drawId);
+      if(d.balance!==undefined){S.balance=d.balance;syncB();}
       save();
-      if(requireTicket&&S.inventory)S.inventory['ticket']=Math.max(0,(S.inventory['ticket']||1)-1);
-      closeDrawDetail();toast('Вы участвуете!','g');loadDraws();
+      closeDrawDetail();toast('✅ Вы участвуете!','g');loadDraws();
     }else{
       toast(d.errorText||d.error||'Ошибка','r');
-      if(btn){btn.disabled=false;btn.textContent=requireTicket?'Участвовать (нужен билет)':'Участвовать';}
+      if(btn){btn.disabled=false;const lbl=requireTicket&&ticketPrice?`Купить билет за ${ticketPrice.toLocaleString('ru')} монет`:requireTicket?'Участвовать (нужен билет)':'Участвовать';btn.textContent=lbl;}
     }
   }catch{toast('Ошибка','r');if(btn)btn.disabled=false;}
 }

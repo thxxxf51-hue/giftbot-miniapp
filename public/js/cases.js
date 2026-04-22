@@ -1,4 +1,23 @@
 /* ══ CASES ══ */
+let _caseOverrides = {};
+async function _loadCaseOverrides() {
+  try {
+    const r = await fetch('/api/cases/overrides');
+    const d = await r.json();
+    if (d && typeof d === 'object') {
+      _caseOverrides = d;
+      // Apply overrides to CASES array
+      CASES.forEach(c => {
+        const ov = _caseOverrides[c.id];
+        if (!ov) return;
+        if (ov.price !== undefined) c.price = ov.price;
+        if (ov.photo !== undefined && ov.photo) c.photo = ov.photo;
+        if (ov.drops !== undefined && ov.drops.length) c.drops = ov.drops;
+      });
+    }
+  } catch {}
+}
+
 const _COIN_SVG=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;
 
 function _getCaseDesc(c){
@@ -15,6 +34,11 @@ function _getCaseDesc(c){
   if(!bestLabel)bestLabel=maxCoins.toLocaleString('ru')+' монет';
   if(minCoins>0)return`Может выпасть от ${minCoins.toLocaleString('ru')} монет до ${bestLabel}!`;
   return`Может выпасть ${bestLabel} и другие призы!`;
+}
+
+async function initCases() {
+  await _loadCaseOverrides();
+  rCases();
 }
 
 function rCases(){
@@ -153,9 +177,17 @@ function updateCostDisplay(){
 function updateCmBtnState(){
   const total=curC.price*curSpinCount;
   const btn=document.getElementById('cm-btn');
-  btn.disabled=S.balance<total;
+  // Check if user has a key for case 3 (Кейс Богача)
+  const hasKey=curC.id===3&&S.inventory&&(S.inventory['casekey3']||0)>0;
+  const canAfford=S.balance>=total;
+  // Show key button if case 3 and has key
+  const keyBtnEl=document.getElementById('cm-key-btn');
+  if(keyBtnEl){keyBtnEl.style.display=hasKey?'':'none';}
+  btn.disabled=!canAfford&&!hasKey;
   const lack=total-S.balance;
-  btn.innerHTML=S.balance<total?`Не хватает ${lack.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`:'🎰 Открыть';
+  if(canAfford){btn.innerHTML='🎰 Открыть';}
+  else if(hasKey){btn.innerHTML='🗝️ Открыть ключом';}
+  else{btn.innerHTML=`Не хватает ${lack.toLocaleString('ru')} <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px;flex-shrink:0"><circle cx="8" cy="8" r="7"/><path d="M19.5 9.94a7 7 0 11-9.56 9.56"/><path d="M7 6h1v4"/><path d="M17.3 14.3l.7.7-2.8 2.8"/></svg>`;}
 }
 
 function buildReel(trackId,drops){
@@ -242,11 +274,20 @@ function spinReel(trackId,drops,onWin){
 function spinCase(){
   if(spinning||!curC)return;
   const total=curC.price*curSpinCount;
-  if(S.balance<total){toast('❌ Недостаточно монет!','r');return;}
+  const hasKey=curC.id===3&&S.inventory&&(S.inventory['casekey3']||0)>0;
+  if(S.balance<total&&!hasKey){toast('❌ Недостаточно монет!','r');return;}
   spinning=true;
-  S.balance-=total;
-  syncB();
-  try{fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:curSpinCount})});}catch{}
+  let usingKey=false;
+  if(hasKey&&S.balance<total){
+    // Use key — free open
+    usingKey=true;
+    S.inventory['casekey3']=Math.max(0,(S.inventory['casekey3']||1)-1);
+    save();
+  }else{
+    S.balance-=total;
+    syncB();
+  }
+  try{fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:curSpinCount,usedKey:usingKey})});}catch{}
   document.getElementById('cm-btn').disabled=true;
   document.querySelectorAll('.spin-cnt-btn').forEach(b=>b.disabled=true);
 
@@ -255,6 +296,7 @@ function spinCase(){
       spinning=false;
       let coins=winner.coins||0;
       const starsWon=winner.stars||0;
+      const keyWon=winner.inv==='casekey3'?1:0;
       if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();toast(`⚡ Бонус применён!`,'g');}
       if(winner.vipDays)activateVip(winner.vipDays);
       if(winner.crownDays)activateCrownTimed(winner.crownDays);
@@ -267,7 +309,9 @@ function spinCase(){
         if(starsWon>0&&d.starsBalance!==undefined){S.starsBalance=d.starsBalance;syncB();}
       }catch{if(coins>0){S.balance+=coins;syncB();}}
       document.getElementById('cm-spin').style.display='none';
-      if(starsWon>0){
+      if(keyWon>0){
+        _showKeyWinModal(curC);
+      }else if(starsWon>0){
         _showStarsWinModal(starsWon,curC);
       }else{
         const r=document.getElementById('cres');r.classList.add('show');
@@ -292,12 +336,13 @@ function spinCase(){
       doneCount++;
       if(doneCount<VISUAL_COUNT)return;
       spinning=false;
-      let totalCoins=0;let totalStars=0;
+      let totalCoins=0;let totalStars=0;let totalKeys=0;
       for(const w of actualWinners){
         let coins=w.coins||0;
         if(coins>0&&S.bonusMulti>1){coins*=S.bonusMulti;S.bonusMulti=0;save();}
         totalCoins+=coins;
         if(w.stars&&w.stars>0){totalStars+=(w.stars||0);}
+        if(w.inv==='casekey3'){totalKeys++;}
         if(w.vipDays)activateVip(w.vipDays);
         if(w.crownDays)activateCrownTimed(w.crownDays);
         if(w.legendDays)activateLegendTimed(w.legendDays);
@@ -305,7 +350,7 @@ function spinCase(){
       }
       // Server credits coins and returns authoritative balance
       if(totalCoins>0){
-        fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:doneCount,coinsWon:totalCoins,starsWon:totalStars})})
+        fetch('/api/case/open',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:UID,caseId:curC.id,count:doneCount,coinsWon:totalCoins,starsWon:totalStars,keyWon:totalKeys||0})})
           .then(r=>r.json()).then(d=>{if(d.balance!==undefined){S.balance=d.balance;save();}else{S.balance+=totalCoins;syncB();}if(totalStars>0&&d.starsBalance!==undefined){S.starsBalance=d.starsBalance;syncB();}})
           .catch(()=>{S.balance+=totalCoins;syncB();});
       }
@@ -452,4 +497,34 @@ function _showStarsWinModal(starsCount, caseObj){
 function _enableCaseClose(){
   const closeBtn = document.querySelector('.cmclose');
   if(closeBtn) closeBtn.disabled = false;
+}
+
+/* ── Key Win Modal ── */
+function _showKeyWinModal(caseObj) {
+  const mo = document.createElement('div');
+  mo.id = 'key-win-mo';
+  mo.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
+  mo.innerHTML = `
+    <div style="width:100%;max-width:480px;background:#0a090f;border-radius:20px 20px 0 0;overflow:hidden;animation:slideUp .3s cubic-bezier(.4,0,.2,1)">
+      <div style="background:#0a1416;padding:16px 18px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:17px;font-weight:800;color:#fff">Ключ от кейса богача</div>
+        <button onclick="this.closest('#key-win-mo').remove();_enableCaseClose&&_enableCaseClose()" style="background:rgba(255,255,255,.1);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <div style="padding:20px 18px 24px;text-align:center">
+        <div style="margin-bottom:14px"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:64px;height:64px"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 5.5C16 8.53757 13.5376 11 10.5 11H7V13H5V15L4 16H0V12L5.16351 6.83649C5.0567 6.40863 5 5.96094 5 5.5C5 2.46243 7.46243 0 10.5 0C13.5376 0 16 2.46243 16 5.5ZM13 4C13 4.55228 12.5523 5 12 5C11.4477 5 11 4.55228 11 4C11 3.44772 11.4477 3 12 3C12.5523 3 13 3.44772 13 4Z" fill="#efa409" stroke="#f7eea6" stroke-width="0.5"/></svg></div>
+        <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:8px">Ключ от Кейса Богача</div>
+        <div style="font-size:13px;color:#86829d;line-height:1.5;margin-bottom:16px">Ключ добавлен в твой инвентарь! Перейди в Магазин → Кейсы и открой Кейс Богача бесплатно.</div>
+        <div style="display:flex;justify-content:center;margin-bottom:16px">
+          <span style="display:inline-flex;align-items:center;gap:5px;background:#0e231e;border:1px solid #1a3d34;color:#28aa80;font-size:11px;font-weight:700;padding:5px 13px;border-radius:20px">
+            🎁 Добавлено в инвентарь
+          </span>
+        </div>
+        <button onclick="this.closest('#key-win-mo').remove();_enableCaseClose&&_enableCaseClose();go('shop')" style="width:100%;padding:14px;border-radius:12px;border:none;background:#0fa776;color:#000;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">Забрать ключ</button>
+        <div style="display:flex;gap:8px">
+          <button onclick="this.closest('#key-win-mo').remove();_enableCaseClose&&_enableCaseClose()" style="flex:1;padding:13px;border-radius:12px;border:1px solid #1b3935;background:#1b1a2a;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Закрыть</button>
+          <button onclick="this.closest('#key-win-mo').remove();_enableCaseClose&&_enableCaseClose();document.getElementById('cres')&&document.getElementById('cres').classList.remove('show');document.getElementById('cm-spin')&&(document.getElementById('cm-spin').style.display='');updateCostDisplay&&updateCostDisplay();updateCmBtnState&&updateCmBtnState();" style="flex:1;padding:13px;border-radius:12px;border:none;background:#0ea776;color:#000;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Ещё раз</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(mo);
 }

@@ -198,7 +198,7 @@ async function init(){
   }catch{}
   renderTasks();
   loadCustomShopItems();
-  rCases();
+  initCases();
   rRefStats();
   rRefList();
   initRefTaskSwiper();

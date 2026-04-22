@@ -1,6 +1,7 @@
 /* ══ INVENTORY DEFS ══ */
 const INV_DEF={
-  megagift:{ico:'🎁',name:'Мега-подарок',desc:'Крути мега-рулетку: VIP 7д, Билеты х10, Корона, Кейс Богача',action:'openMegaGift'},
+  megagift:{ico:'🎁',name:'Мега-подарок',desc:'Крути мега-рулетку: VIP 7д, Корона, Кейс Богача',action:'openMegaGift'},
+  casekey3:{ico:'🗝️',name:'Ключ от Кейса Богача',desc:'Используется для открытия Кейса Богача бесплатно. Проверь свои кейсы!'},
 };
 
 /* ══ CASES ══ */
@@ -11,6 +12,7 @@ const DROP_ICONS={
   vip:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="3"/><path d="M7 10v4M12 10v4M17 10v4M5 6V4a1 1 0 011-1h12a1 1 0 011 1v2"/><line x1="2" y1="14" x2="22" y2="14"/></svg>`,
   megagift:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/><circle cx="12" cy="4" r="1" fill="currentColor"/></svg>`,
   stars:  `<span style="font-size:18px">⭐</span>`,
+  key:    `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px"><path fill-rule="evenodd" clip-rule="evenodd" d="M16 5.5C16 8.53757 13.5376 11 10.5 11H7V13H5V15L4 16H0V12L5.16351 6.83649C5.0567 6.40863 5 5.96094 5 5.5C5 2.46243 7.46243 0 10.5 0C13.5376 0 16 2.46243 16 5.5ZM13 4C13 4.55228 12.5523 5 12 5C11.4477 5 11 4.55228 11 4C11 3.44772 11.4477 3 12 3C12.5523 3 13 3.44772 13 4Z" fill="#efa409" stroke="#f7eea6" stroke-width="0.5"/></svg>`,
 };
 
 const CASES=[
@@ -47,14 +49,13 @@ const CASES=[
   {id:4,name:'Кейс Миллионера',price:77000,bg:'linear-gradient(145deg,#200a0a,#1a0808)',ic:'#FF4D4D',ib:'rgba(255,77,77,.15)',
    photo:'https://i.imgur.com/3iI3Gpq.jpeg',
    drops:[
-     {icoKey:'megagift',n:'Мега-подарок',v:'х1',inv:'megagift',cnt:1,w:5},
-     {icoKey:'coins',n:'Монеты',v:'+5000',coins:5000,w:22},
-     {icoKey:'coins',n:'Монеты',v:'+9999',coins:9999,w:20},
-     {icoKey:'coins',n:'Монеты',v:'+15000',coins:15000,w:20},
-     {icoKey:'coins',n:'Монеты',v:'+25000',coins:25000,w:15},
-     {icoKey:'coins',n:'Монеты',v:'+50000',coins:50000,w:10},
+     {icoKey:'key',n:'Ключ от Кейса Богача',v:'🗝️ x1',inv:'casekey3',cnt:1,w:8},
+     {icoKey:'coins',n:'Монеты',v:'+111',coins:111,w:20},
+     {icoKey:'coins',n:'Монеты',v:'+222',coins:222,w:20},
+     {icoKey:'coins',n:'Монеты',v:'+1000',coins:1000,w:20},
+     {icoKey:'coins',n:'Монеты',v:'+5000',coins:5000,w:17},
+     {icoKey:'coins',n:'Монеты',v:'+7777',coins:7777,w:12},
      {icoKey:'stars',n:'200 Звёзд ⭐',v:'200 ⭐',stars:200,w:3},
-     {icoKey:'coins',n:'Монеты',v:'+100000',coins:100000,w:5,rare:true},
    ]},
   {id:5,name:'Звёздный ⭐',starsPrice:99,wip:true,bg:'linear-gradient(145deg,#1a1500,#201a00)',ic:'#FFD700',ib:'rgba(255,215,0,.15)',
    photo:'',

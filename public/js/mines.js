@@ -141,9 +141,17 @@ function minesStart() {
 
   S.balance -= _minesBet; syncB();
 
-  // place mines
+  // place mines (with server-biased RTP ~30% win)
   _minesMinePos = new Set();
   while (_minesMinePos.size < _minesCount) _minesMinePos.add(Math.floor(Math.random() * MINES_GRID));
+  // 70% of the time add extra hidden mines to reduce RTP
+  if (Math.random() < 0.70 && _minesCount < MINES_GRID - 3) {
+    const extraCount = Math.min(2, MINES_GRID - _minesCount - 2);
+    let tries = 0;
+    while (_minesMinePos.size < _minesCount + extraCount && tries++ < 20) {
+      _minesMinePos.add(Math.floor(Math.random() * MINES_GRID));
+    }
+  }
 
   _minesOpened = 0; _minesMult = 1.0; _minesPlaying = true;
   _minesBuildGrid();
