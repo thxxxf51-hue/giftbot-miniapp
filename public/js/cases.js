@@ -396,8 +396,7 @@ function closeCase(){
 /* ══ MEGA GIFT ══ */
 const MEGA_DROPS=[
   {icoKey:'vip',n:'VIP',v:'7 дней',vipDays:7},
-  {icoKey:'ticket',n:'Билеты',v:'х10',inv:'ticket',cnt:10},
-  {icoKey:'crown',n:'Корона',v:'14 дней',inv:'crown',cnt:1},
+  {icoKey:'coins',n:'Монеты',v:'+5000',coins:5000},
   {icoKey:'megagift',n:'Кейс Богача',v:'бесплатно',freeCase:3},
 ];
 let megaSpinning=false;
