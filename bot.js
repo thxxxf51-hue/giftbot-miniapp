@@ -175,14 +175,15 @@ process.on('SIGINT', async () => {
 
 
 /* ══ TRANSACTIONS ══ */
-function addTx(uid, type, amount, details, status, orderId) {
+function addTx(uid, type, amount, details) {
   const u = getUser(uid);
   if (!u.transactions) u.transactions = [];
   const txId = 'stx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-  const tx = { id: txId, type, amount, details, date: mskFmt(null, {day:'numeric',month:'short',year:'numeric'}) };
-  if (status) tx.status = status;
-  if (orderId) tx.orderId = orderId;
-  u.transactions.unshift(tx);
+  u.transactions.unshift({
+    id: txId, type, amount, details,
+    date: mskFmt(null, {day:'numeric',month:'short',year:'numeric'})
+  });
+  // Keep last 100
   if (u.transactions.length > 100) u.transactions = u.transactions.slice(0, 100);
 }
 
@@ -900,8 +901,6 @@ app.get('/api/draws', (req, res) => {
       imageUrl: d.imageUrl, participantsCount: d.participants.length,
       winnersCount: d.winnersCount || 1, isMoney: isMoney(d.prize),
       requireTicket: d.requireTicket || false,
-      ticketPrice: d.ticketPrice || null,
-      vipOnly: d.vipOnly || false,
       conditions: d.conditions || [],
       description: d.description || d.desc || ''
     }));
@@ -2753,37 +2752,6 @@ app.post('/api/stars/exchange', (req, res) => {
 });
 
 /* ══ TRANSACTIONS API ══ */
-
-/* ══ ORDERS MANAGEMENT ══ */
-app.get('/api/admin/orders/:userId', (req, res) => {
-  if (!adminCheck(req, res)) return;
-  const u = DB.users[String(req.params.userId)];
-  if (!u) return res.json({ ok: true, orders: [] });
-  res.json({ ok: true, orders: u.orders || [] });
-});
-
-app.post('/api/admin/orders/:userId/:orderId/status', (req, res) => {
-  if (!adminCheck(req, res)) return;
-  const { status } = req.body; // 'approved' or 'rejected'
-  if (!['approved','rejected'].includes(status)) return res.json({ ok: false, error: 'invalid status' });
-  const u = DB.users[String(req.params.userId)];
-  if (!u) return res.json({ ok: false, error: 'user not found' });
-  const order = (u.orders || []).find(o => o.id === req.params.orderId);
-  if (!order) return res.json({ ok: false, error: 'order not found' });
-  order.status = status;
-  // Update transaction status too
-  const tx = (u.transactions || []).find(t => t.orderId === req.params.orderId);
-  if (tx) tx.status = status;
-  // If approved stars order, credit the stars
-  if (status === 'approved' && order.type === 'stars') {
-    u.starsBalance = (u.starsBalance || 0) + order.amount;
-    u.serverBalance = u.balance; // protect balance
-    addTx(String(req.params.userId), 'stars_approved', '+' + order.amount + ' ⭐', 'Одобрено: ' + order.details);
-  }
-  saveDB();
-  res.json({ ok: true, order });
-});
-
 app.get('/api/transactions', (req, res) => {
   const { userId } = req.query;
   if (!userId) return res.json({ ok: false });
@@ -3557,11 +3525,11 @@ app.get('/api/admin/draws', (req, res) => {
 
 app.post('/api/admin/draws', async (req, res) => {
   if (!adminCheck(req, res)) return;
-  const { prize, timeMs, winnersCount, requireTicket, ticketPrice, vipOnly, imageUrl } = req.body;
+  const { prize, timeMs, winnersCount, requireTicket, imageUrl } = req.body;
   if (!prize || !timeMs) return res.status(400).json({ error: 'Missing fields' });
   const ms = Math.max(10000, Number(timeMs));
   const id = ++DB.drawCounter;
-  DB.draws[id] = { id, prize, endsAt: Date.now()+ms, imageUrl: imageUrl||null, participants: [], finished: false, winnersCount: Number(winnersCount)||1, requireTicket: !!requireTicket, ticketPrice: ticketPrice ? Number(ticketPrice) : null, vipOnly: !!vipOnly, createdAt: Date.now() };
+  DB.draws[id] = { id, prize, endsAt: Date.now()+ms, imageUrl: imageUrl||null, participants: [], finished: false, winnersCount: Number(winnersCount)||1, requireTicket: !!requireTicket, createdAt: Date.now() };
   saveDB();
   setTimeout(() => finishDraw(id), ms);
   res.json({ ok: true, id, draw: DB.draws[id] });
@@ -3664,6 +3632,75 @@ app.post('/api/admin/draws/:id/reroll', async (req, res) => {
   if (!draw) return res.status(404).json({ error: 'Draw not found' });
   await finishDraw(id);
   res.json({ ok: true });
+});
+
+// Reroll winner in finished draw
+app.post('/api/admin/draws/finished/:id/reroll-winner', async (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.finished && DB.finished[id];
+  if (!draw) return res.status(404).json({ error: 'Finished draw not found' });
+  if (!draw.winners || !draw.winners.length) return res.json({ ok: false, error: 'Нет победителей' });
+
+  const { target } = req.body;
+  if (!target) return res.json({ ok: false, error: 'Укажи имя или UID победителя' });
+
+  const t = String(target).replace('@','').toLowerCase();
+
+  // Find winner to reroll
+  const winnerIdx = draw.winners.findIndex(w => {
+    const uname = (w.username || w.name || '').replace('@','').toLowerCase();
+    const uid = String(w.uid || '');
+    return uname === t || uid === t;
+  });
+  if (winnerIdx === -1) return res.json({ ok: false, error: `Победитель "${target}" не найден` });
+
+  const removed = draw.winners[winnerIdx];
+
+  // Eligible: participants not already winners
+  const winnerUids = new Set(draw.winners.map(w => String(w.uid)));
+  const eligible = (draw.participants || []).filter(p => !winnerUids.has(String(p.uid)));
+  if (!eligible.length) return res.json({ ok: false, error: 'Нет участников для замены' });
+
+  const newWinner = eligible[Math.floor(Math.random() * eligible.length)];
+  draw.winners[winnerIdx] = newWinner;
+  saveDB();
+
+  // Notify new winner
+  if (newWinner.uid) {
+    try {
+      const moneyPrize = isMoney(draw.prize);
+      if (moneyPrize) {
+        const amount = Math.floor(parseInt(draw.prize) / (draw.winnersCount || 1));
+        const u = getUser(newWinner.uid);
+        u.balance = (u.balance || 0) + amount;
+        u.serverBalance = u.balance;
+        saveDB();
+        await bot.telegram.sendMessage(Number(newWinner.uid),
+          `🎉 Ты победил в розыгрыше!\n🏆 Приз: ${amount} монет\n\n💰 Монеты уже на балансе!`
+        );
+      } else {
+        await bot.telegram.sendMessage(Number(newWinner.uid),
+          `🎉 Ты победил в розыгрыше!\n🏆 Приз: ${draw.prize}\n\nАдминистратор скоро свяжется!`
+        );
+      }
+    } catch {}
+  }
+
+  res.json({
+    ok: true,
+    removed: removed.name || removed.username || removed.uid,
+    newWinner: newWinner.name || newWinner.username || newWinner.uid
+  });
+});
+
+// Get participants of finished draw
+app.get('/api/admin/draws/finished/:id/participants', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const id = parseInt(req.params.id);
+  const draw = DB.finished && DB.finished[id];
+  if (!draw) return res.status(404).json({ error: 'Not found' });
+  res.json({ ok: true, participants: draw.participants || [], winners: draw.winners || [] });
 });
 
 // Extend/shorten draw end time
