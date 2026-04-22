@@ -175,15 +175,14 @@ process.on('SIGINT', async () => {
 
 
 /* ══ TRANSACTIONS ══ */
-function addTx(uid, type, amount, details) {
+function addTx(uid, type, amount, details, status, orderId) {
   const u = getUser(uid);
   if (!u.transactions) u.transactions = [];
   const txId = 'stx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-  u.transactions.unshift({
-    id: txId, type, amount, details,
-    date: mskFmt(null, {day:'numeric',month:'short',year:'numeric'})
-  });
-  // Keep last 100
+  const tx = { id: txId, type, amount, details, date: mskFmt(null, {day:'numeric',month:'short',year:'numeric'}) };
+  if (status) tx.status = status;
+  if (orderId) tx.orderId = orderId;
+  u.transactions.unshift(tx);
   if (u.transactions.length > 100) u.transactions = u.transactions.slice(0, 100);
 }
 
@@ -901,6 +900,8 @@ app.get('/api/draws', (req, res) => {
       imageUrl: d.imageUrl, participantsCount: d.participants.length,
       winnersCount: d.winnersCount || 1, isMoney: isMoney(d.prize),
       requireTicket: d.requireTicket || false,
+      ticketPrice: d.ticketPrice || null,
+      vipOnly: d.vipOnly || false,
       conditions: d.conditions || [],
       description: d.description || d.desc || ''
     }));
@@ -2752,6 +2753,37 @@ app.post('/api/stars/exchange', (req, res) => {
 });
 
 /* ══ TRANSACTIONS API ══ */
+
+/* ══ ORDERS MANAGEMENT ══ */
+app.get('/api/admin/orders/:userId', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const u = DB.users[String(req.params.userId)];
+  if (!u) return res.json({ ok: true, orders: [] });
+  res.json({ ok: true, orders: u.orders || [] });
+});
+
+app.post('/api/admin/orders/:userId/:orderId/status', (req, res) => {
+  if (!adminCheck(req, res)) return;
+  const { status } = req.body; // 'approved' or 'rejected'
+  if (!['approved','rejected'].includes(status)) return res.json({ ok: false, error: 'invalid status' });
+  const u = DB.users[String(req.params.userId)];
+  if (!u) return res.json({ ok: false, error: 'user not found' });
+  const order = (u.orders || []).find(o => o.id === req.params.orderId);
+  if (!order) return res.json({ ok: false, error: 'order not found' });
+  order.status = status;
+  // Update transaction status too
+  const tx = (u.transactions || []).find(t => t.orderId === req.params.orderId);
+  if (tx) tx.status = status;
+  // If approved stars order, credit the stars
+  if (status === 'approved' && order.type === 'stars') {
+    u.starsBalance = (u.starsBalance || 0) + order.amount;
+    u.serverBalance = u.balance; // protect balance
+    addTx(String(req.params.userId), 'stars_approved', '+' + order.amount + ' ⭐', 'Одобрено: ' + order.details);
+  }
+  saveDB();
+  res.json({ ok: true, order });
+});
+
 app.get('/api/transactions', (req, res) => {
   const { userId } = req.query;
   if (!userId) return res.json({ ok: false });
@@ -3525,11 +3557,11 @@ app.get('/api/admin/draws', (req, res) => {
 
 app.post('/api/admin/draws', async (req, res) => {
   if (!adminCheck(req, res)) return;
-  const { prize, timeMs, winnersCount, requireTicket, imageUrl } = req.body;
+  const { prize, timeMs, winnersCount, requireTicket, ticketPrice, vipOnly, imageUrl } = req.body;
   if (!prize || !timeMs) return res.status(400).json({ error: 'Missing fields' });
   const ms = Math.max(10000, Number(timeMs));
   const id = ++DB.drawCounter;
-  DB.draws[id] = { id, prize, endsAt: Date.now()+ms, imageUrl: imageUrl||null, participants: [], finished: false, winnersCount: Number(winnersCount)||1, requireTicket: !!requireTicket, createdAt: Date.now() };
+  DB.draws[id] = { id, prize, endsAt: Date.now()+ms, imageUrl: imageUrl||null, participants: [], finished: false, winnersCount: Number(winnersCount)||1, requireTicket: !!requireTicket, ticketPrice: ticketPrice ? Number(ticketPrice) : null, vipOnly: !!vipOnly, createdAt: Date.now() };
   saveDB();
   setTimeout(() => finishDraw(id), ms);
   res.json({ ok: true, id, draw: DB.draws[id] });
